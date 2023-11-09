@@ -1,0 +1,22 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+version: '3.4'
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27018:27017
+
+  webapplication1:
+    image: webapplication1
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 5454:5454
+    depends_on:
+      - mongo
+    links:
+      - mongo
