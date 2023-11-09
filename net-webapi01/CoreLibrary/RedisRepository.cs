@@ -87,4 +87,14 @@ public class RedisRepository
         var value = await _redisClient.Db0.HashGetAsync<T>(key, field);
         return value;
     }
+
+    public async Task<List<T?>> GetHashValues<T>(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentException("The key should not be null or empty.");
+        }
+        var value = await _redisClient.Db0.HashValuesAsync<T>(key);
+        return value.ToList();
+    }
 }

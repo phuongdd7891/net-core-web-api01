@@ -28,7 +28,7 @@ public class JwtService
     public async Task<AuthenticationResponse> CreateToken(ApplicationUser user)
     {
         var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
-        var roles = await _redisRepository.GetHashEntity<string>(Const.userRolesKey);
+        var roles = await _redisRepository.GetHashEntity<string>(Const.USER_ROLES_KEY);
         var tokenHandler = new JsonWebTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {

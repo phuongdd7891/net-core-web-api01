@@ -16,12 +16,13 @@ public class BooksController : ControllerBase
     public BooksController(BooksService booksService) =>
         _booksService = booksService;
 
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ApiKeyAuthenticationHandler.API_KEY_HEADER}")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ApiKeyAuthenticationHandler.API_KEY_HEADER}", Roles = Const.ACTION_LIST_BOOK)]
     [HttpGet]
     public async Task<List<Book>> Get() =>
         await _booksService.GetAsync();
 
     [HttpGet("{id:length(24)}")]
+    [CustomAuthorize(Const.ACTION_GET_BOOK)]
     public async Task<ActionResult<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -35,7 +36,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpPost]
-    [CustomAuthorize(true)]
+    [CustomAuthorize(Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Post(Book newBook)
     {
         await _booksService.CreateAsync(newBook);

@@ -67,10 +67,6 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         {
             return AuthenticateResult.Fail(errMessage = "Invalid user");
         }
-        if (await ValidateRoleAction(user.Roles) == false)
-        {
-            return AuthenticateResult.Fail(errMessage = "Access denied");
-        }
         return AuthenticateResult.Success(await CreateTicket(user));
     }
 
@@ -95,10 +91,15 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         };
         if (user.Roles != null)
         {
-            var roleDict = await _redisRepository.GetHashEntity<string>(Const.userRolesKey);
-            foreach (var role in user.Roles)
+            var roleValues = await _redisRepository.GetHashValues<List<string>>(Const.ROLE_ACTION_KEY);
+            var roleList = roleValues.SelectMany(a => a!.Where(x => user.Roles.Contains(Guid.Parse(x))).Select(x => x)).DistinctBy(a => a).ToList();
+            var roleAction = await _redisRepository.GetHashEntity<List<string>>(Const.ROLE_ACTION_KEY);
+            foreach (var item in roleAction)
             {
-                claims = claims.Append(new Claim(ClaimTypes.Role, roleDict[role.ToString()])).ToArray();
+                if (item.Value.Any(a => roleList.Contains(a)))
+                {
+                    claims = claims.Append(new Claim(ClaimTypes.Role, item.Key)).ToArray();
+                }
             }
         }
         var identity = new ClaimsIdentity(claims, Scheme.Name);
@@ -106,11 +107,5 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
         return ticket;
-    }
-
-    private async Task<bool> ValidateRoleAction(List<Guid> userRoles)
-    {
-        var roles = await _redisRepository.GetHashByField<List<string>>(Const.roleActionKey, string.Format("[{0}]{1}", Request.Method.ToLower(), Request.Path));
-        return roles == null || roles.Count == 0 || roles.Any(a => userRoles.Contains(Guid.Parse(a)));
     }
 }

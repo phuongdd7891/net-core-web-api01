@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using CoreLibrary.Repository;
 using IdentityMongo.Models;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -12,15 +11,15 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
 {
     public const string API_KEY_HEADER = "ApiKey";
     private readonly RedisRepository _redisRepository;
-    private readonly bool _requireRole;
+    private readonly string _requestAction;
 
     public CustomAuthorizeFilter(
         RedisRepository redisRepository,
-        bool requireRole
+        string requestAction
     )
     {
         _redisRepository = redisRepository;
-        _requireRole = requireRole;
+        _requestAction = requestAction;
     }
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
@@ -67,8 +66,8 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             context.Result = new ForbidResult(API_KEY_HEADER);
             return;
         }
-        var roles = await _redisRepository.GetHashByField<List<string>>(Const.roleActionKey, string.Format("[{0}]{1}", context.HttpContext.Request.Method.ToLower(), context.HttpContext.Request.Path));
-        if (_requireRole && ((roles?.Count > 0 && !roles.Any(a => user!.Roles.Contains(Guid.Parse(a)))) || roles == null))
+        var roles = await _redisRepository.GetHashByField<List<string>>(Const.ROLE_ACTION_KEY, _requestAction);
+        if ((roles?.Count > 0 && !roles.Any(a => user!.Roles.Contains(Guid.Parse(a)))) || roles == null)
         {
             context.Result = new JsonResult("Access denied") { StatusCode = StatusCodes.Status403Forbidden };
             return;
@@ -79,11 +78,11 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
 public class CustomAuthorizeAttribute : TypeFilterAttribute
 {
     public CustomAuthorizeAttribute(
-        bool requireRole
+        string requestAction
     ) : base(typeof(CustomAuthorizeFilter))
     {
         Arguments = new object[] {
-            requireRole
+            requestAction
         };
     }
 

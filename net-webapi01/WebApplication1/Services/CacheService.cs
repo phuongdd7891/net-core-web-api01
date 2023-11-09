@@ -53,12 +53,12 @@ public class CacheService
     public async Task LoadUserRoles()
     {
         var roles = _roleManager.Roles.ToDictionary(a => a.Id.ToString(), a => a.Name);
-        await _redisRepository.SetHashEntity<string>(Const.userRolesKey, roles!);
+        await _redisRepository.SetHashEntity<string>(Const.USER_ROLES_KEY, roles!);
     }
 
     public async Task LoadRoleActions()
     {
         var actions = await _roleActionRepository.GetAll();
-        await _redisRepository.SetHashEntity<List<string>>(Const.roleActionKey, actions.ToDictionary(a => a.RequestAction, a => a.Roles));
+        await _redisRepository.SetHashEntity(Const.ROLE_ACTION_KEY, actions.DistinctBy(a => a.RequestAction).ToDictionary(a => a.RequestAction, a => a.Roles));
     }
 }
