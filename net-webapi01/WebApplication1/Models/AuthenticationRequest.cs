@@ -21,4 +21,10 @@ namespace WebApplication1.ResourceModels
         public required string Username { get; set; }
         public required string[] Roles { get; set; }
     }
+
+    public class RoleActionRequest
+    {
+        public required string Action { get; set; }
+        public required string Role { get; set; }
+    }
 }

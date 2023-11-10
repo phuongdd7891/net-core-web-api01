@@ -13,13 +13,29 @@ public class RoleActionRepository
         _collection = context.RoleActions;
     }
 
-    public async Task Add(string action, List<string> roles)
+    public async Task Add(string action, string role)
     {
-        await _collection.InsertOneAsync(new RoleAction
+        var filter = Builders<RoleAction>.Filter.Where(x => x.RequestAction == action);
+        var roleAction = await _collection.Find(filter).FirstOrDefaultAsync();
+        if (roleAction == null)
         {
-            RequestAction = action,
-            Roles = roles
-        });
+            await _collection.InsertOneAsync(new RoleAction
+            {
+                RequestAction = action,
+                Roles = new List<string> { role }
+            });
+        }
+        else
+        {
+            var builder = Builders<RoleAction>.Update;
+            var roles = roleAction.Roles;
+            if (!roles.Contains(role))
+            {
+                roles.Add(role);
+            }
+            var update = builder.Set("Roles", roles);
+            await _collection.UpdateOneAsync(filter, update);
+        }
     }
 
     public async Task<List<RoleAction>> GetAll()

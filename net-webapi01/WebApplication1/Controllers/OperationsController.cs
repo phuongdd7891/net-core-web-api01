@@ -111,7 +111,7 @@ public class OperationsController : ControllerBase
 
         if (user == null)
         {
-            return NotFound("Not found user");
+            return NotFound("User not found");
         }
         var result = await _userManager.AddToRolesAsync(user, req.Roles);
         if (result.Succeeded)
@@ -125,9 +125,14 @@ public class OperationsController : ControllerBase
     #endregion
 
     [HttpPost("RoleAction")]
-    public async Task<IActionResult> AddRoleAction(RoleAction request)
+    public async Task<IActionResult> AddRoleAction(RoleActionRequest request)
     {
-        await _roleActionRepository.Add(request.RequestAction, request.Roles);
+        var appRole = await _roleManager.FindByNameAsync(request.Role);
+        if (appRole == null)
+        {
+            return NotFound("Role not found");
+        }
+        await _roleActionRepository.Add(request.Action, appRole!.Id.ToString());
         await _cacheService.LoadRoleActions();
         return Ok();
     }
