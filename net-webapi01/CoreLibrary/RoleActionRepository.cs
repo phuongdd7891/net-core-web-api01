@@ -27,12 +27,12 @@ public class RoleActionRepository
         }
         else
         {
-            var builder = Builders<RoleAction>.Update;
             var roles = roleAction.Roles;
             if (!roles.Contains(role))
             {
                 roles.Add(role);
             }
+            var builder = Builders<RoleAction>.Update;
             var update = builder.Set("Roles", roles);
             await _collection.UpdateOneAsync(filter, update);
         }

@@ -64,26 +64,19 @@ public class OperationsController : ControllerBase
     public async Task<ActionResult<AuthenticationResponse>> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
     {
         var user = await _userManager.FindByNameAsync(request.UserName);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
 
-        if (user == null)
-        {
-            return NotFound("Not found user");
-        }
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user!, request.Password);
+        ErrorStatuses.ThrowBadRequest("Bad credentials", !isPasswordValid);
 
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-
-        if (!isPasswordValid)
-        {
-            return BadRequest("Bad credentials");
-        }
         if (tokenType == "jwt")
         {
-            var token = await _jwtService.CreateToken(user);
+            var token = await _jwtService.CreateToken(user!);
             return Ok(token);
         }
         else
         {
-            var token = await _apiKeyService.CreateRedisToken(user);
+            var token = await _apiKeyService.CreateRedisToken(user!);
             return Ok(token);
         }
     }
@@ -93,15 +86,9 @@ public class OperationsController : ControllerBase
     public async Task<IActionResult> CreateRole([FromBody] string name)
     {
         IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = name });
-        if (result.Succeeded)
-        {
-            await _cacheService.LoadUserRoles();
-            return Ok("Role Created Successfully");
-        }
-        else
-        {
-            return BadRequest(result.Errors);
-        }
+        ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
+        await _cacheService.LoadUserRoles();
+        return Ok("Role Created Successfully");
     }
 
     [HttpPost("UserRoles")]

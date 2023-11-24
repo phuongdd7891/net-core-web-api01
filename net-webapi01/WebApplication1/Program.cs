@@ -139,6 +139,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.MapControllers();
 app.UseRedisInformation();
+app.UseErrorHandling();
 
 app.Run();
 
