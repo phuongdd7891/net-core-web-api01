@@ -19,19 +19,28 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            // Log the exception
-            var errResp = JsonConvert.DeserializeObject<ErrorResponse>(ex.Message);
-            // Return consistent error response
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = errResp?.Code ?? (int)HttpStatusCode.InternalServerError;
-
-            if (errResp != null)
+            try
             {
-                errResp.Message = errResp?.Message ?? "An error occurred while processing your request.";
-            }
+                // Log the exception
+                var errResp = JsonConvert.DeserializeObject<ErrorResponse>(ex.Message);
+                // Return consistent error response
+                context.Response.StatusCode = errResp?.Code ?? (int)HttpStatusCode.InternalServerError;
 
-            var json = JsonConvert.SerializeObject(errResp);
-            await context.Response.WriteAsync(json);
+                if (errResp != null)
+                {
+                    errResp.Message = errResp?.Message ?? "An error occurred while processing your request.";
+                }
+
+                var json = JsonConvert.SerializeObject(errResp);
+                await context.Response.WriteAsync(json);
+            }
+            catch
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                var json = JsonConvert.SerializeObject(ex);
+                await context.Response.WriteAsync(json);
+            }
         }
     }
 }

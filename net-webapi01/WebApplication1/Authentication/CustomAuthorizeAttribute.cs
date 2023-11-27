@@ -55,7 +55,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             var keyValue = await _redisRepository.Get(username);
             if (apiKeyToValidate != keyValue)
             {
-                context.Result = new JsonResult("Invalid key") { StatusCode = StatusCodes.Status401Unauthorized };
+                context.Result = new JsonResult("Invalid api key") { StatusCode = StatusCodes.Status401Unauthorized };
                 return;
             }
         }
