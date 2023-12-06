@@ -3,13 +3,18 @@ using CoreLibrary.Repository;
 using DnsClient.Protocol;
 using IdentityMongo.Models;
 using Microsoft.AspNetCore.Identity;
+using NLog;
+using NLog.Web;
 
 namespace WebApi.Services;
 
 public class InitializeCacheService : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;
-
+    private readonly Logger logger = LogManager.Setup()
+                       .LoadConfigurationFromAppSettings()
+                       .GetCurrentClassLogger();
+    
     public InitializeCacheService(
         IServiceProvider serviceProvider
     )
@@ -24,6 +29,7 @@ public class InitializeCacheService : IHostedService
             var cacheService = scope.ServiceProvider.GetService<CacheService>()!;
             await cacheService.LoadUserRoles();
             await cacheService.LoadRoleActions();
+            logger.Info("caches load done");
         }
     }
 

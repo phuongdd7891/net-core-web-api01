@@ -13,6 +13,9 @@ using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.Newtonsoft;
 using WebApplication1.Authentication;
 using CoreLibrary.DbContext;
+using NLog.Extensions.Logging;
+using NLog.Web;
+using NLog;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -106,6 +109,15 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             options => { }
         );
 
+#region Nlog config
+var config = new ConfigurationBuilder()
+   .SetBasePath(Directory.GetCurrentDirectory())
+   .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+   .Build();
+
+NLog.LogManager.Configuration = new NLogLoggingConfiguration(config.GetSection("NLog"));
+#endregion
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -140,6 +152,7 @@ app.UseAuthentication();
 app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();
+app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
 
 app.Run();
 
