@@ -1,4 +1,5 @@
 - implement handle error
 - implement logger by input condition
-- upload form data
+- upload file
+- api gateway
 - rabbitmq

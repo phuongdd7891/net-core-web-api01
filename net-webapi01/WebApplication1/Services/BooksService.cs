@@ -1,5 +1,6 @@
 using WebApi.Models;
 using MongoDB.Driver;
+using System.Text;
 
 namespace WebApi.Services;
 
@@ -9,7 +10,8 @@ public class BooksService
 
     public BooksService(
         AppDBContext _context
-    ) {
+    )
+    {
         _booksCollection = _context.Books;
     }
 
@@ -19,12 +21,37 @@ public class BooksService
     public async Task<Book?> GetAsync(string id) =>
         await _booksCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
-    public async Task CreateAsync(Book newBook) =>
+    public async Task CreateAsync(Book newBook, IFormFile? coverData)
+    {
+        if (coverData?.Length > 0)
+        {
+            var filePath = GetBookCoverPath();
+            DirectoryInfo dirInfo = new DirectoryInfo(filePath);
+            if (!dirInfo.Exists)
+            {
+                dirInfo.Create();
+            }
+            var fileName = string.Format("{0}{1}", Guid.NewGuid(), Path.GetExtension(coverData.FileName));
+            var path = Path.Combine(filePath, fileName);
+            using (var ms = new MemoryStream())
+            {
+                await coverData.CopyToAsync(ms);
+                ms.Position = 0;
+                using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    await ms.CopyToAsync(fs);
+                }
+                newBook.CoverPicture = fileName;
+            }
+        }
         await _booksCollection.InsertOneAsync(newBook);
+    }
 
     public async Task UpdateAsync(string id, Book updatedBook) =>
         await _booksCollection.ReplaceOneAsync(x => x.Id == id, updatedBook);
 
     public async Task RemoveAsync(string id) =>
         await _booksCollection.DeleteOneAsync(x => x.Id == id);
+
+    public string GetBookCoverPath() => Path.Combine(Directory.GetCurrentDirectory(), @"../", "BookCover");
 }
