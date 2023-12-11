@@ -1,5 +1,9 @@
+# ===IMPLEMENTATION
 - implement handle error
-- implement logger by input condition
-- upload file
+- implement logger
+- upload file - validate file (size, extension...)
 - api gateway
 - rabbitmq
+- full-text search lucene.net
+#===IMPROVEMENT
+- merge token key with username key

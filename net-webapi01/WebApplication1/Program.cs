@@ -14,8 +14,9 @@ using StackExchange.Redis.Extensions.Newtonsoft;
 using WebApplication1.Authentication;
 using CoreLibrary.DbContext;
 using NLog.Extensions.Logging;
-using NLog.Web;
 using NLog;
+
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -49,10 +50,19 @@ services.AddSwaggerGen(options =>
         }
     });
 });
+services.AddCors(options =>
+{
+    options.AddPolicy(MyAllowSpecificOrigins,
+                          policy =>
+                          {
+                              policy.WithOrigins("http://192.168.156.58:8089","http://localhost:8089")
+                                                  .AllowAnyHeader()
+                                                  .AllowAnyMethod();
+                          });
+});
 services.AddControllers()
     .AddJsonOptions(
         options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
-
 
 //db configs
 var mongoDbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>();
@@ -152,6 +162,7 @@ app.UseAuthentication();
 app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();
+app.UseCors(MyAllowSpecificOrigins);
 app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
 
 app.Run();

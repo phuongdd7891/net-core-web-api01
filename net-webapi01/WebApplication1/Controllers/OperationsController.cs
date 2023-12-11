@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.ResourceModels;
 using CoreLibrary.Models;
+using WebApplication1.Authentication;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -79,6 +80,15 @@ public class OperationsController : ControllerBase
             var token = await _apiKeyService.CreateRedisToken(user!);
             return Ok(token);
         }
+    }
+
+    [HttpPost("Logout")]
+    [CustomAuthorize()]
+    public async Task<IActionResult> Logout()
+    {
+        var username = HttpContext.Request.Query["u"];
+        await _apiKeyService.RemoveRedisToken(username!);
+        return Ok();
     }
 
     #region Roles

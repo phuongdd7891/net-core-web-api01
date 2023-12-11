@@ -21,7 +21,7 @@ public class BooksService
     public async Task<Book?> GetAsync(string id) =>
         await _booksCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
-    public async Task CreateAsync(Book newBook, IFormFile? coverData)
+    public async Task CreateAsync(Book newBook, IFormFile? coverData = null)
     {
         if (coverData?.Length > 0)
         {

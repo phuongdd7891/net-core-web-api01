@@ -72,6 +72,17 @@ public class ApiKeyService
         return userKey;
     }
 
+    public async Task RemoveRedisToken(string username)
+    {
+        var hasKey = await _redisRepository.HasKey(username);
+        if (hasKey)
+        {
+            var token = await _redisRepository.Get(username);
+            await _redisRepository.Remove(username);
+            await _redisRepository.Remove($"{username}:{token}");
+        }
+    }
+
     private string GenerateApiKeyValue() =>
         $"{Guid.NewGuid()}-{DateTime.UtcNow.Ticks}";
 }

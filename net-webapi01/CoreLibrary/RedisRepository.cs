@@ -27,6 +27,12 @@ public class RedisRepository
         return value ?? string.Empty;
     }
 
+    public async Task Remove(string key)
+    {
+        ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
+        await _redisClient.Db0.RemoveAsync(key);
+    }
+
     public async Task<bool> HasKey(string key)
     {
         return await _redisClient.Db0.ExistsAsync(key);

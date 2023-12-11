@@ -68,6 +68,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("download-cover")]
+    [CustomAuthorize(Const.ACTION_GET_BOOK)]
     public async Task<IActionResult> DownloadCover(string id)
     {
         ErrorStatuses.ThrowBadRequest("Id cannot empty", string.IsNullOrEmpty(id));
