@@ -1,6 +1,7 @@
-import { ClientRequest, Net, session } from "electron";
+import { Net, session } from "electron";
 import { IpcRequest } from "src/shared/IpcRequest";
-import { BaseApiChannel, apiHost, appSessionKey } from "../BaseApiChannel";
+import { BaseApiChannel, appSessionKey } from "../BaseApiChannel";
+import { NetUtils } from "../../../utils";
 
 export class LoginApiChannel extends BaseApiChannel {
 
@@ -9,41 +10,19 @@ export class LoginApiChannel extends BaseApiChannel {
     }
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
-        let buffers: Buffer[] = [];
-        
-        const netRequest: ClientRequest = net.request({
-            url: `${apiHost}/api/Operations/login`,
-            method: 'post'
-        })
-        netRequest.setHeader("Content-Type", "application/json");
-        netRequest.write(JSON.stringify(request.params));
-        netRequest.on('response', (response) => {
-            response.on('data', (chunk: Buffer) => {
-                if (response.statusCode != 200) {
-                    console.log(`BODY: ${chunk}`)
-                }
-                buffers.push(chunk);
-            })
-            response.on('error', (error: any) => {
-                event.reply(request.responseChannel, error);
-            })
-            response.on('end', async () => {
-                let responseBodyBuffer = Buffer.concat(buffers);
-                let responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
-                await session.defaultSession.cookies.set({
-                    path: '/',
-                    domain: 'localhost',
-                    url: 'http://localhost/',
-                    name: appSessionKey,
-                    value: JSON.stringify({
-                        username: responseBodyJSON.Username,
-                        token: responseBodyJSON.Value
-                    })
+        NetUtils.postRequest('api/Operations/login', request, net).then(async (response: any) => {
+            await session.defaultSession.cookies.set({
+                path: '/',
+                domain: 'localhost',
+                url: 'http://localhost/',
+                name: appSessionKey,
+                value: JSON.stringify({
+                    username: response.Username,
+                    token: response.Value
                 })
-                event.reply(request.responseChannel, responseBodyJSON);
             })
+            event.reply(request.responseChannel, response);
         })
-        netRequest.end();
     }
 
 }
