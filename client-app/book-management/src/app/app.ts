@@ -1,11 +1,26 @@
+import { IpcRequest } from "src/shared/IpcRequest";
 import { IpcService } from "./IpcService";
+import * as $ from 'jquery';
 
 const ipc = new IpcService();
 
-document.getElementById('request-os-info').addEventListener('click', async () => {
-    const t = await ipc.send<{ kernel: string }>('system-info');
-    document.getElementById('os-info').innerHTML = t.kernel;
+$(function() {
+    ipc.send<{ kernel: string }>('system-info').then(res => {
+        $('#os-info').html(res.kernel);
+    })
+})
 
-    const loginResponse = await ipc.login();
+$('#frmLogin').on('submit', async (event) => {
+    event.preventDefault();
+    let req: IpcRequest = {
+        params: {
+            Username: $('#txtUsername').val(),
+            Password: $('#txtPwd').val()
+        }
+    };
+    const loginResponse = await ipc.sendApi("login", req);
     console.log(loginResponse)
-});
+
+    const bookResponse = await ipc.sendApi("book");
+    console.log(bookResponse)
+})

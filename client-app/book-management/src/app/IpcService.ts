@@ -1,5 +1,6 @@
 import { IpcRenderer } from 'electron';
 import { IpcRequest } from "../shared/IpcRequest";
+import { apiNamePrefix } from '../electron/IPC/BaseApiChannel';
 
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
@@ -30,17 +31,18 @@ export class IpcService {
         this.ipcRenderer = window.require('electron').ipcRenderer;
     }
 
-    public login(request: IpcRequest = {}) {
+    public sendApi(apiName: string, request: IpcRequest = { params: {} }) {
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
         }
+        const channelName = `${apiNamePrefix}${apiName}`;
         if (!request.responseChannel) {
-            request.responseChannel = 'api-login';
+            request.responseChannel = channelName;
         }
         const ipcRenderer = this.ipcRenderer;
-        ipcRenderer.send('api-login', request);
+        ipcRenderer.send(channelName, request);
         return new Promise(resolve => {
-            ipcRenderer.once('api-login', (event, response) => resolve(response));
+            ipcRenderer.once(channelName, (event, response) => resolve(response));
         });
     }
 }

@@ -1,22 +1,20 @@
-import { ClientRequest, Net, session } from "electron";
+import { ClientRequest, Net } from "electron";
 import { IpcRequest } from "src/shared/IpcRequest";
-import { BaseApiChannel, apiHost, appSessionKey } from "../BaseApiChannel";
+import { BaseApiChannel, apiHost } from "../BaseApiChannel";
 
-export class LoginApiChannel extends BaseApiChannel {
+export class BookApiChannel extends BaseApiChannel {
 
     constructor() {
-        super("login");
+        super("book");
     }
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         let buffers: Buffer[] = [];
         
         const netRequest: ClientRequest = net.request({
-            url: `${apiHost}/api/Operations/login`,
-            method: 'post'
+            url: `${apiHost}/api/books?u=${request.params["username"]}`
         })
         netRequest.setHeader("Content-Type", "application/json");
-        netRequest.write(JSON.stringify(request.params));
         netRequest.on('response', (response) => {
             response.on('data', (chunk: Buffer) => {
                 if (response.statusCode != 200) {
@@ -30,16 +28,6 @@ export class LoginApiChannel extends BaseApiChannel {
             response.on('end', async () => {
                 let responseBodyBuffer = Buffer.concat(buffers);
                 let responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
-                await session.defaultSession.cookies.set({
-                    path: '/',
-                    domain: 'localhost',
-                    url: 'http://localhost/',
-                    name: appSessionKey,
-                    value: JSON.stringify({
-                        username: responseBodyJSON.Username,
-                        token: responseBodyJSON.Value
-                    })
-                })
                 event.reply(request.responseChannel, responseBodyJSON);
             })
         })
