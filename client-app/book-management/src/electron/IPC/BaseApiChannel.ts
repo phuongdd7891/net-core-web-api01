@@ -4,6 +4,8 @@ import { IpcChannelInterface } from "./IpcChannelInterface";
 export const apiHost: string = 'http://localhost:5253';
 export const apiNamePrefix: string = 'api-';
 export const appSessionKey: string = '__app_session';
+export const apiEndpointKey: string = 'endpoint';
+export const apiMethodKey: string = 'method';
 
 export abstract class BaseApiChannel implements IpcChannelInterface {
     private _apiName: string;

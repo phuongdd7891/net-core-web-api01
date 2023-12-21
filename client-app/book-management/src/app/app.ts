@@ -1,6 +1,7 @@
 import { IpcRequest } from "src/shared/IpcRequest";
 import { IpcService } from "./IpcService";
 import * as $ from 'jquery';
+import { apiEndpointKey } from "../electron/IPC/BaseApiChannel";
 
 const ipc = new IpcService();
 
@@ -21,6 +22,10 @@ $('#frmLogin').on('submit', async (event) => {
     const loginResponse = await ipc.sendApi("login", req);
     console.log(loginResponse)
 
-    const bookResponse = await ipc.sendApi("book");
+    const bookResponse = await ipc.sendApi("book", {
+        params: {
+            [apiEndpointKey]: 'api/books'
+        }
+    });
     console.log(bookResponse)
 })

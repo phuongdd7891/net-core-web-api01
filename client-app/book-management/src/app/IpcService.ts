@@ -31,7 +31,7 @@ export class IpcService {
         this.ipcRenderer = window.require('electron').ipcRenderer;
     }
 
-    public sendApi(apiName: string, request: IpcRequest = { params: {} }) {
+    public sendApi<T>(apiName: string, request: IpcRequest = { params: {} }): Promise<T> {
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
         }

@@ -1,15 +1,15 @@
 import { ClientRequest, Net } from "electron";
 import { IpcRequest } from "./shared/IpcRequest";
-import { apiHost } from "./electron/IPC/BaseApiChannel";
+import { apiEndpointKey, apiHost } from "./electron/IPC/BaseApiChannel";
 
 export class NetUtils {
     static getRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {
             let buffers: Buffer[] = [];
-            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params["username"]}`;
-            if (!Object.getOwnPropertyNames(request.params).includes('username')) {
-                const { username, ...queryParams } = request.params;
-                reqUrl += this.getUrlQuery(queryParams);
+            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
+            if (Object.getOwnPropertyNames(request.params).some(a => a != 'username' && a != apiEndpointKey)) {
+                const { username, endpoint, ...queryParams } = request.params;
+                reqUrl += '&' + this.getUrlQuery(queryParams);
             }
             const netRequest: ClientRequest = net.request({
                 url: reqUrl
@@ -38,7 +38,7 @@ export class NetUtils {
     static postRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {
             let buffers: Buffer[] = [];
-            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params["username"]}`;
+            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
             const netRequest: ClientRequest = net.request({
                 url: reqUrl,
                 method: 'post'
