@@ -3,9 +3,9 @@ using System.Text.Json;
 
 public class ErrorStatuses
 {
-    private static ErrorResponse GetErrorResponse(int code, string message) => new ErrorResponse {
+    private static DataResponse<string> GetErrorResponse(int code, string message) => new DataResponse<string> {
         Code = code,
-        Message = message
+        Data = message,
     };
 
     public static void ThrowInternalErr(string message, bool condition)

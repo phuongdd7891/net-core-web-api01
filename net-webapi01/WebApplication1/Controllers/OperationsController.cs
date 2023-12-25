@@ -62,7 +62,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("Login")]
-    public async Task<ActionResult<AuthenticationResponse>> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
+    public async Task<ActionResult<DataResponse<AuthenticationResponse>>> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
     {
         var user = await _userManager.FindByNameAsync(request.UserName);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
@@ -73,12 +73,16 @@ public class OperationsController : ControllerBase
         if (tokenType == "jwt")
         {
             var token = await _jwtService.CreateToken(user!);
-            return Ok(token);
+            return Ok(new DataResponse<AuthenticationResponse>{
+                Data = token
+            });
         }
         else
         {
             var token = await _apiKeyService.CreateRedisToken(user!);
-            return Ok(token);
+            return Ok(new DataResponse<UserApiKey>{
+                Data = token
+            });
         }
     }
 

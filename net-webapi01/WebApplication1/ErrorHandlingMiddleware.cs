@@ -23,13 +23,13 @@ public class ErrorHandlingMiddleware
             try
             {
                 // Log the exception
-                var errResp = JsonConvert.DeserializeObject<ErrorResponse>(ex.Message);
+                var errResp = JsonConvert.DeserializeObject<DataResponse<string>>(ex.Message);
                 // Return consistent error response
                 context.Response.StatusCode = errResp?.Code ?? (int)HttpStatusCode.InternalServerError;
 
                 if (errResp != null)
                 {
-                    errResp.Message = errResp?.Message ?? "An error occurred while processing your request.";
+                    errResp.Data = errResp?.Data ?? "An error occurred while processing your request.";
                 }
 
                 var json = JsonConvert.SerializeObject(errResp);

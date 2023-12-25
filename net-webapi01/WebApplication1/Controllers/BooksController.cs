@@ -20,8 +20,13 @@ public class BooksController : ControllerBase
 
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ApiKeyAuthenticationHandler.API_KEY_HEADER}", Roles = Const.ACTION_LIST_BOOK)]
     [HttpGet]
-    public async Task<List<Book>> Get() =>
-        await _booksService.GetAsync();
+    public async Task<DataResponse<List<Book>>> Get()
+    {
+        var data = await _booksService.GetAsync();
+        return new DataResponse<List<Book>> {
+            Data = data
+        };
+    }
 
     [HttpGet("{id:length(24)}")]
     [CustomAuthorize(Const.ACTION_GET_BOOK)]

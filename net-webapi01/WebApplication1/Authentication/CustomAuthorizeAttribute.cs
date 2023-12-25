@@ -32,8 +32,9 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         // authorization
         if (!context.HttpContext.Request.Headers.ContainsKey(API_KEY_HEADER))
         {
-            context.Result = new JsonResult(new ErrorResponse {
-                Message = "Header key Not Found"
+            context.Result = new JsonResult(new DataResponse<string> {
+                Data = "Header key Not Found",
+                Code = StatusCodes.Status401Unauthorized
             }) { StatusCode = StatusCodes.Status401Unauthorized };
             return;
         }
@@ -41,8 +42,9 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
 
         if (!context.HttpContext.Request.Query.ContainsKey("u"))
         {
-            context.Result = new JsonResult(new ErrorResponse {
-                Message = "Username not found"
+            context.Result = new JsonResult(new DataResponse<string> {
+                Data = "Username not found",
+                Code = StatusCodes.Status401Unauthorized
             }) { StatusCode = StatusCodes.Status401Unauthorized };
             return;
         }
@@ -51,8 +53,9 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         var apiKey = await _redisRepository.HasKey(username);
         if (!apiKey)
         {
-            context.Result = new JsonResult(new ErrorResponse {
-                Message = "User key not found"
+            context.Result = new JsonResult(new DataResponse<string> {
+                Data = "User key not found",
+                Code = StatusCodes.Status401Unauthorized
             }) { StatusCode = StatusCodes.Status401Unauthorized };
             return;
         }
@@ -61,8 +64,9 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             var keyValue = await _redisRepository.Get(username);
             if (apiKeyToValidate != keyValue)
             {
-                context.Result = new JsonResult(new ErrorResponse {
-                    Message = "Invalid api key"
+                context.Result = new JsonResult(new DataResponse<string> {
+                    Data = "Invalid api key",
+                    Code = StatusCodes.Status401Unauthorized
                 }) { StatusCode = StatusCodes.Status401Unauthorized };
                 return;
             }
@@ -81,8 +85,9 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         var roles = await _redisRepository.GetHashByField<List<string>>(Const.ROLE_ACTION_KEY, _requestAction);
         if ((roles?.Count > 0 && !roles.Any(a => user!.Roles.Contains(Guid.Parse(a)))) || roles == null)
         {
-            context.Result = new JsonResult(new ErrorResponse {
-                Message = "Access denied"
+            context.Result = new JsonResult(new DataResponse<string> {
+                Data = "Access denied",
+                Code = StatusCodes.Status403Forbidden
             }) { StatusCode = StatusCodes.Status403Forbidden };
             return;
         }
