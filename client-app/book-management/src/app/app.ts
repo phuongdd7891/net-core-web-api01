@@ -1,12 +1,11 @@
-import { IpcRequest } from "src/shared/IpcRequest";
+import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { IpcService } from "./IpcService";
 import * as $ from 'jquery';
-import { apiEndpointKey } from "../electron/IPC/BaseApiChannel";
 
-const ipc = new IpcService();
+const ipcService = new IpcService();
 
 $(function() {
-    ipc.send<{ kernel: string }>('system-info').then(res => {
+    ipcService.send<{ kernel: string }>('system-info').then(res => {
         $('#os-info').html(res.kernel);
     })
 })
@@ -19,13 +18,20 @@ $('#frmLogin').on('submit', async (event) => {
             Password: $('#txtPwd').val()
         }
     };
-    const loginResponse = await ipc.sendApi("login", req);
-    console.log(loginResponse)
-
-    const bookResponse = await ipc.sendApi("book", {
-        params: {
-            [apiEndpointKey]: 'api/books'
-        }
-    });
-    console.log(bookResponse)
+    const loginResponse = await ipcService.sendApi<IpcResponse>("login", req);
+    if (loginResponse.Code == 200) {
+        ipcService.send('menu', {
+            params: {
+                type: 'user'
+            }
+        }).then(async () => {
+            await ipcService.send('wd', {
+                params: {
+                    path: '../app/pages/book/book.html'
+                }
+            });
+        })
+    } else {
+        ipcService.sendDialogError('', loginResponse.Data);
+    }
 })

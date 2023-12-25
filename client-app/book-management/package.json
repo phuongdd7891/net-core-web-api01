@@ -4,6 +4,7 @@
   "description": "electron book mangement app",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prestart": "copyfiles -u 1 src/**/*.html dist/",
     "build": "tsc",
     "start": "npm run build && electron --inspect=9222 ./dist/electron/main.js"
   },

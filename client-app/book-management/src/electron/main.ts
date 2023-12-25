@@ -1,15 +1,17 @@
-import { app, BrowserWindow, ipcMain, net, protocol, session } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
-import { SystemInfoChannel } from "./IPC/SystemInfoChannel";
-import { LoginApiChannel } from './IPC/Api/Login';
+import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
+import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
 import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
 import { BookApiChannel } from './IPC/Api/Book';
+import * as path from 'node:path';
 
 class Main {
     private mainWindow: BrowserWindow;
 
     public init(ipcChannels: IpcChannelInterface[]) {
         app.on('ready', () => {
+            Menu.setApplicationMenu(null);
             this.createWindow();
 
             session.defaultSession.webRequest.onBeforeSendHeaders({
@@ -33,7 +35,6 @@ class Main {
     }
 
     private async onWindowAllClosed() {
-        await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
         if (process.platform !== 'darwin') {
             app.quit();
         }
@@ -53,6 +54,7 @@ class Main {
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false,
+                preload: path.join(__dirname, '../preload.js')
             }
         });
 
@@ -62,14 +64,39 @@ class Main {
 
     private registerIpcChannels(ipcChannels: IpcChannelInterface[]) {
         ipcChannels.forEach(channel => ipcMain.on(channel.getName(), async (event, request) => {
-            if (channel.getName().startsWith(apiNamePrefix)) {
-                const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: appSessionKey });
-                if (cookies) {
-                    const sessionData = JSON.parse(cookies.value);
-                    request.params["username"] = sessionData.username;
-                }
+            const channelName = channel.getName();
+            const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: appSessionKey });
+            const sessionData = cookies ? JSON.parse(cookies.value) : null;
+            if (sessionData) {
+                request.params["username"] = sessionData.username;
+            }
+            if (channelName.startsWith(apiNamePrefix)) {
                 channel.handleNet(event, request, net);
+            } else if (channelName == 'wd') {
+                this.mainWindow.loadFile(request.params?.['path']);
+            } else if (channelName == 'dialog') {
+                if (request.params?.['type'] == 'err') {
+                    dialog.showErrorBox(request.params?.['title'], request.params?.['message']);
+                }
+            } else if (channelName == 'msg') {
+                if (request.params?.['type'] == 'logout') {
+                    Menu.setApplicationMenu(null);
+                    this.mainWindow.loadFile('../../index.html');
+                }
             } else {
+                if (channelName == 'menu') {
+                    if (request.params?.['type'] == 'user') {
+                        const userMenu = new Menu();
+                        userMenu.append(new MenuItem({
+                            label: sessionData.username,
+                            submenu: [{
+                                label: 'Logout',
+                                click: () => this.mainWindow.webContents.send("menu-logout")
+                            }]
+                        }));
+                        Menu.setApplicationMenu(userMenu);
+                    }
+                }
                 channel.handle(event, request);
             }
         }));
@@ -77,7 +104,12 @@ class Main {
 }
 
 (new Main()).init([
-    new SystemInfoChannel(),
+    new GeneralInfoChannel(),
+    new GeneralInfoChannel("wd"),
+    new GeneralInfoChannel("dialog"),
+    new GeneralInfoChannel("menu"),
+    new GeneralInfoChannel("msg"),
     new LoginApiChannel(),
+    new LogoutApiChannel(),
     new BookApiChannel()
 ]);

@@ -57,8 +57,11 @@ export class NetUtils {
                 })
                 response.on('end', async () => {
                     let responseBodyBuffer = Buffer.concat(buffers);
-                    let responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
-                    resolve(responseBodyJSON);
+                    let responseBodyJSON; 
+                    if (responseBodyBuffer.length > 0) {
+                        responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
+                    }
+                    resolve(responseBodyJSON ?? { Code: 200 });
                 })
             })
             netRequest.end();

@@ -5,7 +5,7 @@ import { apiNamePrefix } from '../electron/IPC/BaseApiChannel';
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
 
-    public send<T>(channel: string, request: IpcRequest = {}): Promise<T> {
+    public send<T>(channel: string, request: IpcRequest = { params: {} }): Promise<T> {
         // If the ipcRenderer is not available try to initialize it
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
@@ -44,5 +44,15 @@ export class IpcService {
         return new Promise(resolve => {
             ipcRenderer.once(channelName, (event, response) => resolve(response));
         });
+    }
+
+    public sendDialogError(title: string, message: string) {
+        this.send('dialog', {
+            params: {
+                message: message,
+                title: title,
+                type: 'err'
+            }
+        })
     }
 }
