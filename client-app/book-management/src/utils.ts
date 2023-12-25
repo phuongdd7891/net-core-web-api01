@@ -61,7 +61,7 @@ export class NetUtils {
                     if (responseBodyBuffer.length > 0) {
                         responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
                     }
-                    resolve(responseBodyJSON ?? { Code: 200 });
+                    resolve(responseBodyJSON ?? { code: 200 });
                 })
             })
             netRequest.end();

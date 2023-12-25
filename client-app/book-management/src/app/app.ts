@@ -19,7 +19,7 @@ $('#frmLogin').on('submit', async (event) => {
         }
     };
     const loginResponse = await ipcService.sendApi<IpcResponse>("login", req);
-    if (loginResponse.Code == 200) {
+    if (loginResponse.code == 200) {
         ipcService.send('menu', {
             params: {
                 type: 'user'
@@ -32,6 +32,6 @@ $('#frmLogin').on('submit', async (event) => {
             });
         })
     } else {
-        ipcService.sendDialogError('', loginResponse.Data);
+        ipcService.sendDialogError('', loginResponse.data);
     }
 })

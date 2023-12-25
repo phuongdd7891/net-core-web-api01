@@ -11,15 +11,15 @@ export class LoginApiChannel extends BaseApiChannel {
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/login', request, net).then(async (response: any) => {
-            if (response.Code == 200) {
+            if (response.code == 200) {
                 await session.defaultSession.cookies.set({
                     path: '/',
                     domain: 'localhost',
                     url: 'http://localhost/',
                     name: appSessionKey,
                     value: JSON.stringify({
-                        username: response.Data.Username,
-                        token: response.Data.Value
+                        username: response.data.username,
+                        token: response.data.value
                     })
                 })
             }
@@ -37,7 +37,7 @@ export class LogoutApiChannel extends BaseApiChannel {
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/logout', request, net).then(async (response: any) => {
-            if (response.Code == 200) {
+            if (response.code == 200) {
                 await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
             }
             event.reply(request.responseChannel, response);

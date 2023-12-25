@@ -25,7 +25,7 @@ const ipcService = new IpcService();
 window.addEventListener("DOMContentLoaded", () => {
     ipcRenderer.on('menu-logout', async (_event, value) => {
         const response = await ipcService.sendApi<IpcResponse>('logout');
-        if (response.Code == 200) {
+        if (response.code == 200) {
             ipcService.send("msg", {
                 params: {
                     type: 'logout'

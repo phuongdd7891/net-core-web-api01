@@ -4,6 +4,6 @@ export interface IpcRequest {
 }
 
 export interface IpcResponse {
-  Code: number,
-  Data: any
+  code: number,
+  data: any
 }
