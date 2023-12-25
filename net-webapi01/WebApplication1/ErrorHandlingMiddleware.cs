@@ -1,6 +1,7 @@
 // ErrorHandlingMiddleware.cs
 using System.Net;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 public class ErrorHandlingMiddleware
 {
@@ -20,6 +21,13 @@ public class ErrorHandlingMiddleware
         catch (Exception ex)
         {
             context.Response.ContentType = "application/json";
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                }
+            };
             try
             {
                 // Log the exception
@@ -32,13 +40,13 @@ public class ErrorHandlingMiddleware
                     errResp.Data = errResp?.Data ?? "An error occurred while processing your request.";
                 }
 
-                var json = JsonConvert.SerializeObject(errResp);
+                var json = JsonConvert.SerializeObject(errResp, jsonSettings);
                 await context.Response.WriteAsync(json);
             }
             catch
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                var json = JsonConvert.SerializeObject(ex);
+                var json = JsonConvert.SerializeObject(ex, jsonSettings);
                 await context.Response.WriteAsync(json);
             }
         }

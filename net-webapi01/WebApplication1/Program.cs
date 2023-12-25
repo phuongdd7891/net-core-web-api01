@@ -15,6 +15,7 @@ using WebApplication1.Authentication;
 using CoreLibrary.DbContext;
 using NLog.Extensions.Logging;
 using NLog;
+using Newtonsoft.Json.Serialization;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -55,14 +56,17 @@ services.AddCors(options =>
     options.AddPolicy(MyAllowSpecificOrigins,
                           policy =>
                           {
-                              policy.WithOrigins("http://192.168.156.58:8089","http://localhost:8089")
+                              policy.WithOrigins("http://192.168.156.58:8089", "http://localhost:8089")
                                                   .AllowAnyHeader()
                                                   .AllowAnyMethod();
                           });
 });
 services.AddControllers()
-    .AddJsonOptions(
-        options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+    .AddNewtonsoftJson(
+        options => options.SerializerSettings.ContractResolver = new DefaultContractResolver
+        {
+            NamingStrategy = new CamelCaseNamingStrategy()
+        });
 
 //db configs
 var mongoDbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>();
