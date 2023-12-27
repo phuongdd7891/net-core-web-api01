@@ -15,6 +15,11 @@ export class BookApiChannel extends BaseApiChannel {
             (reqMethod == 'post' ? NetUtils.postRequest(request.params[apiEndpointKey], request, net) : NetUtils.getRequest(request.params[apiEndpointKey], request, net))
                 .then(response => {
                     event.reply(request.responseChannel, response);
+                }).catch(err => {
+                    event.reply(request.responseChannel, {
+                        code: 500,
+                        data: err
+                    });
                 })
         }
     }

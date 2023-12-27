@@ -11,5 +11,9 @@ $(async function() {
             [apiEndpointKey]: 'api/books'
         }
     });
-    $('#info').html(JSON.stringify(bookResponse))
+    if (bookResponse.code == 200) {
+        $('#info').html(JSON.stringify(bookResponse))
+    } else {
+        ipcService.sendDialogError('',  bookResponse.data)
+    }
 })

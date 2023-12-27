@@ -2,20 +2,39 @@
   "name": "book-management",
   "version": "1.0.0",
   "description": "electron book mangement app",
+  "main": "./dist/electron/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prestart": "copyfiles -u 1 src/**/*.html dist/",
     "build": "tsc",
+    "make": "electron-forge make",
+    "package": "electron-forge package",
     "start": "npm run build && electron --inspect=9222 ./dist/electron/main.js"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "electron_quick_start"
+          }
+        }
+      ]
+    }
   },
   "author": "boong",
   "license": "ISC",
   "devDependencies": {
+    "@electron-forge/cli": "^7.2.0",
+    "@electron-forge/maker-squirrel": "^7.2.0",
     "@types/jquery": "^3.5.29",
     "copyfiles": "^2.4.1",
     "electron": "^28.0.0"
   },
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
     "jquery": "^3.7.1",
     "typescript": "^5.3.3"
   }

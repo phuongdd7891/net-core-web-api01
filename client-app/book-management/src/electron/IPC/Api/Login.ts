@@ -24,6 +24,11 @@ export class LoginApiChannel extends BaseApiChannel {
                 })
             }
             event.reply(request.responseChannel, response);
+        }).catch(err => {
+            event.reply(request.responseChannel, {
+                code: 500,
+                data: err
+            });
         })
     }
 

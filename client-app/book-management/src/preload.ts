@@ -4,24 +4,6 @@ import { IpcResponse } from './shared/IpcRequest';
 
 const ipcService = new IpcService();
 
-// contextBridge.exposeInMainWorld('versions', {
-//     node: () => process.versions.node,
-//     chrome: () => process.versions.chrome,
-//     electron: () => process.versions.electron
-// });
-
-// contextBridge.exposeInMainWorld(
-//     "ipcRenderer",
-//     {
-//         sendSync: (channel: string, ...args: any[]) => {
-//             return ipcRenderer.sendSync(channel, ...args);
-//         },
-//         invoke: (channel: string, ...args: any[]) => {
-//             return ipcRenderer.invoke(channel, ...args);
-//         }
-//     }
-// );
-
 window.addEventListener("DOMContentLoaded", () => {
     ipcRenderer.on('menu-logout', async (_event, value) => {
         const response = await ipcService.sendApi<IpcResponse>('logout');
@@ -33,4 +15,15 @@ window.addEventListener("DOMContentLoaded", () => {
             });
         }
     })
+
+    const replaceText = (selector: string, text: string) => {
+        const element = document.getElementById(selector);
+        if (element) {
+            element.innerText = text;
+        }
+    };
+
+    for (const type of ["chrome", "node", "electron"]) {
+        replaceText(`${type}-version`, process.versions[type as keyof NodeJS.ProcessVersions]);
+    }
 });

@@ -10,9 +10,8 @@
 </head>
 
 <body>
-  <div id="os-info"></div>
-  <div class="container">
-    <form action="#" id="frmLogin">
+  <main class="flex-shrink-0">
+    <div class="container">
       <div class="row mb-3">
         <label for="txtUsername" class="col-sm-2 col-form-label">Username</label>
         <div class="col-sm-10">
@@ -25,9 +24,18 @@
           <input type="password" class="form-control" id="txtPwd" value="AA1234aa~" />
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">Log in</button>
-    </form>
-  </div>
+      <button type="button" class="btn btn-primary" id="btnLogin">Log in</button>
+      <button type="button" class="btn btn-danger" id="btnExit">Exit</button>
+      <p id="errMsg"></p>
+    </div>
+  </main>
+  <footer class="footer mt-auto py-3">
+    <div class="container">
+      Node.js <span id="node-version"></span>, Chromium
+      <span id="chrome-version"></span>, and Electron
+      <span id="electron-version"></span>.
+    </div>
+  </footer>
   <script>
     require('./dist/app/app.js');
   </script>

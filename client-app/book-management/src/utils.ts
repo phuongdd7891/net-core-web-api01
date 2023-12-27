@@ -31,6 +31,9 @@ export class NetUtils {
                     resolve(responseBodyJSON);
                 })
             })
+            netRequest.on('error', (error) => {
+                reject(error.message)
+            })
             netRequest.end();
         })
     }
@@ -44,7 +47,7 @@ export class NetUtils {
                 method: 'post'
             })
             netRequest.setHeader("Content-Type", "application/json");
-            netRequest.write(JSON.stringify(request.params));
+            netRequest.write(JSON.stringify(request.params));            
             netRequest.on('response', (response) => {
                 response.on('data', (chunk: Buffer) => {
                     if (response.statusCode != 200) {
@@ -63,6 +66,9 @@ export class NetUtils {
                     }
                     resolve(responseBodyJSON ?? { code: 200 });
                 })
+            })
+            netRequest.on('error', (error) => {
+                reject(error.message)
             })
             netRequest.end();
         })

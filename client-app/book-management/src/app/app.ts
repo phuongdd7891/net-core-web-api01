@@ -1,17 +1,11 @@
+import { ipcRenderer } from "electron";
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { IpcService } from "./IpcService";
 import * as $ from 'jquery';
 
 const ipcService = new IpcService();
 
-$(function() {
-    ipcService.send<{ kernel: string }>('system-info').then(res => {
-        $('#os-info').html(res.kernel);
-    })
-})
-
-$('#frmLogin').on('submit', async (event) => {
-    event.preventDefault();
+async function login() {
     let req: IpcRequest = {
         params: {
             Username: $('#txtUsername').val(),
@@ -34,4 +28,16 @@ $('#frmLogin').on('submit', async (event) => {
     } else {
         ipcService.sendDialogError('', loginResponse.data);
     }
+}
+
+$(function() {
+    ipcService.send<{ kernel: string }>('system-info').then(res => {
+        $('#os-info').html(res.kernel);
+    })
+
+    $('#btnExit').on('click', () => {
+        ipcRenderer.send("app-exit")
+    })
+
+    $('#btnLogin').on('click', login)
 })

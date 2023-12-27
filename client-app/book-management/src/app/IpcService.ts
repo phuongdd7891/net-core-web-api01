@@ -41,13 +41,17 @@ export class IpcService {
         }
         const ipcRenderer = this.ipcRenderer;
         ipcRenderer.send(channelName, request);
+        ipcRenderer.send('loader-show', true);
         return new Promise(resolve => {
-            ipcRenderer.once(channelName, (event, response) => resolve(response));
+            ipcRenderer.once(channelName, (event, response) => {
+                ipcRenderer.send('loader-show', false);
+                resolve(response)
+            });
         });
     }
 
     public sendDialogError(title: string, message: string) {
-        this.send('dialog', {
+        this.ipcRenderer.send('dialog', {
             params: {
                 message: message,
                 title: title,
