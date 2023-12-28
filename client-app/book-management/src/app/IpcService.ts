@@ -31,7 +31,7 @@ export class IpcService {
         this.ipcRenderer = window.require('electron').ipcRenderer;
     }
 
-    public sendApi<T>(apiName: string, request: IpcRequest = { params: {} }): Promise<T> {
+    public async sendApi<T>(apiName: string, request: IpcRequest = { params: {} }): Promise<T> {
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
         }
@@ -42,11 +42,10 @@ export class IpcService {
         const ipcRenderer = this.ipcRenderer;
         ipcRenderer.send(channelName, request);
         ipcRenderer.send('loader-show', true);
-        return new Promise(resolve => {
-            ipcRenderer.once(channelName, (event, response) => {
-                ipcRenderer.send('loader-show', false);
-                resolve(response)
-            });
+        return new Promise<T>(resolve => {
+            ipcRenderer.once(channelName, async (event, response) => resolve(response));
+        }).finally(async () => {
+            ipcRenderer.send('loader-show', false)
         });
     }
 
