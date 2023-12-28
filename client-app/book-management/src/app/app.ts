@@ -1,7 +1,7 @@
 import { ipcRenderer } from "electron";
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { IpcService } from "./IpcService";
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 const ipcService = new IpcService();
 

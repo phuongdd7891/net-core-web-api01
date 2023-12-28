@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "sourceMap": true,
     "moduleResolution": "node",
     "outDir": "dist",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*"

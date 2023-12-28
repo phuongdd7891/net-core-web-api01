@@ -34,6 +34,8 @@
     "electron": "^28.0.0"
   },
   "dependencies": {
+    "datatables.net-bs5": "^1.13.8",
+    "datatables.net-dt": "^1.13.8",
     "electron-squirrel-startup": "^1.0.0",
     "jquery": "^3.7.1",
     "typescript": "^5.3.3"
