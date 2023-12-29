@@ -93,3 +93,13 @@ export class NetUtils {
         return str.join("&");
     }
 }
+
+export const channels = {
+    appExit: "app-exit",
+    loaderShow: "loader-show",
+    openFile: "wd",
+    dialog: "dialog",
+    message: "msg",
+    menu: "menu",
+    menuLogout: "menu-logout"
+}

@@ -2,6 +2,7 @@ import { ipcRenderer } from "electron";
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { IpcService } from "./IpcService";
 import $ from 'jquery';
+import { channels } from "../utils";
 
 const ipcService = new IpcService();
 
@@ -14,12 +15,12 @@ async function login() {
     };
     const loginResponse = await ipcService.sendApi<IpcResponse>("login", req);
     if (loginResponse.code == 200) {
-        ipcService.send('menu', {
+        ipcService.send(channels.menu, {
             params: {
                 type: 'user'
             }
         }).then(async () => {
-            await ipcService.send('wd', {
+            await ipcService.send(channels.openFile, {
                 params: {
                     path: '../app/pages/book/book.html'
                 }
@@ -36,7 +37,7 @@ $(function() {
     })
 
     $('#btnExit').on('click', () => {
-        ipcRenderer.send("app-exit")
+        ipcRenderer.send(channels.appExit)
     })
 
     $('#btnLogin').on('click', login)

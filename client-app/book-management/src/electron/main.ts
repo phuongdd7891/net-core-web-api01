@@ -5,6 +5,7 @@ import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
 import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
 import { BookApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
+import { channels } from '../utils';
 
 class Main {
     private mainWindow: BrowserWindow;
@@ -36,8 +37,8 @@ class Main {
         app.on('window-all-closed', this.onWindowAllClosed);
         app.on('activate', this.onActivate);
 
-        ipcMain.once('app-exit', () => app.quit())
-        ipcMain.on('loader-show', (event, show) => this.handleLoader(show))
+        ipcMain.once(channels.appExit, () => app.quit())
+        ipcMain.on(channels.loaderShow, (event, show) => this.handleLoader(show))
 
         this.registerIpcChannels(ipcChannels);
     }
@@ -97,26 +98,33 @@ class Main {
             }
             if (channelName.startsWith(apiNamePrefix)) {
                 channel.handleNet(event, request, net);
-            } else if (channelName == 'wd') {
+            } else if (channelName == channels.openFile) {
                 this.mainView.webContents.loadFile(request.params?.['path']);
-            } else if (channelName == 'dialog') {
+            } else if (channelName == channels.dialog) {
                 if (request.params?.['type'] == 'err') {
                     dialog.showErrorBox(request.params?.['title'], request.params?.['message']);
                 }
-            } else if (channelName == 'msg') {
+            } else if (channelName == channels.message) {
                 if (request.params?.['type'] == 'logout') {
-                    Menu.setApplicationMenu(null);
-                    this.mainView.webContents.loadFile('../../index.html');
+                    if (request.params?.['data']) {
+                        app.quit();
+                    } else {
+                        Menu.setApplicationMenu(null);
+                        this.mainView.webContents.loadFile('../../index.html');
+                    }
                 }
             } else {
-                if (channelName == 'menu') {
+                if (channelName == channels.menu) {
                     if (request.params?.['type'] == 'user') {
                         const userMenu = new Menu();
                         userMenu.append(new MenuItem({
                             label: `Login: ${sessionData.username}`,
                             submenu: [{
                                 label: 'Logout',
-                                click: () => this.mainView.webContents.send("menu-logout")
+                                click: () => this.mainView.webContents.send(channels.menuLogout)
+                            }, {
+                                label: 'Logout and Quit',
+                                click: () => this.mainView.webContents.send(channels.menuLogout, true)
                             }, {
                                 type: 'separator'
                             }, {
@@ -127,7 +135,7 @@ class Main {
                             }]
                         }));
                         userMenu.append(new MenuItem({
-                            label: 'Book',
+                            label: '|   Book',
                             submenu: [{
                                 label: 'List',
                                 click: () => this.mainView.webContents.loadFile('../app/pages/book/book.html')

@@ -1,6 +1,7 @@
 import { IpcRenderer } from 'electron';
 import { IpcRequest } from "../shared/IpcRequest";
 import { apiNamePrefix } from '../electron/IPC/BaseApiChannel';
+import { channels } from '../utils';
 
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
@@ -41,16 +42,16 @@ export class IpcService {
         }
         const ipcRenderer = this.ipcRenderer;
         ipcRenderer.send(channelName, request);
-        ipcRenderer.send('loader-show', true);
+        ipcRenderer.send(channels.loaderShow, true);
         return new Promise<T>(resolve => {
             ipcRenderer.once(channelName, async (event, response) => resolve(response));
         }).finally(async () => {
-            ipcRenderer.send('loader-show', false)
+            ipcRenderer.send(channels.loaderShow, false)
         });
     }
 
     public sendDialogError(title: string, message: string) {
-        this.ipcRenderer.send('dialog', {
+        this.ipcRenderer.send(channels.dialog, {
             params: {
                 message: message,
                 title: title,
