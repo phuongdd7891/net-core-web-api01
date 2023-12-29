@@ -10,6 +10,7 @@ class Main {
     private mainWindow: BrowserWindow;
     private mainView: BrowserView;
     private loadingView: BrowserView;
+    private loadingWindow: BrowserWindow;
 
     public init(ipcChannels: IpcChannelInterface[]) {
         if (require('electron-squirrel-startup')) app.quit();
@@ -34,7 +35,7 @@ class Main {
 
         app.on('window-all-closed', this.onWindowAllClosed);
         app.on('activate', this.onActivate);
-        
+
         ipcMain.once('app-exit', () => app.quit())
         ipcMain.on('loader-show', (event, show) => this.handleLoader(show))
 
@@ -57,7 +58,8 @@ class Main {
         this.mainWindow = new BrowserWindow({
             height: 600,
             width: 800,
-            title: `Yet another Electron Application`
+            title: `Yet another Electron Application`,
+            resizable: false
         });
         this.mainView = new BrowserView({
             webPreferences: {
@@ -71,13 +73,18 @@ class Main {
         this.mainView.webContents.openDevTools();
         this.mainView.webContents.loadFile('../../index.html');
 
-        this.loadingView = new BrowserView({
-            webPreferences: {
-                nodeIntegration: true
-            }
+        this.loadingWindow = new BrowserWindow({
+            parent: this.mainWindow,
+            modal: true,
+            transparent: true,
+            titleBarStyle: 'hidden',
+            movable: false,
+            show: false
         });
-        this.loadingView.setBounds({ x: 350, y: 250, height: 100, width: 100 });
+        this.loadingView = new BrowserView();
+        this.loadingView.setBounds({ x: 350, y: 250, height: 45, width: 45 });
         this.loadingView.webContents.loadFile('../app/pages/loading.html');
+        this.loadingWindow.addBrowserView(this.loadingView);
     }
 
     private registerIpcChannels(ipcChannels: IpcChannelInterface[]) {
@@ -136,9 +143,11 @@ class Main {
 
     private handleLoader(show: boolean) {
         if (show) {
-            this.mainWindow.addBrowserView(this.loadingView);
+            this.loadingWindow.show();
+            this.mainView.webContents.executeJavaScript("window.$ = require(\"jquery\");$('<div class=\"modal-backdrop\" style=\"opacity:0.3 !important;\"></div>').appendTo(document.body);0");
         } else {
-            this.mainWindow.removeBrowserView(this.loadingView);
+            this.loadingWindow.hide();
+            this.mainView.webContents.executeJavaScript("window.$ = require(\"jquery\");$(\".modal-backdrop\").remove();0");
         }
     }
 }
