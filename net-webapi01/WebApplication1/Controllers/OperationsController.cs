@@ -64,6 +64,8 @@ public class OperationsController : ControllerBase
     [HttpPost("Login")]
     public async Task<ActionResult<DataResponse<AuthenticationResponse>>> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
     {
+        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.UserName));
+        ErrorStatuses.ThrowBadRequest("Password is required", string.IsNullOrEmpty(request.Password));
         var user = await _userManager.FindByNameAsync(request.UserName);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
 

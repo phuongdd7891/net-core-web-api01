@@ -16,6 +16,7 @@ using CoreLibrary.DbContext;
 using NLog.Extensions.Logging;
 using NLog;
 using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -99,6 +100,11 @@ services.AddSingleton<RedisRepository>();
 services.AddSingleton<CacheService>();
 services.AddSingleton<RoleActionRepository>();
 services.AddHostedService<InitializeCacheService>();
+
+services.Configure<ApiBehaviorOptions>(opt =>
+{
+    opt.SuppressModelStateInvalidFilter = true;
+});
 
 // authentication
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

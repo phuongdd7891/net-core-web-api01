@@ -10,6 +10,8 @@ using MongoDB.Driver;
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace WebApplication1.Authentication;
 
@@ -73,10 +75,21 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
     protected override Task HandleChallengeAsync(AuthenticationProperties properties)
     {
         Response.StatusCode = 401;
-
+        Response.ContentType = "application/json";
         if (!string.IsNullOrEmpty(errMessage))
         {
-            Response.WriteAsync(errMessage);
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                }
+            };
+            Response.WriteAsync(JsonConvert.SerializeObject(new DataResponse<string>
+            {
+                Code = 401,
+                Data = errMessage
+            }, jsonSettings));
         }
 
         return Task.CompletedTask;
