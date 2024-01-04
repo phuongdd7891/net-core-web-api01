@@ -46,7 +46,8 @@ public class BooksController : ControllerBase
         ErrorStatuses.ThrowBadRequest("Invalid author", string.IsNullOrEmpty(request.Data.Author));
         await _booksService.CreateAsync(request.Data, request.FileData);
 
-        return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
+        //return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
+        return Ok(new DataResponse<string>());
     }
 
     [HttpPut("{id:length(24)}")]

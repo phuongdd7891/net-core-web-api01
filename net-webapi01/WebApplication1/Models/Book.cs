@@ -20,4 +20,6 @@ public class Book
 
     public string? Author { get; set; }
     public string? CoverPicture { get; set; }
+
+    public DateTime? CreatedDate { get; set; }
 }

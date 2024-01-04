@@ -44,6 +44,7 @@ public class BooksService
                 newBook.CoverPicture = fileName;
             }
         }
+        newBook.CreatedDate = DateTime.Now;
         await _booksCollection.InsertOneAsync(newBook);
     }
 
