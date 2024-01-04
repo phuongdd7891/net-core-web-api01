@@ -3,6 +3,7 @@ import { IpcService } from "../../IpcService";
 import $ from 'jquery';
 import { apiEndpointKey } from "../../../electron/IPC/BaseApiChannel";
 import DataTable from 'datatables.net-bs5';
+import { channels } from "../../../utils";
 
 const ipcService = new IpcService();
 
@@ -23,6 +24,14 @@ $(async function() {
             searching: false
         })
     } else {
-        ipcService.sendDialogError('',  bookResponse.data)
+        ipcService.sendDialogError(bookResponse.data)
     }
+})
+
+$('#btnCreate').on('click',async () => {
+    await ipcService.send(channels.openFile, {
+        params: {
+            path: '../app/pages/book/create.html'
+        }
+    });
 })

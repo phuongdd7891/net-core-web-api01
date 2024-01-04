@@ -50,12 +50,22 @@ export class IpcService {
         });
     }
 
-    public sendDialogError(title: string, message: string) {
+    public sendDialogError(message: any, title: string = '') {
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: message,
+                message: typeof message == "string" ? message : JSON.stringify(message),
                 title: title,
-                type: 'err'
+                type: "error"
+            }
+        })
+    }
+
+    public sendDialogInfo(message: any, title: string = '') {
+        this.ipcRenderer.send(channels.dialog, {
+            params: {
+                message: typeof message == "string" ? message : JSON.stringify(message),
+                title: title,
+                type: "info"
             }
         })
     }

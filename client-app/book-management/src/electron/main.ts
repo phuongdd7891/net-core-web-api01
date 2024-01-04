@@ -32,6 +32,10 @@ class Main {
                     requestHeaders: details.requestHeaders
                 });
             })
+
+            this.mainView.webContents.on('did-finish-load', () => {
+                this.mainWindow.setTitle(this.mainView.webContents.getTitle())
+            })
         })
 
         app.on('window-all-closed', this.onWindowAllClosed);
@@ -101,9 +105,11 @@ class Main {
             } else if (channelName == channels.openFile) {
                 this.mainView.webContents.loadFile(request.params?.['path']);
             } else if (channelName == channels.dialog) {
-                if (request.params?.['type'] == 'err') {
-                    dialog.showErrorBox(request.params?.['title'], request.params?.['message']);
-                }
+                dialog.showMessageBox(this.mainWindow, {
+                    title: request.params?.['title'],
+                    message: request.params?.['message'],
+                    type: request.params?.['type']
+                })
             } else if (channelName == channels.message) {
                 if (request.params?.['type'] == 'logout') {
                     if (request.params?.['data']) {

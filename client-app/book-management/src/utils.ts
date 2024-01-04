@@ -2,6 +2,25 @@ import { ClientRequest, Net } from "electron";
 import { IpcRequest } from "./shared/IpcRequest";
 import { apiEndpointKey, apiHost } from "./electron/IPC/BaseApiChannel";
 
+export const fileToBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+
+export const convertBase64ToBlob = (base64Image: string) => {
+    const [baseInfo, baseData] = base64Image.split(',');
+    const buff = Buffer.from(baseData, 'base64');
+    const mimeString = baseInfo.split(':')[1].split(';')[0];
+    const fileName = `.${mimeString.split('/')[1]}`;
+    const blob = new Blob([buff], {
+        type: mimeString
+    });
+    return { blob, fileName };
+}
+
 export class NetUtils {
     static getRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {
@@ -47,7 +66,10 @@ export class NetUtils {
                 method: 'post'
             })
             netRequest.setHeader("Content-Type", "application/json");
-            netRequest.write(JSON.stringify(request.params));
+            if (request.params?.body) {
+                netRequest.write(JSON.stringify(request.params.body));
+            }
+
             netRequest.on('response', (response) => {
                 response.on('data', (chunk: Buffer) => {
                     if (response.statusCode != 200) {
@@ -71,6 +93,27 @@ export class NetUtils {
                 reject(error.message)
             })
             netRequest.end();
+        })
+    }
+
+    static fetchRequest(endpoint: string, request: IpcRequest, net: Net) {
+        const formData = new FormData();
+        Object.keys(request.params?.body).forEach(a => {
+            if (a == 'FileData') {
+                const blobData = convertBase64ToBlob(request.params?.body[a]);
+                formData.append(a, blobData.blob, blobData.fileName);
+            } else {
+                formData.append(a, request.params?.body[a]);
+            }
+        });
+        return new Promise((resolve, reject) => {
+            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
+            net.fetch(reqUrl, {
+                method: 'post',
+                body: formData
+            }).then(
+                async (res) => resolve(await res.json())
+            ).catch(err => reject(err));
         })
     }
 

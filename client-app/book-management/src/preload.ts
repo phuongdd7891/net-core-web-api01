@@ -15,6 +15,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     data: value
                 }
             });
+        } else {
+            ipcService.sendDialogError(response.data)
         }
     })
 

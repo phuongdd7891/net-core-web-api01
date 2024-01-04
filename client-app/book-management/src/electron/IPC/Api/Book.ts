@@ -1,27 +1,8 @@
-import { Net } from "electron";
-import { IpcRequest } from "../../../shared/IpcRequest";
-import { BaseApiChannel, apiEndpointKey, apiMethodKey } from "../BaseApiChannel";
-import { NetUtils } from "../../../utils";
+import { BaseApiChannel } from "../BaseApiChannel";
 
 export class BookApiChannel extends BaseApiChannel {
 
     constructor() {
         super("book");
     }
-
-    handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
-        if (request.params?.[apiEndpointKey]) {
-            const reqMethod = request.params?.[apiMethodKey] ?? 'get';
-            (reqMethod == 'post' ? NetUtils.postRequest(request.params[apiEndpointKey], request, net) : NetUtils.getRequest(request.params[apiEndpointKey], request, net))
-                .then(response => {
-                    event.reply(request.responseChannel, response);
-                }).catch(err => {
-                    event.reply(request.responseChannel, {
-                        code: 500,
-                        data: err
-                    });
-                })
-        }
-    }
-
 }

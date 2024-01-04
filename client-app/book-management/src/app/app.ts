@@ -9,8 +9,10 @@ const ipcService = new IpcService();
 async function login() {
     let req: IpcRequest = {
         params: {
-            Username: $('#txtUsername').val(),
-            Password: $('#txtPwd').val()
+            body: {
+                Username: $('#txtUsername').val(),
+                Password: $('#txtPwd').val()
+            }
         }
     };
     const loginResponse = await ipcService.sendApi<IpcResponse>("login", req);
@@ -27,7 +29,7 @@ async function login() {
             });
         })
     } else {
-        ipcService.sendDialogError('', loginResponse.data);
+        ipcService.sendDialogError(loginResponse.data);
     }
 }
 

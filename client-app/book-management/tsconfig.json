@@ -6,7 +6,12 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "baseUrl": ".",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": [
+      "es2019",
+      "dom",
+      "dom.iterable"
+    ]
   },
   "include": [
     "src/**/*"

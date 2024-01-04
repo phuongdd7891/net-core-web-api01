@@ -1,5 +1,7 @@
 import { IpcRequest } from "src/shared/IpcRequest";
 import { IpcChannelInterface } from "./IpcChannelInterface";
+import { NetUtils } from "../../utils";
+import { Net } from "electron";
 
 export const apiHost: string = 'http://localhost:5253';
 export const apiNamePrefix: string = 'api-';
@@ -22,5 +24,31 @@ export abstract class BaseApiChannel implements IpcChannelInterface {
         throw new Error("Method not implemented.");
     }
 
-    abstract handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Electron.Net): void;
+    handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
+        if (request.params?.[apiEndpointKey]) {
+            const reqMethod = request.params?.[apiMethodKey] ?? 'get';
+            if (reqMethod == 'fetch') {
+                NetUtils.fetchRequest(request.params[apiEndpointKey], request, net)
+                    .then(response => {
+                        event.reply(request.responseChannel, response);
+                    }).catch(err => {
+                        event.reply(request.responseChannel, {
+                            code: 500,
+                            data: err
+                        });
+                    })
+            } else {
+                (reqMethod == 'post' ? NetUtils.postRequest(request.params[apiEndpointKey], request, net) : NetUtils.getRequest(request.params[apiEndpointKey], request, net))
+                    .then(response => {
+                        event.reply(request.responseChannel, response);
+                    }).catch(err => {
+                        event.reply(request.responseChannel, {
+                            code: 500,
+                            data: err
+                        });
+                    })
+            }
+        }
+    }
+
 }

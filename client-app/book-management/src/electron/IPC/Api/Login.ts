@@ -46,6 +46,11 @@ export class LogoutApiChannel extends BaseApiChannel {
                 await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
             }
             event.reply(request.responseChannel, response);
+        }).catch(err => {
+            event.reply(request.responseChannel, {
+                code: 500,
+                data: err
+            });
         })
     }
 
