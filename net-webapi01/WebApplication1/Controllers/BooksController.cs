@@ -80,10 +80,12 @@ public class BooksController : ControllerBase
         ErrorStatuses.ThrowBadRequest("Id cannot empty", string.IsNullOrEmpty(id));
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
+        ErrorStatuses.ThrowNotFound("Image not found", string.IsNullOrEmpty(book!.CoverPicture));
         var picFile = new FileInfo(Path.Combine(_booksService.GetBookCoverPath(), book!.CoverPicture!));
         ErrorStatuses.ThrowBadRequest("File not found", !picFile.Exists);
 
         var content = Utils.ConvertToByteArrayChunked(Path.Combine(picFile.DirectoryName!, book!.CoverPicture!));
-        return File(content, "image/png");
+        var splitFileName = book.CoverPicture!.Split('.');
+        return File(content, $"image/{splitFileName[splitFileName.Length - 1]}");
     }
 }

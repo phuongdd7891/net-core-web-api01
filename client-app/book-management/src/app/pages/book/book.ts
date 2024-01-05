@@ -19,7 +19,14 @@ $(async function() {
             columns: [
                 { data: 'bookName', title: 'Name' },
                 { data: 'category', title: 'Category' },
-                { data: 'author', title: 'Author' }
+                { data: 'author', title: 'Author' },
+                {
+                    data: 'id',
+                    title: 'Cover',
+                    render: (data, type, row, meta) => {
+                        return `<img src="http://localhost:5253/api/books/download-cover?id=${data}&u=${bookResponse['extraData'].username}" style="max-width:20px;"/>`
+                    },
+                }
             ],
             searching: false
         })

@@ -40,7 +40,7 @@ export abstract class BaseApiChannel implements IpcChannelInterface {
             } else {
                 (reqMethod == 'post' ? NetUtils.postRequest(request.params[apiEndpointKey], request, net) : NetUtils.getRequest(request.params[apiEndpointKey], request, net))
                     .then(response => {
-                        event.reply(request.responseChannel, response);
+                        event.reply(request.responseChannel, response, { username: request.params?.['username'] });
                     }).catch(err => {
                         event.reply(request.responseChannel, {
                             code: 500,

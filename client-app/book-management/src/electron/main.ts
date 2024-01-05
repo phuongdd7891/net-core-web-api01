@@ -109,6 +109,10 @@ class Main {
                     title: request.params?.['title'],
                     message: request.params?.['message'],
                     type: request.params?.['type']
+                }).then(res => {
+                    if (res.response == 0) {
+                        event.sender.send(channels.dialog, true);
+                    }
                 })
             } else if (channelName == channels.message) {
                 if (request.params?.['type'] == 'logout') {

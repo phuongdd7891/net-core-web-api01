@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { IpcResponse } from '../../../shared/IpcRequest';
 import { apiEndpointKey, apiMethodKey } from '../../../electron/IPC/BaseApiChannel';
 import { IpcService } from '../../../app/IpcService';
-import { fileToBase64 } from '../../../utils';
+import { channels, fileToBase64 } from '../../../utils';
 
 const ipcService = new IpcService();
 
@@ -29,7 +29,15 @@ $(function () {
         });
         console.log(response)
         if (response.code == 200) {
-            ipcService.sendDialogInfo('Create successful!')
+            ipcService.sendDialogInfo('Create successful!').then(res => {
+                if (res) {
+                    ipcService.send(channels.openFile, {
+                        params: {
+                            path: '../app/pages/book/book.html'
+                        }
+                    });
+                }
+            });
         } else {
             ipcService.sendDialogError(response.data);
         }
