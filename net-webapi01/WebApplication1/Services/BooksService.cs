@@ -25,34 +25,52 @@ public class BooksService
     {
         if (coverData?.Length > 0)
         {
+            var fileName = await UploadFile(coverData);
+            newBook.CoverPicture = fileName;
+        }
+        newBook.CreatedDate = DateTime.Now;
+        await _booksCollection.InsertOneAsync(newBook);
+    }
+
+    public async Task UpdateAsync(Book updatedBook, IFormFile? coverData = null)
+    {
+        if (coverData?.Length > 0)
+        {
+            var fileName = await UploadFile(coverData);
+            updatedBook.CoverPicture = fileName;
+        }
+        updatedBook.ModifiedDate = DateTime.Now;
+        await _booksCollection.ReplaceOneAsync(x => x.Id == updatedBook.Id, updatedBook);
+    }
+
+    public async Task RemoveAsync(string id) =>
+        await _booksCollection.DeleteOneAsync(x => x.Id == id);
+
+    public string GetBookCoverPath() => Path.Combine(Directory.GetCurrentDirectory(), @"../", "BookCover");
+
+    private async Task<string> UploadFile(IFormFile file)
+    {
+        if (file?.Length > 0)
+        {
             var filePath = GetBookCoverPath();
             DirectoryInfo dirInfo = new DirectoryInfo(filePath);
             if (!dirInfo.Exists)
             {
                 dirInfo.Create();
             }
-            var fileName = string.Format("{0}{1}", Guid.NewGuid(), Path.GetExtension(coverData.FileName));
+            var fileName = string.Format("{0}{1}", Guid.NewGuid(), Path.GetExtension(file.FileName));
             var path = Path.Combine(filePath, fileName);
             using (var ms = new MemoryStream())
             {
-                await coverData.CopyToAsync(ms);
+                await file.CopyToAsync(ms);
                 ms.Position = 0;
                 using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
                     await ms.CopyToAsync(fs);
+                    return fileName;
                 }
-                newBook.CoverPicture = fileName;
             }
         }
-        newBook.CreatedDate = DateTime.Now;
-        await _booksCollection.InsertOneAsync(newBook);
+        return string.Empty;
     }
-
-    public async Task UpdateAsync(string id, Book updatedBook) =>
-        await _booksCollection.ReplaceOneAsync(x => x.Id == id, updatedBook);
-
-    public async Task RemoveAsync(string id) =>
-        await _booksCollection.DeleteOneAsync(x => x.Id == id);
-
-    public string GetBookCoverPath() => Path.Combine(Directory.GetCurrentDirectory(), @"../", "BookCover");
 }

@@ -30,12 +30,14 @@ public class BooksController : ControllerBase
 
     [HttpGet("{id:length(24)}")]
     [CustomAuthorize(Const.ACTION_GET_BOOK)]
-    public async Task<ActionResult<Book>> Get(string id)
+    public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
 
-        return book!;
+        return new DataResponse<Book> {
+            Data = book
+        };
     }
 
     [HttpPost]
@@ -51,15 +53,16 @@ public class BooksController : ControllerBase
     }
 
     [HttpPut("{id:length(24)}")]
-    public async Task<IActionResult> Update(string id, Book updatedBook)
+    public async Task<IActionResult> Update(string id, [FromForm] CreateBookRequest request)
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
-        updatedBook.Id = book!.Id;
+        request.Data.Id = book!.Id;
+        request.Data.CreatedDate = book!.CreatedDate;
 
-        await _booksService.UpdateAsync(id, updatedBook);
+        await _booksService.UpdateAsync(request.Data, request.FileData);
 
-        return NoContent();
+        return Ok(new DataResponse<string>());
     }
 
     [HttpDelete("{id:length(24)}")]

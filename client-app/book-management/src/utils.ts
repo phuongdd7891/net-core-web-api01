@@ -109,7 +109,7 @@ export class NetUtils {
         return new Promise((resolve, reject) => {
             let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
             net.fetch(reqUrl, {
-                method: 'post',
+                method: request.params?.['method'] ?? 'post',
                 body: formData
             }).then(
                 async (res) => resolve(await res.json())

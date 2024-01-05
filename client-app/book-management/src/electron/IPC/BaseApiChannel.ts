@@ -7,7 +7,7 @@ export const apiHost: string = 'http://localhost:5253';
 export const apiNamePrefix: string = 'api-';
 export const appSessionKey: string = '__app_session';
 export const apiEndpointKey: string = 'endpoint';
-export const apiMethodKey: string = 'method';
+export const apiMethodKey: string = 'netMethod';
 
 export abstract class BaseApiChannel implements IpcChannelInterface {
     private _apiName: string;

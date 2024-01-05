@@ -103,7 +103,9 @@ class Main {
             if (channelName.startsWith(apiNamePrefix)) {
                 channel.handleNet(event, request, net);
             } else if (channelName == channels.openFile) {
-                this.mainView.webContents.loadFile(request.params?.['path']);
+                this.mainView.webContents.loadFile(request.params?.['path'], {
+                    query: request.params?.['query']
+                });
             } else if (channelName == channels.dialog) {
                 dialog.showMessageBox(this.mainWindow, {
                     title: request.params?.['title'],
