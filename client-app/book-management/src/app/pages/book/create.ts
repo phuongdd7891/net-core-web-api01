@@ -1,8 +1,8 @@
 import $ from 'jquery';
 import { IpcResponse } from '../../../shared/IpcRequest';
-import { apiEndpointKey, apiHost, apiMethodKey } from '../../../electron/IPC/BaseApiChannel';
+import { apiEndpointKey, apiMethodKey } from '../../../electron/IPC/BaseApiChannel';
 import { IpcService } from '../../../app/IpcService';
-import { channels, fileToBase64 } from '../../../utils';
+import { fileToBase64 } from '../../../utils';
 
 const ipcService = new IpcService();
 
@@ -21,7 +21,8 @@ $(function () {
                 $('[name="category"]').val(res.data.category);
                 $('[name="author"]').val(res.data.author);
                 if (res.data.coverPicture) {
-                    $('#coverImg').attr('src', `${apiHost}/api/books/download-cover?id=${res.data.id}&u=${res['extraData'].username}`);
+                    const imgSrc = ipcService.getImageSrc(res.data.id);
+                    $('#coverImg').attr('src', `${imgSrc}`);
                 }
             } else {
                 ipcService.sendDialogError(res.data);
@@ -60,15 +61,15 @@ $(function () {
         if (response.code == 200) {
             ipcService.sendDialogInfo(`${isEdit ? 'Update' : 'Create'} successful!`).then(res => {
                 if (res) { 
-                    ipcService.send(channels.openFile, {
-                        params: {
-                            path: '../app/pages/book/book.html'
-                        }
-                    });
+                    ipcService.sendOpenFile('../app/pages/book/book.html');
                 }
             });
         } else {
             ipcService.sendDialogError(response.data);
         }
     })
+})
+
+$('#btnCancel').on('click', () => {
+    ipcService.sendOpenFile('../app/pages/book/book.html')
 })

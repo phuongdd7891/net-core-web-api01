@@ -21,12 +21,8 @@ async function login() {
             params: {
                 type: 'user'
             }
-        }).then(async () => {
-            await ipcService.send(channels.openFile, {
-                params: {
-                    path: '../app/pages/book/book.html'
-                }
-            });
+        }).then(() => {
+            ipcService.sendOpenFile('../app/pages/book/book.html');
         })
     } else {
         ipcService.sendDialogError(loginResponse.data);

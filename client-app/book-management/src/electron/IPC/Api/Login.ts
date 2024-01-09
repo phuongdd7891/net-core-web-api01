@@ -1,7 +1,8 @@
 import { Net, session } from "electron";
-import { IpcRequest } from "src/shared/IpcRequest";
+import { IpcRequest } from "../../../shared/IpcRequest";
 import { BaseApiChannel, appSessionKey } from "../BaseApiChannel";
 import { NetUtils } from "../../../utils";
+import appCookies from '../../main'
 
 export class LoginApiChannel extends BaseApiChannel {
 
@@ -12,20 +13,22 @@ export class LoginApiChannel extends BaseApiChannel {
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/login', request, net).then(async (response: any) => {
             if (response.code == 200) {
+                const data = {
+                    username: response.data.username,
+                    token: response.data.value
+                };
                 await session.defaultSession.cookies.set({
                     path: '/',
                     domain: 'localhost',
                     url: 'http://localhost/',
                     name: appSessionKey,
-                    value: JSON.stringify({
-                        username: response.data.username,
-                        token: response.data.value
-                    })
+                    value: JSON.stringify(data)
                 })
+                appCookies.setData(data);
             }
-            event.reply(request.responseChannel, response);
+            event.reply(request.responseChannel!, response);
         }).catch(err => {
-            event.reply(request.responseChannel, {
+            event.reply(request.responseChannel!, {
                 code: 500,
                 data: err
             });
@@ -45,9 +48,9 @@ export class LogoutApiChannel extends BaseApiChannel {
             if (response.code == 200) {
                 await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
             }
-            event.reply(request.responseChannel, response);
+            event.reply(request.responseChannel!, response);
         }).catch(err => {
-            event.reply(request.responseChannel, {
+            event.reply(request.responseChannel!, {
                 code: 500,
                 data: err
             });

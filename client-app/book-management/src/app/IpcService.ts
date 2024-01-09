@@ -1,6 +1,6 @@
 import { IpcRenderer } from 'electron';
 import { IpcRequest } from "../shared/IpcRequest";
-import { apiNamePrefix } from '../electron/IPC/BaseApiChannel';
+import { apiHost, apiNamePrefix } from '../electron/IPC/BaseApiChannel';
 import { channels } from '../utils';
 
 export class IpcService {
@@ -16,12 +16,12 @@ export class IpcService {
             request.responseChannel = `${channel}_response_${new Date().getTime()}`
         }
 
-        const ipcRenderer = this.ipcRenderer;
+        const ipcRenderer = this.ipcRenderer!;
         ipcRenderer.send(channel, request);
 
         // This method returns a promise which will be resolved when the response has arrived.
         return new Promise(resolve => {
-            ipcRenderer.once(request.responseChannel, (event, response) => resolve(response));
+            ipcRenderer.once(request.responseChannel!, (event, response) => resolve(response));
         });
     }
 
@@ -40,20 +40,23 @@ export class IpcService {
         if (!request.responseChannel) {
             request.responseChannel = channelName;
         }
-        const ipcRenderer = this.ipcRenderer;
+        const ipcRenderer = this.ipcRenderer!;
         ipcRenderer.send(channelName, request);
         ipcRenderer.send(channels.loaderShow, true);
         return new Promise<T>(resolve => {
-            ipcRenderer.once(channelName, (event, response, extraData) => resolve({...response, extraData}));
+            ipcRenderer.once(channelName, (event, response) => resolve(response));
         }).finally(() => {
             ipcRenderer.send(channels.loaderShow, false)
         });
     }
 
     public sendDialogError(message: any, title: string = '') {
+        if (!this.ipcRenderer) {
+            this.initializeIpcRenderer();
+        }
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: typeof message == "string" ? message : JSON.stringify(message),
+                message: typeof message == "string" ? message : (message.message || JSON.stringify(message)),
                 title: title,
                 type: "error"
             }
@@ -61,16 +64,44 @@ export class IpcService {
     }
 
     public sendDialogInfo(message: any, title: string = '') {
+        if (!this.ipcRenderer) {
+            this.initializeIpcRenderer();
+        }
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: typeof message == "string" ? message : JSON.stringify(message),
+                message: message,
                 title: title,
                 type: "info"
             }
         });
-        const ipcRenderer = this.ipcRenderer;
+        const ipcRenderer = this.ipcRenderer!;
         return new Promise(resolve => {
             ipcRenderer.once(channels.dialog, (event, response) => resolve(response))
         })
+    }
+
+    public sendOpenFile(filePath: string, params?: any) {
+        if (filePath) {
+            this.send(channels.openFile, {
+                params: {
+                    ...params,
+                    path: filePath
+                }
+            })
+        }
+    }
+
+    public getAppCookies() {
+        const cookies = require('@electron/remote').require('../electron/main').default;
+        return cookies;
+    }
+
+    public getImageSrc(id: string) {
+        const cookies = this.getAppCookies();
+        let src: string = '';
+        if (cookies) {
+            src = `${apiHost}/api/books/download-cover?id=${id}&u=${cookies.data?.username}`
+        }
+        return src;
     }
 }

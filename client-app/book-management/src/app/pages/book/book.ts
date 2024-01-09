@@ -1,9 +1,8 @@
 import { IpcResponse } from "../../../shared/IpcRequest";
 import { IpcService } from "../../IpcService";
 import $ from 'jquery';
-import { apiEndpointKey, apiHost } from "../../../electron/IPC/BaseApiChannel";
+import { apiEndpointKey } from "../../../electron/IPC/BaseApiChannel";
 import DataTable from 'datatables.net-bs5';
-import { channels } from "../../../utils";
 
 const ipcService = new IpcService();
 
@@ -24,7 +23,8 @@ $(async function () {
                     data: 'id',
                     title: 'Cover',
                     render: (data, type, row, meta) => {
-                        return row['coverPicture'] ? `<img src="${apiHost}/api/books/download-cover?id=${data}&u=${bookResponse['extraData'].username}" style="max-width:20px;"/>` : '';
+                        const imgSrc = ipcService.getImageSrc(data);
+                        return row['coverPicture'] ? `<img src="${imgSrc}" style="max-width:20px;"/>` : '';
                     },
                 },
                 {
@@ -48,19 +48,12 @@ $(async function () {
     }
 
     function editBook(id: string) {
-        ipcService.send(channels.openFile, {
-            params: {
-                path: '../app/pages/book/create.html',
-                query: { id }
-            }
+        ipcService.sendOpenFile('../app/pages/book/create.html', {
+            query: { id }
         });
     }
 })
 
 $('#btnCreate').on('click', async () => {
-    await ipcService.send(channels.openFile, {
-        params: {
-            path: '../app/pages/book/create.html'
-        }
-    });
+    ipcService.sendOpenFile('../app/pages/book/create.html');
 })

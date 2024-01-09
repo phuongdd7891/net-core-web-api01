@@ -1,6 +1,6 @@
 export interface IpcRequest {
   responseChannel?: string;
-  params?: Record<string, any>;
+  params?: any;
 }
 
 export interface IpcResponse {

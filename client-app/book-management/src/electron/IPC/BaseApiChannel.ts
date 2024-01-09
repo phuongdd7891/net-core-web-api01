@@ -1,4 +1,4 @@
-import { IpcRequest } from "src/shared/IpcRequest";
+import { IpcRequest } from "../../shared/IpcRequest";
 import { IpcChannelInterface } from "./IpcChannelInterface";
 import { NetUtils } from "../../utils";
 import { Net } from "electron";
@@ -27,27 +27,24 @@ export abstract class BaseApiChannel implements IpcChannelInterface {
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         if (request.params?.[apiEndpointKey]) {
             const reqMethod = request.params?.[apiMethodKey] ?? 'get';
+            let promiseReq: Promise<any>;
             if (reqMethod == 'fetch') {
-                NetUtils.fetchRequest(request.params[apiEndpointKey], request, net)
-                    .then(response => {
-                        event.reply(request.responseChannel, response);
-                    }).catch(err => {
-                        event.reply(request.responseChannel, {
-                            code: 500,
-                            data: err
-                        });
-                    })
+                promiseReq = NetUtils.fetchRequest(request.params[apiEndpointKey], request, net);
+            } else if (reqMethod == 'post') {
+                promiseReq = NetUtils.postRequest(request.params[apiEndpointKey], request, net);
             } else {
-                (reqMethod == 'post' ? NetUtils.postRequest(request.params[apiEndpointKey], request, net) : NetUtils.getRequest(request.params[apiEndpointKey], request, net))
-                    .then(response => {
-                        event.reply(request.responseChannel, response, { username: request.params?.['username'] });
-                    }).catch(err => {
-                        event.reply(request.responseChannel, {
-                            code: 500,
-                            data: err
-                        });
-                    })
+                promiseReq = NetUtils.getRequest(request.params[apiEndpointKey], request, net);
             }
+            promiseReq.then(response => {
+                event.reply(request.responseChannel!, response);
+            }).catch(err => {
+                event.reply(request.responseChannel!, {
+                    code: 500,
+                    data: err
+                });
+            })
+        } else {
+            event.reply(request.responseChannel!, "Invalid request")
         }
     }
 

@@ -1,4 +1,5 @@
-import { app, BrowserView, BrowserWindow, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
+import { app, BrowserView, BrowserWindow, Cookie, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
+import * as remoteMain from '@electron/remote/main';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
 import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
@@ -6,6 +7,17 @@ import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
 import { BookApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
 import { channels } from '../utils';
+
+remoteMain.initialize()
+
+const appCookies: any = {
+    data: null,
+    setData: (value) => {
+        appCookies.data = {...value}
+    }
+};
+
+export default appCookies;
 
 class Main {
     private mainWindow: BrowserWindow;
@@ -77,6 +89,7 @@ class Main {
         this.mainView.setBounds({ x: 0, y: 0, width: 800, height: 600 });
         this.mainView.webContents.openDevTools();
         this.mainView.webContents.loadFile('../../index.html');
+        remoteMain.enable(this.mainView.webContents);
 
         this.loadingWindow = new BrowserWindow({
             parent: this.mainWindow,

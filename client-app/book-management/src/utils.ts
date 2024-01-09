@@ -113,12 +113,12 @@ export class NetUtils {
                 body: formData
             }).then(
                 async (res) => resolve(await res.json())
-            ).catch(err => reject(err));
+            ).catch(err => reject(err.message));
         })
     }
 
     static getUrlQuery(data: any): string {
-        let str = [];
+        let str: string[] = [];
         for (let p in data)
             if (data.hasOwnProperty(p) && data[p] !== '') {
                 if (Array.isArray(data[p])) {
