@@ -11,19 +11,20 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController : ControllerBase
+public class BooksController : BaseController
 {
     private readonly BooksService _booksService;
 
     public BooksController(BooksService booksService) =>
         _booksService = booksService;
-
+    
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ApiKeyAuthenticationHandler.API_KEY_HEADER}", Roles = Const.ACTION_LIST_BOOK)]
     [HttpGet]
     public async Task<DataResponse<List<Book>>> Get()
     {
         var data = await _booksService.GetAsync();
-        return new DataResponse<List<Book>> {
+        return new DataResponse<List<Book>>
+        {
             Data = data
         };
     }
@@ -35,7 +36,8 @@ public class BooksController : ControllerBase
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
 
-        return new DataResponse<Book> {
+        return new DataResponse<Book>
+        {
             Data = book
         };
     }
@@ -46,6 +48,11 @@ public class BooksController : ControllerBase
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
         ErrorStatuses.ThrowBadRequest("Invalid author", string.IsNullOrEmpty(request.Data.Author));
+        var user = await GetRequestUser();
+        if (user != null)
+        {
+            request.Data.CreatedBy = user.UserName;
+        }
         await _booksService.CreateAsync(request.Data, request.FileData);
 
         //return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
@@ -57,10 +64,16 @@ public class BooksController : ControllerBase
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
-        request.Data.Id = book!.Id;
-        request.Data.CreatedDate = book!.CreatedDate;
-
-        await _booksService.UpdateAsync(request.Data, request.FileData);
+        book!.BookName = request.Data.BookName;
+        book!.Author = request.Data.Author;
+        book!.Category = request.Data.Category;
+        var user = await GetRequestUser();
+        if (user != null)
+        {
+            book.ModifiedBy = user.UserName;
+        }
+        
+        await _booksService.UpdateAsync(book, request.FileData);
 
         return Ok(new DataResponse<string>());
     }

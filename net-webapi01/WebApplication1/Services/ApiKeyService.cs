@@ -83,6 +83,18 @@ public class ApiKeyService
         }
     }
 
+    public async Task<ApplicationUser?> GetRequestUser(HttpRequest request)
+    {
+        var user = request.Query["u"];
+        var token = request.Headers["ApiKey"];
+        var key = $"{user}:{token}";
+        if (await _redisRepository.HasKey(key))
+        {
+            return await _redisRepository.GetEntity<ApplicationUser>(key)!;
+        }
+        return null;
+    }
+
     private string GenerateApiKeyValue() =>
         $"{Guid.NewGuid()}-{DateTime.UtcNow.Ticks}";
 }
