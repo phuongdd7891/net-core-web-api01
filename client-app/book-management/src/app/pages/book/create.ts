@@ -32,6 +32,10 @@ $(function () {
         $('#coverImg').hide();
     }
 
+    $('#btnCancel').on('click', () => {
+        ipcService.sendOpenFile(ipcService.pagePaths.book)
+    })
+
     $('#frmCreate').on('submit', async (event) => {
         event.preventDefault();
         const data = new URLSearchParams($('#frmCreate').serialize());
@@ -61,15 +65,11 @@ $(function () {
         if (response.code == 200) {
             ipcService.sendDialogInfo(`${isEdit ? 'Update' : 'Create'} successful!`).then(res => {
                 if (res) { 
-                    ipcService.sendOpenFile('../app/pages/book/book.html');
+                    ipcService.sendOpenFile(ipcService.pagePaths.book);
                 }
             });
         } else {
             ipcService.sendDialogError(response.data);
         }
     })
-})
-
-$('#btnCancel').on('click', () => {
-    ipcService.sendOpenFile('../app/pages/book/book.html')
 })

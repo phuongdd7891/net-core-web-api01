@@ -46,7 +46,8 @@ class Main {
             })
 
             this.mainView.webContents.on('did-finish-load', () => {
-                this.mainWindow.setTitle(this.mainView.webContents.getTitle())
+                this.mainWindow.setTitle(this.mainView.webContents.getTitle());
+                this.mainView.webContents.insertCSS("html, body { padding: 0; }");
             })
         })
 
@@ -116,7 +117,7 @@ class Main {
             if (channelName.startsWith(apiNamePrefix)) {
                 channel.handleNet(event, request, net);
             } else if (channelName == channels.openFile) {
-                this.mainView.webContents.loadFile(request.params?.['path'], {
+                this.mainView.webContents.loadFile('../app/pages/master.html', {
                     query: request.params?.['query']
                 });
             } else if (channelName == channels.dialog) {
@@ -163,7 +164,12 @@ class Main {
                             label: '|   Book',
                             submenu: [{
                                 label: 'List',
-                                click: () => this.mainView.webContents.loadFile('../app/pages/book/book.html')
+                                click: () => this.mainView.webContents.loadFile('../app/pages/master.html', {
+                                    query: {
+                                        path: './book/book.html',
+                                        script: './book/book.js'
+                                    }
+                                })
                             }]
                         }));
                         Menu.setApplicationMenu(userMenu);
@@ -186,10 +192,10 @@ class Main {
 }
 
 (new Main()).init([
-    new GeneralInfoChannel("wd"),
-    new GeneralInfoChannel("dialog"),
-    new GeneralInfoChannel("menu"),
-    new GeneralInfoChannel("msg"),
+    new GeneralInfoChannel(channels.openFile),
+    new GeneralInfoChannel(channels.dialog),
+    new GeneralInfoChannel(channels.menu),
+    new GeneralInfoChannel(channels.message),
     new LoginApiChannel(),
     new LogoutApiChannel(),
     new BookApiChannel()

@@ -26,7 +26,7 @@ export class LoginApiChannel extends BaseApiChannel {
                 })
                 appCookies.setData(data);
             }
-            event.reply(request.responseChannel!, response);
+            event.reply(request.responseChannel, response);
         }).catch(err => {
             event.reply(request.responseChannel!, {
                 code: 500,
@@ -48,9 +48,9 @@ export class LogoutApiChannel extends BaseApiChannel {
             if (response.code == 200) {
                 await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
             }
-            event.reply(request.responseChannel!, response);
+            event.reply(request.responseChannel, response);
         }).catch(err => {
-            event.reply(request.responseChannel!, {
+            event.reply(request.responseChannel, {
                 code: 500,
                 data: err
             });

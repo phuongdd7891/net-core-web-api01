@@ -1,0 +1,14 @@
+footer.border-top {
+    border-top-color: #c1c1c1 !important;
+    font-size: 12px !important;
+    text-align: center;
+}
+
+body {
+    background-color: #e3e3e3;
+    font-size: 15px;
+}
+
+body #contentWrapper {
+    padding: 10px;
+}

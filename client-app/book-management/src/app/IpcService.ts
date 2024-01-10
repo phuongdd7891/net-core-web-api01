@@ -5,6 +5,14 @@ import { channels } from '../utils';
 
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
+    private readonly pageScripts = {
+        'book.html': './book/book.js',
+        'create.html': './book/create.js'
+    }
+    public readonly pagePaths = {
+        book: './book/book.html',
+        createBook: './book/create.html'
+    }
 
     public send<T>(channel: string, request: IpcRequest = { params: {} }): Promise<T> {
         // If the ipcRenderer is not available try to initialize it
@@ -16,7 +24,7 @@ export class IpcService {
             request.responseChannel = `${channel}_response_${new Date().getTime()}`
         }
 
-        const ipcRenderer = this.ipcRenderer!;
+        const ipcRenderer = this.ipcRenderer;
         ipcRenderer.send(channel, request);
 
         // This method returns a promise which will be resolved when the response has arrived.
@@ -40,7 +48,7 @@ export class IpcService {
         if (!request.responseChannel) {
             request.responseChannel = channelName;
         }
-        const ipcRenderer = this.ipcRenderer!;
+        const ipcRenderer = this.ipcRenderer;
         ipcRenderer.send(channelName, request);
         ipcRenderer.send(channels.loaderShow, true);
         return new Promise<T>(resolve => {
@@ -74,18 +82,25 @@ export class IpcService {
                 type: "info"
             }
         });
-        const ipcRenderer = this.ipcRenderer!;
+        const ipcRenderer = this.ipcRenderer;
         return new Promise(resolve => {
             ipcRenderer.once(channels.dialog, (event, response) => resolve(response))
         })
     }
 
-    public sendOpenFile(filePath: string, params?: any) {
+    public sendOpenFile(filePath: string, scriptPath?: string, queryParams?: any) {
         if (filePath) {
+            if (!scriptPath) {
+                const pathName = filePath.substring(filePath.lastIndexOf('/') + 1);
+                scriptPath = this.pageScripts[pathName];
+            }
             this.send(channels.openFile, {
                 params: {
-                    ...params,
-                    path: filePath
+                    query: {
+                        ...queryParams,
+                        path: filePath,
+                        script: scriptPath
+                    }
                 }
             })
         }

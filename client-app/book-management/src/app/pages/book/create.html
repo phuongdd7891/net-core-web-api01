@@ -1,43 +1,25 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="UTF-8">
-    <title>Create book</title>
-    <meta http-equiv="Content-Security-Policy"
-        content="script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com 'unsafe-inline';" />
-    <link href="../../../assets/css/bootstrap.min.css" rel="stylesheet">
-</head>
-
-<body>
-    <form id="frmCreate" enctype="multipart/form-data">
-        <div class="mb-3">
-            <label for="txtName" class="form-label">Name</label>
-            <input type="text" class="form-control" id="txtName" name="bookName" placeholder="name...">
+<form id="frmCreate" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="txtName" class="form-label">Name</label>
+        <input type="text" class="form-control" id="txtName" name="bookName" placeholder="name...">
+    </div>
+    <div class="mb-3">
+        <label for="txtCategory" class="form-label">Category</label>
+        <input type="text" class="form-control" id="txtCategory" name="category" placeholder="category...">
+    </div>
+    <div class="mb-3">
+        <label for="txtAuthor" class="form-label">Author</label>
+        <input type="text" class="form-control" id="txtAuthor" name="author" placeholder="author...">
+    </div>
+    <div class="mb-3">
+        <label for="fileCover" class="form-label">Cover</label>
+        <input class="form-control" type="file" name="cover" id="fileCover">
+        <div class="mt-2">
+            <img id="coverImg" style="max-width: 50px;"/>
         </div>
-        <div class="mb-3">
-            <label for="txtCategory" class="form-label">Category</label>
-            <input type="text" class="form-control" id="txtCategory" name="category" placeholder="category...">
-        </div>
-        <div class="mb-3">
-            <label for="txtAuthor" class="form-label">Author</label>
-            <input type="text" class="form-control" id="txtAuthor" name="author" placeholder="author...">
-        </div>
-        <div class="mb-3">
-            <label for="fileCover" class="form-label">Cover</label>
-            <input class="form-control" type="file" name="cover" id="fileCover">
-            <div class="mt-2">
-                <img id="coverImg" style="max-width: 50px;"/>
-            </div>
-        </div>
-        <div class="mb-3">
-            <button type="submit" class="btn btn-success" id="btnSubmit">Submit</button>
-            <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
-        </div>
-    </form>
-    <script>
-        require('./create.js');
-    </script>
-</body>
-
-</html>
+    </div>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-success" id="btnSubmit">Submit</button>
+        <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
+    </div>
+</form>

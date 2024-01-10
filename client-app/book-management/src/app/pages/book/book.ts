@@ -14,8 +14,12 @@ $(async function () {
     });
     if (bookResponse.code == 200) {
         let table = new DataTable('#grid', {
-            data: bookResponse.data,
+            data: bookResponse.data.map((a, idx) => ({
+                ...a,
+                order: idx + 1
+            })),
             columns: [
+                { data: 'order', title: 'No.' },
                 { data: 'name', title: 'Name' },
                 { data: 'category', title: 'Category' },
                 { data: 'author', title: 'Author' },
@@ -48,12 +52,10 @@ $(async function () {
     }
 
     function editBook(id: string) {
-        ipcService.sendOpenFile('../app/pages/book/create.html', {
-            query: { id }
-        });
+        ipcService.sendOpenFile(ipcService.pagePaths.createBook, null, { id });
     }
-})
 
-$('#btnCreate').on('click', async () => {
-    ipcService.sendOpenFile('../app/pages/book/create.html');
+    $('#btnCreate').on('click', async () => {
+        ipcService.sendOpenFile(ipcService.pagePaths.createBook);
+    })
 })

@@ -22,7 +22,7 @@ async function login() {
                 type: 'user'
             }
         }).then(() => {
-            ipcService.sendOpenFile('../app/pages/book/book.html');
+            ipcService.sendOpenFile(ipcService.pagePaths.book);
         })
     } else {
         ipcService.sendDialogError(loginResponse.data);
