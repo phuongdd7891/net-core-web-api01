@@ -6,8 +6,8 @@ import { channels } from '../utils';
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
     private readonly pageScripts = {
-        'book.html': './book/book.js',
-        'create.html': './book/create.js'
+        './book/book.html': './book/book.js',
+        './book/create.html': './book/create.js'
     }
     public readonly pagePaths = {
         book: './book/book.html',
@@ -71,19 +71,20 @@ export class IpcService {
         })
     }
 
-    public sendDialogInfo(message: any, title: string = '') {
+    public sendDialogInfo(message: any, title: string = '', type: string = 'info', buttons: string[] = []) {
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
         }
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: message,
-                title: title,
-                type: "info"
+                message,
+                title,
+                type,
+                buttons
             }
         });
         const ipcRenderer = this.ipcRenderer;
-        return new Promise(resolve => {
+        return new Promise<number>(resolve => {
             ipcRenderer.once(channels.dialog, (event, response) => resolve(response))
         })
     }
@@ -91,8 +92,7 @@ export class IpcService {
     public sendOpenFile(filePath: string, scriptPath?: string, queryParams?: any) {
         if (filePath) {
             if (!scriptPath) {
-                const pathName = filePath.substring(filePath.lastIndexOf('/') + 1);
-                scriptPath = this.pageScripts[pathName];
+                scriptPath = this.pageScripts[filePath];
             }
             this.send(channels.openFile, {
                 params: {

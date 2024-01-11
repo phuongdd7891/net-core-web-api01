@@ -124,11 +124,10 @@ class Main {
                 dialog.showMessageBox(this.mainWindow, {
                     title: request.params?.['title'],
                     message: request.params?.['message'],
-                    type: request.params?.['type']
+                    type: request.params?.['type'],
+                    buttons: request.params?.['buttons'] ?? []
                 }).then(res => {
-                    if (res.response == 0) {
-                        event.sender.send(channels.dialog, true);
-                    }
+                    event.sender.send(channels.dialog, res.response);
                 })
             } else if (channelName == channels.message) {
                 if (request.params?.['type'] == 'logout') {

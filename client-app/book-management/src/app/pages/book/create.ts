@@ -1,31 +1,25 @@
 import $ from 'jquery';
-import { IpcResponse } from '../../../shared/IpcRequest';
-import { apiEndpointKey, apiMethodKey } from '../../../electron/IPC/BaseApiChannel';
-import { IpcService } from '../../../app/IpcService';
 import { fileToBase64 } from '../../../utils';
+import { BookService } from '../../../app/services/book.service';
 
-const ipcService = new IpcService();
+const bookService = new BookService();
 
 $(function () {
     const searchParams = new URLSearchParams(global.location.search);
     const bookId = searchParams.get('id');
     const isEdit = searchParams.has('id');
     if (isEdit) {
-        ipcService.sendApi<IpcResponse>("book", {
-            params: {
-                [apiEndpointKey]: `api/books/${bookId}`
-            }
-        }).then(res => {
-            if (res.code == 200) {
+        bookService.getBook(bookId).then(res => {
+            if (res.success) {
                 $('[name="bookName"]').val(res.data.name);
                 $('[name="category"]').val(res.data.category);
                 $('[name="author"]').val(res.data.author);
                 if (res.data.coverPicture) {
-                    const imgSrc = ipcService.getImageSrc(res.data.id);
+                    const imgSrc = bookService.getImageSrc(res.data.id);
                     $('#coverImg').attr('src', `${imgSrc}`);
                 }
             } else {
-                ipcService.sendDialogError(res.data);
+                bookService.sendDialogError(res.data);
             }
         });
     } else {
@@ -33,7 +27,7 @@ $(function () {
     }
 
     $('#btnCancel').on('click', () => {
-        ipcService.sendOpenFile(ipcService.pagePaths.book)
+        bookService.sendOpenFile(bookService.pagePaths.book)
     })
 
     $('#frmCreate').on('submit', async (event) => {
@@ -49,27 +43,16 @@ $(function () {
             const file = await fileToBase64(fileUpload);
             body['FileData'] = file;
         }
-        let reqParams: any = {
-            [apiEndpointKey]: 'api/books',
-            [apiMethodKey]: 'fetch',
-            body: body
-        }
-        if (isEdit) {
-            reqParams['method'] = 'put';
-            reqParams[apiEndpointKey] += `/${bookId}`;
-        }
-        const response = await ipcService.sendApi<IpcResponse>("book", {
-            params: reqParams
-        });
+        const response = isEdit ? await bookService.updateBook(bookId, body) : await bookService.createBook(body);
         console.log(response)
-        if (response.code == 200) {
-            ipcService.sendDialogInfo(`${isEdit ? 'Update' : 'Create'} successful!`).then(res => {
-                if (res) { 
-                    ipcService.sendOpenFile(ipcService.pagePaths.book);
+        if (response.success) {
+            bookService.sendDialogInfo(`${isEdit ? 'Update' : 'Create'} successful!`).then(res => {
+                if (res == 0) { 
+                    bookService.sendOpenFile(bookService.pagePaths.book);
                 }
             });
         } else {
-            ipcService.sendDialogError(response.data);
+            bookService.sendDialogError(response.data);
         }
     })
 })

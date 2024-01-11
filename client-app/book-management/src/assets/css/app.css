@@ -6,9 +6,15 @@ footer.border-top {
 
 body {
     background-color: #e3e3e3;
-    font-size: 15px;
+    --bs-body-font-size: 14px;
+    --bs-body-font-family: Arial;
+}
+
+body .btn {
+    font-size: var(--bs-body-font-size);
 }
 
 body #contentWrapper {
     padding: 10px;
+    font-size: 14px;
 }

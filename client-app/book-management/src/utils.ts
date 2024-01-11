@@ -21,6 +21,14 @@ export const convertBase64ToBlob = (base64Image: string) => {
     return { blob, fileName };
 }
 
+export const wrapFunction = <TArgs extends any[], TReturn>(
+    targetFunction: (...parameters: TArgs) => TReturn,
+  ): (...parameters: TArgs) => TReturn => {
+    return (...parameters: TArgs) => {
+      return targetFunction(...parameters);
+    };
+  }
+
 export class NetUtils {
     static getRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {
@@ -98,22 +106,28 @@ export class NetUtils {
 
     static fetchRequest(endpoint: string, request: IpcRequest, net: Net) {
         const formData = new FormData();
-        Object.keys(request.params?.body).forEach(a => {
-            if (a == 'FileData') {
-                const blobData = convertBase64ToBlob(request.params?.body[a]);
-                formData.append(a, blobData.blob, blobData.fileName);
-            } else {
-                formData.append(a, request.params?.body[a]);
-            }
-        });
+        const reqInit: RequestInit = {
+            method: request.params?.['method'] ?? 'post',
+        };
+        if (request.params?.body) {
+            Object.keys(request.params?.body).forEach(a => {
+                if (a == 'FileData') {
+                    const blobData = convertBase64ToBlob(request.params?.body[a]);
+                    formData.append(a, blobData.blob, blobData.fileName);
+                } else {
+                    formData.append(a, request.params?.body[a]);
+                }
+            });
+            reqInit.body = formData;
+        }
         return new Promise((resolve, reject) => {
             let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
-            net.fetch(reqUrl, {
-                method: request.params?.['method'] ?? 'post',
-                body: formData
-            }).then(
-                async (res) => resolve(await res.json())
-            ).catch(err => reject(err.message));
+            net.fetch(reqUrl, reqInit).then(
+                async (res) => {
+                    resolve(await res.json())
+                }).catch(err => {
+                    reject(err.message)
+                });
         })
     }
 
