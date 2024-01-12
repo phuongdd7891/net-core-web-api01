@@ -119,4 +119,16 @@ export class IpcService {
         }
         return src;
     }
+
+    public setAppStore(key, data) {
+        this.ipcRenderer!.send(channels.setStore, key, data);
+    }
+
+    public getAppStore(key: string) {
+        return this.ipcRenderer!.invoke(channels.getStore, key);
+    }
+
+    public removeAppStore(key: string) {
+        this.ipcRenderer!.send(channels.removeStore, key);
+    }
 }

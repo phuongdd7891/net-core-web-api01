@@ -4,10 +4,10 @@ import { apiEndpointKey, apiMethodKey } from "../../electron/IPC/BaseApiChannel"
 import { wrapFunction } from "../../utils";
 
 export class BookService extends IpcService {
-    private wrapSendApi = (req: IpcRequest) => {
+    private sendBookApi = (req: IpcRequest) => {
         return this.sendApi<IpcResponse>("book", req).then(res => ({...res, success: res.code == 200}));
     }
-    private wrapResponse = wrapFunction(this.wrapSendApi);
+    private wrapResponse = wrapFunction(this.sendBookApi);
 
     public listBooks() {
         return this.wrapResponse({

@@ -158,5 +158,12 @@ export const channels = {
     dialog: "dialog",
     message: "msg",
     menu: "menu",
-    menuLogout: "menu-logout"
+    menuLogout: "menu-logout",
+    setStore: "set-store",
+    getStore: "get-store",
+    removeStore: "remove-store"
+}
+
+export const storeKeys = {
+    userStore: "user-store"
 }

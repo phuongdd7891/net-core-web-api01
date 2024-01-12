@@ -1,13 +1,26 @@
-footer.border-top {
-    border-top-color: #c1c1c1 !important;
+:root {
+    --app-bg-color: #CACDD2;
+    --bs-body-font-size: 14px;
+    --bs-body-font-family: Arial;
+}
+
+body {
+    padding: 20px;
+    margin: 0;
+    background-color: var(--app-bg-color);
+    background-image: url(../imgs/app-bg.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center bottom;
+}
+
+body footer {
     font-size: 12px !important;
     text-align: center;
 }
 
-body {
-    background-color: #e3e3e3;
-    --bs-body-font-size: 14px;
-    --bs-body-font-family: Arial;
+body .table {
+    --bs-table-bg: var(--app-bg-color);
 }
 
 body .btn {
@@ -15,6 +28,10 @@ body .btn {
 }
 
 body #contentWrapper {
-    padding: 10px;
     font-size: 14px;
+}
+
+body #contentWrapper form {
+    padding: 10px;
+    background-color: var(--app-bg-color);
 }

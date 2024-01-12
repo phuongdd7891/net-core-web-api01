@@ -10,25 +10,31 @@
 </head>
 
 <body>
-  <main class="flex-shrink-0" id="contentWrapper">
-    <div class="container">
-      <div class="row mb-3">
-        <label for="txtUsername" class="col-sm-2 col-form-label">Username</label>
-        <div class="col-sm-10">
-          <input type="text" class="form-control" id="txtUsername" value="test" />
-        </div>
+  <div class="container-sm" id="contentWrapper">
+    <div class="row mb-3">
+      <label for="txtUsername" class="col-form-label">Username</label>
+      <div class="col-sm-5">
+        <input type="text" class="form-control" id="txtUsername" />
       </div>
-      <div class="row mb-3">
-        <label for="txtPwd" class="col-sm-2 col-form-label">Password</label>
-        <div class="col-sm-10">
-          <input type="password" class="form-control" id="txtPwd" value="AA1234aa~" />
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary" id="btnLogin">Log in</button>
-      <button type="button" class="btn btn-danger" id="btnExit">Exit</button>
-      <p id="errMsg"></p>
     </div>
-  </main>
+    <div class="row mb-3">
+      <label for="txtPwd" class="col-form-label">Password</label>
+      <div class="col-sm-5">
+        <input type="password" class="form-control" id="txtPwd" />
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="form-check">
+        <input class="form-check-input ms-0" type="checkbox" id="ckbRemember">
+        <label class="form-check-label ps-2" for="flexCheckDefault">
+          Remember user
+        </label>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" id="btnLogin">Log in</button>
+    <button type="button" class="btn btn-secondary" id="btnExit">Exit</button>
+    <p id="errMsg"></p>
+  </div>
   <footer class="footer py-3 my-2 border-top">
     <div class="container">
       Node.js <span id="node-version"></span> / Chromium

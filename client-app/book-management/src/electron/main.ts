@@ -7,6 +7,7 @@ import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
 import { BookApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
 import { channels } from '../utils';
+import Store from 'electron-store';
 
 remoteMain.initialize()
 
@@ -58,6 +59,20 @@ class Main {
         ipcMain.on(channels.loaderShow, (event, show) => this.handleLoader(show))
 
         this.registerIpcChannels(ipcChannels);
+        this.initStore();
+    }
+
+    private initStore() {
+        const store = new Store();
+        ipcMain.on(channels.setStore, (event, key, data) => {
+            store.set(key, data);
+        })
+        ipcMain.on(channels.removeStore, (event, key) => {
+            store.delete(key);
+        })
+        ipcMain.handle(channels.getStore, (event, key) => {
+            return store.get(key);
+        })
     }
 
     private async onWindowAllClosed() {
