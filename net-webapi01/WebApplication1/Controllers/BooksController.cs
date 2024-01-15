@@ -17,8 +17,8 @@ public class BooksController : BaseController
 
     public BooksController(BooksService booksService) =>
         _booksService = booksService;
-    
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{ApiKeyAuthenticationHandler.API_KEY_HEADER}", Roles = Const.ACTION_LIST_BOOK)]
+
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_LIST_BOOK)]
     [HttpGet]
     public async Task<DataResponse<List<Book>>> Get()
     {
@@ -30,7 +30,7 @@ public class BooksController : BaseController
     }
 
     [HttpGet("{id:length(24)}")]
-    [CustomAuthorize(Const.ACTION_GET_BOOK)]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_GET_BOOK)]
     public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -43,7 +43,7 @@ public class BooksController : BaseController
     }
 
     [HttpPost]
-    [CustomAuthorize(Const.ACTION_CREATE_BOOK)]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Post([FromForm] CreateBookRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
@@ -72,7 +72,7 @@ public class BooksController : BaseController
         {
             book.ModifiedBy = user.UserName;
         }
-        
+
         await _booksService.UpdateAsync(book, request.FileData);
 
         return Ok(new DataResponse<string>());
@@ -84,13 +84,26 @@ public class BooksController : BaseController
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
 
-        await _booksService.RemoveAsync(id);
-
-        return NoContent();
+        var result = await _booksService.RemoveAsync(id);
+        if (result)
+        {
+            if (!string.IsNullOrEmpty(book!.CoverPicture))
+            {
+                var picFile = new FileInfo(Path.Combine(_booksService.GetBookCoverPath(), book.CoverPicture));
+                if (picFile.Exists)
+                {
+                    picFile.Delete();
+                }
+            }
+        }
+        return Ok(new DataResponse<bool>
+        {
+            Data = result
+        });
     }
 
     [HttpGet("download-cover")]
-    [CustomAuthorize(Const.ACTION_GET_BOOK)]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_GET_BOOK)]
     public async Task<IActionResult> DownloadCover(string id)
     {
         ErrorStatuses.ThrowBadRequest("Id cannot empty", string.IsNullOrEmpty(id));

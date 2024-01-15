@@ -28,11 +28,10 @@ public class JwtService
     public async Task<AuthenticationResponse> CreateToken(ApplicationUser user)
     {
         var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
-        var roles = await _redisRepository.GetHashEntity<string>(Const.USER_ROLES_KEY);
         var tokenHandler = new JsonWebTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(CreateClaims(user, roles)),
+            Subject = new ClaimsIdentity(await CreateClaims(user)),
             Audience = _configuration["Jwt:Audience"],
             Issuer = _configuration["Jwt:Issuer"],
             Expires = expiration,
@@ -42,11 +41,12 @@ public class JwtService
         return new AuthenticationResponse
         {
             Token = token,
-            Expiration = expiration
+            Expiration = expiration,
+            Username = user.UserName!
         };
     }
 
-    private Claim[] CreateClaims(ApplicationUser user, Dictionary<string, string> roles)
+    private async Task<Claim[]> CreateClaims(ApplicationUser user)
     {
         var claims = new[] {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -55,9 +55,21 @@ public class JwtService
         };
         if (user.Roles != null)
         {
+            var roleActions = await _redisRepository.GetHashEntity<string[]>(Const.ROLE_ACTION_KEY);
+            var actions = new List<string>();
             foreach (var role in user.Roles)
             {
-                claims = claims.Append(new Claim(ClaimTypes.Role, roles[role.ToString()])).ToArray();
+                foreach (var item in roleActions)
+                {
+                    if (item.Value.Contains(role.ToString()))
+                    {
+                        actions.Add(item.Key);
+                    }
+                }
+            }
+            foreach (var action in actions)
+            {
+                claims = claims.Append(new Claim(ClaimTypes.Role, action)).ToArray();
             }
         }
         return claims;

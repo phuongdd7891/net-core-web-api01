@@ -9,6 +9,7 @@ public class BaseController: ControllerBase
     private ApiKeyService? _apiKeyService;
     protected ApiKeyService apiKeyService => _apiKeyService ?? (_apiKeyService = HttpContext.RequestServices.GetService<ApiKeyService>())!;
 
+    [HttpGet("request-user")]
     public async Task<ApplicationUser?> GetRequestUser()
     {
         return await apiKeyService.GetRequestUser(Request);

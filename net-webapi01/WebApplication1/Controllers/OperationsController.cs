@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using WebApplication1.ResourceModels;
 using CoreLibrary.Models;
 using WebApplication1.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -89,7 +91,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("Logout")]
-    [CustomAuthorize()]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
     public async Task<IActionResult> Logout()
     {
         var username = HttpContext.Request.Query["u"];

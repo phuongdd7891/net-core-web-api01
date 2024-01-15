@@ -58,7 +58,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         else
         {
             var keyValue = await _redisRepository.Get(username);
-            if (apiKeyToValidate != keyValue)
+            if (string.Compare(apiKeyToValidate, keyValue) != 0)
             {
                 return AuthenticateResult.Fail(errMessage = "Invalid key");
             }

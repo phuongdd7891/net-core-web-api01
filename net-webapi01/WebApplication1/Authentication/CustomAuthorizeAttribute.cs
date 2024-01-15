@@ -83,7 +83,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         else
         {
             var keyValue = await _redisRepository.Get(username);
-            if (apiKeyToValidate != keyValue)
+            if (string.Compare(apiKeyToValidate, keyValue) != 0)
             {
                 context.Result = GetJsonResult(new DataResponse<string>
                 {
