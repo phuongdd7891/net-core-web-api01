@@ -39,7 +39,7 @@ class Main {
                 const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: appSessionKey });
                 if (cookies) {
                     const sessionData = JSON.parse(cookies.value);
-                    details.requestHeaders['ApiKey'] = sessionData.token;
+                    details.requestHeaders['Authorization'] = `Bearer ${sessionData.token}`;
                 }
                 callback({
                     requestHeaders: details.requestHeaders

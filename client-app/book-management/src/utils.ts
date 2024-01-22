@@ -53,9 +53,13 @@ export class NetUtils {
                     reject(error);
                 })
                 response.on('end', async () => {
-                    let responseBodyBuffer = Buffer.concat(buffers);
-                    let responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
-                    resolve(responseBodyJSON);
+                    try {
+                        let responseBodyBuffer = Buffer.concat(buffers);
+                        let responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
+                        resolve(responseBodyJSON);    
+                    } catch (error) {
+                        reject(error);
+                    }
                 })
             })
             netRequest.on('error', (error) => {
@@ -68,7 +72,7 @@ export class NetUtils {
     static postRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {
             let buffers: Buffer[] = [];
-            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
+            let reqUrl: string = `${apiHost}/${endpoint}${endpoint.indexOf('?') > 0 ? '&' : '?'}u=${request.params?.["username"] ?? ""}`;
             const netRequest: ClientRequest = net.request({
                 url: reqUrl,
                 method: 'post'
@@ -89,12 +93,16 @@ export class NetUtils {
                     reject(error);
                 })
                 response.on('end', async () => {
-                    let responseBodyBuffer = Buffer.concat(buffers);
-                    let responseBodyJSON;
-                    if (responseBodyBuffer.length > 0) {
-                        responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
+                    try {
+                        let responseBodyBuffer = Buffer.concat(buffers);
+                        let responseBodyJSON;
+                        if (responseBodyBuffer.length > 0) {
+                            responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
+                        }
+                        resolve(responseBodyJSON ?? { code: 200 });
+                    } catch (error) {
+                        reject(error);
                     }
-                    resolve(responseBodyJSON ?? { code: 200 });
                 })
             })
             netRequest.on('error', (error) => {

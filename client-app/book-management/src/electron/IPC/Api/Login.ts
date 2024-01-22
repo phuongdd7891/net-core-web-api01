@@ -11,11 +11,11 @@ export class LoginApiChannel extends BaseApiChannel {
     }
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
-        NetUtils.postRequest('api/Operations/login', request, net).then(async (response: any) => {
+        NetUtils.postRequest('api/Operations/login?t=jwt', request, net).then(async (response: any) => {
             if (response.code == 200) {
                 const data = {
                     username: response.data.username,
-                    token: response.data.value
+                    token: response.data.token
                 };
                 await session.defaultSession.cookies.set({
                     path: '/',
