@@ -6,3 +6,9 @@ export class BookApiChannel extends BaseApiChannel {
         super("book");
     }
 }
+
+export class BookCategoryApiChannel extends BaseApiChannel {
+    constructor() {
+        super("book-category")
+    }
+}

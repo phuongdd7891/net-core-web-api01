@@ -7,11 +7,15 @@ export class IpcService {
     private ipcRenderer?: IpcRenderer;
     private readonly pageScripts = {
         './book/book.html': './book/book.js',
-        './book/create.html': './book/create.js'
+        './book/create.html': './book/create.js',
+        './book-category/category.html': './book-category/category.js',
+        './book-category/create.html': './book-category/create.js'
     }
     public readonly pagePaths = {
         book: './book/book.html',
-        createBook: './book/create.html'
+        createBook: './book/create.html',
+        category: './book-category/category.html',
+        createCategory: './book-category/create.html'
     }
 
     public send<T>(channel: string, request: IpcRequest = { params: {} }): Promise<T> {

@@ -1,18 +1,21 @@
 using WebApi.Models;
 using MongoDB.Driver;
 using System.Text;
+using WebApi.Models.Requests;
 
 namespace WebApi.Services;
 
 public class BooksService
 {
     private readonly IMongoCollection<Book> _booksCollection;
+    private readonly IMongoCollection<BookCategory> _categoryCollection;
     
     public BooksService(
         AppDBContext _context
     )
     {
         _booksCollection = _context.Books;
+        _categoryCollection = _context.BookCategories;
     }
 
     public async Task<List<Book>> GetAsync() =>
@@ -83,4 +86,41 @@ public class BooksService
         }
         return string.Empty;
     }
+
+    #region Category
+    public async Task<List<BookCategory>> GetCategoriesAsync() =>
+        await _categoryCollection.Find(_ => true).ToListAsync();
+
+    public async Task<List<BookCategory>> GetCategoriesByParentAsync(string parentId) =>
+        await _categoryCollection.Find(a => !string.IsNullOrEmpty(a.ParentPath) && a.ParentPath.Contains($".{parentId}")).ToListAsync();
+
+    public async Task<BookCategory?> GetCategoryAsync(string id) =>
+        await _categoryCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+    public async Task CreateCategoryAsync(CreateBookCateogryRequest request)
+    {
+        var category = new BookCategory {
+            CategoryName = request.Name
+        };
+        if (!string.IsNullOrEmpty(request.Parent))
+        {
+            var parent = await GetCategoryAsync(request.Parent);
+            if (parent != null)
+            {
+                category.ParentPath = $"{parent.ParentPath}.{request.Parent}";
+            }
+        }
+        if (string.IsNullOrEmpty(request.Id))
+        {
+            await _categoryCollection.InsertOneAsync(category);    
+        }
+        else
+        {
+            category.Id = request.Id;
+            await _categoryCollection.ReplaceOneAsync(a => a.Id == request.Id, category);
+        }
+    }
+
+    #endregion
+
 }

@@ -23,9 +23,15 @@ public class BooksController : BaseController
     public async Task<DataResponse<List<Book>>> Get()
     {
         var data = await _booksService.GetAsync();
+        var categories = await _booksService.GetCategoriesAsync();
+        var catDict = categories.ToDictionary(a => a.Id!);
+        var list = data.ToList();
+        list.ForEach(a => {
+            a.Category = catDict.ContainsKey(a.Category ?? "") ? catDict[a.Category!].CategoryName : string.Empty;
+        });
         return new DataResponse<List<Book>>
         {
-            Data = data
+            Data = list
         };
     }
 

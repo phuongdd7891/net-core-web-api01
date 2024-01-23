@@ -29,6 +29,10 @@ export const wrapFunction = <TArgs extends any[], TReturn>(
     };
   }
 
+export const formatCategoryPath = (path: string) => {
+    return `${path ? path.split('.').map((_, idx) => '.'.repeat(idx + 1)).join('') : ''}`;
+}
+
 export class NetUtils {
     static getRequest(endpoint: string, request: IpcRequest, net: Net) {
         return new Promise((resolve, reject) => {

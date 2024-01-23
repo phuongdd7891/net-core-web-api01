@@ -1,19 +1,32 @@
 import $ from 'jquery';
-import { fileToBase64 } from '../../../utils';
+import { fileToBase64, formatCategoryPath } from '../../../utils';
 import { BookService } from '../../../app/services/book.service';
+import { BookCategoryService } from '../../../app/services/book-category.service';
 
 const bookService = new BookService();
+const categoryService = new BookCategoryService();
 
-$(function () {
+$(async function () {
     const searchParams = new URLSearchParams(global.location.search);
     const bookId = searchParams.get('id');
     const isEdit = searchParams.has('id');
+    const catRes = await categoryService.listCategories();
+    if (catRes.success) {
+        if (catRes.data.length > 0) {
+            catRes.data.forEach(c => {
+                $('#ddlCategory').append(`<option value='${c.id}'>${formatCategoryPath(c.parentPath)}${c.name}</option>`)
+            });
+        }
+    } else {
+        categoryService.sendDialogError(catRes.data);
+    }
+
     if (isEdit) {
         bookService.getBook(bookId).then(res => {
             if (res.success) {
                 $('[name="bookName"]').val(res.data.name);
-                $('[name="category"]').val(res.data.category);
                 $('[name="author"]').val(res.data.author);
+                $('#ddlCategory').val(res.data.category);
                 if (res.data.coverPicture) {
                     const imgSrc = bookService.getImageSrc(res.data.id);
                     $('#coverImg').attr('src', `${imgSrc}`);

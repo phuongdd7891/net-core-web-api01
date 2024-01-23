@@ -4,7 +4,7 @@ import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
 import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
 import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
-import { BookApiChannel } from './IPC/Api/Book';
+import { BookApiChannel, BookCategoryApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
 import { channels } from '../utils';
 import Store from 'electron-store';
@@ -184,6 +184,14 @@ class Main {
                                         script: './book/book.js'
                                     }
                                 })
+                            }, {
+                                label: 'List Category',
+                                click: () => this.mainView.webContents.loadFile('../app/pages/master.html', {
+                                    query: {
+                                        path: './book-category/category.html',
+                                        script: './book-category/category.js'
+                                    }
+                                })
                             }]
                         }));
                         Menu.setApplicationMenu(userMenu);
@@ -212,5 +220,6 @@ class Main {
     new GeneralInfoChannel(channels.message),
     new LoginApiChannel(),
     new LogoutApiChannel(),
-    new BookApiChannel()
+    new BookApiChannel(),
+    new BookCategoryApiChannel()
 ]);

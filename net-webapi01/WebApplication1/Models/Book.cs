@@ -1,7 +1,5 @@
-using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Newtonsoft.Json.Serialization;
 
 namespace WebApi.Models;
 
@@ -26,4 +24,16 @@ public class Book
     public DateTime? ModifiedDate { get; set; }
     public string? CreatedBy { get; set; }
     public string? ModifiedBy { get; set; }
+}
+
+public class BookCategory
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? Id { get; set; }
+
+    [BsonElement("Name")]
+    [Newtonsoft.Json.JsonProperty("name")]
+    public string? CategoryName { get; set; }
+    public string? ParentPath { get; set; }
 }
