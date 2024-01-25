@@ -13,3 +13,9 @@ public class CreateBookCateogryRequest
     public required string Name { get; set; }
     public string? Parent { get; set; }
 }
+
+public class GetBooksReply
+{
+    public List<Book>? List { get; set; }
+    public long Total { get; set; }
+}

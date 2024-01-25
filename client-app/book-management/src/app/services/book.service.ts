@@ -5,7 +5,7 @@ import { wrapFunction } from "../../utils";
 
 export class BookService extends IpcService {
     private sendBookApi = (req: IpcRequest) => {
-        return this.sendApi<IpcResponse>("book", req).then(res => ({...res, success: res.code == 200}));
+        return this.sendApi<IpcResponse>("book", req);
     }
     private wrapResponse = wrapFunction(this.sendBookApi);
 
@@ -52,6 +52,16 @@ export class BookService extends IpcService {
             [apiMethodKey]: 'fetch',
             method: 'put',
             body: data
+        }
+        return this.wrapResponse({
+            params: reqParams
+        })
+    }
+
+    public copyBook(bookId: string, qty: number) {
+        let reqParams: any = {
+            [apiEndpointKey]: `api/books/copy?id=${bookId}&qty=${qty}`,
+            [apiMethodKey]: 'post',
         }
         return this.wrapResponse({
             params: reqParams

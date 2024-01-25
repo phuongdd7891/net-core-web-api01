@@ -20,18 +20,23 @@ public class BooksController : BaseController
 
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_LIST_BOOK)]
     [HttpGet]
-    public async Task<DataResponse<List<Book>>> Get()
+    public async Task<DataResponse<GetBooksReply>> Get(int skip, int limit)
     {
-        var data = await _booksService.GetAsync();
+        var data = await _booksService.GetAsync(skip, limit);
         var categories = await _booksService.GetCategoriesAsync();
         var catDict = categories.ToDictionary(a => a.Id!);
         var list = data.ToList();
-        list.ForEach(a => {
+        list.ForEach(a =>
+        {
             a.Category = catDict.ContainsKey(a.Category ?? "") ? catDict[a.Category!].CategoryName : string.Empty;
         });
-        return new DataResponse<List<Book>>
+        return new DataResponse<GetBooksReply>
         {
-            Data = list
+            Data = new GetBooksReply
+            {
+                List = list,
+                Total = await _booksService.GetCount()
+            }
         };
     }
 
@@ -62,6 +67,16 @@ public class BooksController : BaseController
         await _booksService.CreateAsync(request.Data, request.FileData);
 
         //return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
+        return Ok(new DataResponse<string>());
+    }
+
+    [HttpPost("copy")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    public async Task<IActionResult> Copy([FromQuery] string id, [FromQuery] int qty)
+    {
+        var book = await _booksService.GetAsync(id);
+        ErrorStatuses.ThrowNotFound("Book not found", book == null);
+        await _booksService.CreateCopyAsync(book!, qty);
         return Ok(new DataResponse<string>());
     }
 

@@ -43,12 +43,12 @@ public class ErrorHandlingMiddleware
                 var json = JsonConvert.SerializeObject(errResp, jsonSettings);
                 await context.Response.WriteAsync(json);
             }
-            catch (Exception ex2)
+            catch
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 var json = JsonConvert.SerializeObject(new DataResponse<string> {
                     Code = context.Response.StatusCode,
-                    Data = ex2.Message
+                    Data = ex.Message
                 }, jsonSettings);
                 await context.Response.WriteAsync(json);
             }

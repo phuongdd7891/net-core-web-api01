@@ -1,5 +1,5 @@
 import { IpcRenderer } from 'electron';
-import { IpcRequest } from "../shared/IpcRequest";
+import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { apiHost, apiNamePrefix } from '../electron/IPC/BaseApiChannel';
 import { channels } from '../utils';
 
@@ -44,7 +44,7 @@ export class IpcService {
         this.ipcRenderer = window.require('electron').ipcRenderer;
     }
 
-    public sendApi<T>(apiName: string, request: IpcRequest = { params: {} }): Promise<T> {
+    public sendApi<T extends IpcResponse>(apiName: string, request: IpcRequest = { params: {} }): Promise<T> {
         if (!this.ipcRenderer) {
             this.initializeIpcRenderer();
         }
@@ -57,7 +57,7 @@ export class IpcService {
         ipcRenderer.send(channels.loaderShow, true);
         return new Promise<T>(resolve => {
             ipcRenderer.once(channelName, (event, response) => resolve(response));
-        }).finally(() => {
+        }).then(res => ({...res, success: res.code == 200})).finally(() => {
             ipcRenderer.send(channels.loaderShow, false)
         });
     }
@@ -134,5 +134,12 @@ export class IpcService {
 
     public removeAppStore(key: string) {
         this.ipcRenderer!.send(channels.removeStore, key);
+    }
+
+    public showLoader(show: boolean) {
+        if (!this.ipcRenderer) {
+            this.initializeIpcRenderer();
+        }
+        this.ipcRenderer.send(channels.loaderShow, show);
     }
 }

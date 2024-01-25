@@ -1,7 +1,8 @@
 using WebApi.Models;
 using MongoDB.Driver;
-using System.Text;
 using WebApi.Models.Requests;
+using Newtonsoft.Json;
+using MongoDB.Bson;
 
 namespace WebApi.Services;
 
@@ -18,11 +19,14 @@ public class BooksService
         _categoryCollection = _context.BookCategories;
     }
 
-    public async Task<List<Book>> GetAsync() =>
-        await _booksCollection.Find(_ => true).SortByDescending(a => a.CreatedDate).ToListAsync();
+    public async Task<List<Book>> GetAsync(int skip = 0, int limit = 10) =>
+        await _booksCollection.Find(_ => true).Skip(skip).Limit(limit).SortByDescending(a => a.CreatedDate).ToListAsync();
 
     public async Task<Book?> GetAsync(string id) =>
         await _booksCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+    public async Task<long> GetCount() =>
+        await _booksCollection.CountDocumentsAsync(_ => true);
 
     public async Task CreateAsync(Book newBook, IFormFile? coverData = null)
     {
@@ -33,6 +37,22 @@ public class BooksService
         }
         newBook.CreatedDate = DateTime.Now;
         await _booksCollection.InsertOneAsync(newBook);
+    }
+
+    public async Task CreateCopyAsync(Book newBook, int numOfCopy = 1)
+    {
+        var list = new List<Book>(numOfCopy);
+        var bookJs = JsonConvert.SerializeObject(newBook);
+        for (int i = 0; i < numOfCopy; i++)
+        {
+            var now = DateTime.Now;
+            var book = JsonConvert.DeserializeObject<Book>(bookJs)!;
+            book.Id = ObjectId.GenerateNewId(now).ToString();
+            book.BookName += $"- copy {i + 1}";
+            book.CreatedDate = now;
+            list.Add(book);
+        }
+        await _booksCollection.InsertManyAsync(list);
     }
 
     public async Task UpdateAsync(Book updatedBook, IFormFile? coverData = null)
