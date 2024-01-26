@@ -117,11 +117,11 @@ export class NetUtils {
     }
 
     static fetchRequest(endpoint: string, request: IpcRequest, net: Net) {
-        const formData = new FormData();
         const reqInit: RequestInit = {
             method: request.params?.['method'] ?? 'post',
         };
         if (request.params?.body) {
+            const formData = new FormData();
             Object.keys(request.params?.body).forEach(a => {
                 if (a == 'FileData') {
                     const blobData = convertBase64ToBlob(request.params?.body[a]);
@@ -133,7 +133,7 @@ export class NetUtils {
             reqInit.body = formData;
         }
         return new Promise((resolve, reject) => {
-            let reqUrl: string = `${apiHost}/${endpoint}?u=${request.params?.["username"] ?? ""}`;
+            let reqUrl: string = `${apiHost}/${endpoint}${endpoint.indexOf('?') > 0 ? '&' : '?'}u=${request.params?.["username"] ?? ""}`;
             net.fetch(reqUrl, reqInit).then(
                 async (res) => {
                     resolve(await res.json())

@@ -10,7 +10,7 @@ public class BooksService
 {
     private readonly IMongoCollection<Book> _booksCollection;
     private readonly IMongoCollection<BookCategory> _categoryCollection;
-    
+
     public BooksService(
         AppDBContext _context
     )
@@ -70,13 +70,26 @@ public class BooksService
     {
         try
         {
-            await _booksCollection.DeleteOneAsync(x => x.Id == id);
+            var result = await _booksCollection.DeleteOneAsync(x => x.Id == id);
+            return result.DeletedCount > 0;  
         }
         catch
         {
             return false;
         }
-        return true;
+    }
+
+    public async Task<string> RemoveManyAsync(string[] ids)
+    {
+        try
+        {
+            var result = await _booksCollection.DeleteManyAsync(x => ids.Contains(x.Id));
+            return string.Empty;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
     }
 
     public string GetBookCoverPath() => Path.Combine(Directory.GetCurrentDirectory(), @"../", "BookCover");
@@ -119,7 +132,8 @@ public class BooksService
 
     public async Task CreateCategoryAsync(CreateBookCateogryRequest request)
     {
-        var category = new BookCategory {
+        var category = new BookCategory
+        {
             CategoryName = request.Name
         };
         if (!string.IsNullOrEmpty(request.Parent))
@@ -132,7 +146,7 @@ public class BooksService
         }
         if (string.IsNullOrEmpty(request.Id))
         {
-            await _categoryCollection.InsertOneAsync(category);    
+            await _categoryCollection.InsertOneAsync(category);
         }
         else
         {

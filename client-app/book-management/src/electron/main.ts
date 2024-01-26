@@ -136,11 +136,13 @@ class Main {
                     query: request.params?.['query']
                 });
             } else if (channelName == channels.dialog) {
+                const buttons = request.params?.['buttons']
                 dialog.showMessageBox(this.mainWindow, {
                     title: request.params?.['title'],
                     message: request.params?.['message'],
                     type: request.params?.['type'],
-                    buttons: request.params?.['buttons'] ?? []
+                    buttons: buttons ?? [],
+                    cancelId: buttons?.length - 1 ?? 0
                 }).then(res => {
                     event.sender.send(channels.dialog, res.response);
                 })
@@ -193,6 +195,16 @@ class Main {
                                     }
                                 })
                             }]
+                        }));
+                        userMenu.append(new MenuItem({
+                            label: '|   Dev tool',
+                            click: () => {
+                                if (this.mainView.webContents.isDevToolsOpened()) {
+                                    this.mainView.webContents.closeDevTools();
+                                } else {
+                                    this.mainView.webContents.openDevTools();
+                                }
+                            }
                         }));
                         Menu.setApplicationMenu(userMenu);
                     }

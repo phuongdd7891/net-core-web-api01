@@ -43,13 +43,18 @@ $(async function () {
         columns: [
             {
                 data: 'id',
-                title: '',
-                orderable: false,
                 render: (data, type, row, meta) => {
-                    const editBtn = `<a href="javascript:void(0)" class="edit-book p-1"><i class="bi bi-pencil"></i></a>`;
-                    const deleteBtn = `<a href="javascript:void(0)" class="delete-book p-1"><i class="bi bi-trash"></i></a>`;
-                    const copyBtn = `<a href="javascript:void(0)" class="copy-book p-1"><i class="bi bi-copy"></i></a>`;
-                    return `<div class="d-flex">${editBtn} | ${deleteBtn} | ${copyBtn}</div>`;
+                    return `<input type="checkbox" class="ckbBook"/>`;
+                },
+            },
+            {
+                data: 'id',
+                title: '',
+                render: (data, type, row, meta) => {
+                    const editBtn = `<a href="javascript:void(0)" class="edit-book p-1" title="Edit"><i class="bi bi-pencil"></i></a>`;
+                    const deleteBtn = `<a href="javascript:void(0)" class="delete-book p-1" title="Delete"><i class="bi bi-trash"></i></a>`;
+                    const copyBtn = `<a href="javascript:void(0)" class="copy-book p-1" title="Copy"><i class="bi bi-copy"></i></a>`;
+                    return `<div class="d-flex align-items-center">${editBtn} | ${deleteBtn} | ${copyBtn}</div>`;
                 },
             },
             { data: 'order', title: 'No.' },
@@ -72,7 +77,23 @@ $(async function () {
                 },
             }
         ],
-        searching: false
+        searching: false,
+        columnDefs: [{
+            targets: [0, 1, 2, 3, 4, 5, 6, 7],
+            orderable: false
+        }],
+        initComplete: function () {
+            this.api().column(0).every(function () {
+                var column = this;
+                var ckbAll = $('<input type="checkbox" id="ckbAll"/>')
+                    .appendTo($(column.header()).empty());
+                ckbAll.on('change', () => {
+                    table.rows().iterator('row', function (context, index) {
+                        $(this.row(index).node()).find('td:first input').prop('checked', ckbAll.is(':checked'));
+                    }, false);
+                });
+            });
+        }
     })
     $('#grid tbody').on('click', '.edit-book', function () {
         let tr = $(this).closest('tr');
@@ -88,6 +109,11 @@ $(async function () {
         let tr = $(this).closest('tr');
         let data = table.row(tr).data();
         copyBook(data.id);
+    });
+    $('#grid tbody').on('change', '.ckbBook', function () {
+        if (!$(this).is(':checked')) {
+            $('#ckbAll').prop("checked", false);;
+        }
     });
 
     function editBook(id: string) {
@@ -108,13 +134,21 @@ $(async function () {
     }
 
     function copyBook(id: string) {
-        bookService.sendDialogInfo(`Are you sure to copy more 10 books?`, '', 'question', ['Yes', 'No']).then(async (res) => {
+        bookService.sendDialogInfo(`Choose quantity of books to copy`, '', 'question', ['1', '5', '10', 'Cancel']).then(async (res) => {
+            let qty = 0;
             if (res == 0) {
-                const res = await bookService.copyBook(id, 10);
-                if (res.success) {
+                qty = 1;
+            } else if (res == 1) {
+                qty = 5;
+            } else if (res == 2) {
+                qty = 10;
+            }
+            if (qty > 0) {
+                const resCopy = await bookService.copyBook(id, qty);
+                if (resCopy.success) {
                     global.location.reload();
                 } else {
-                    bookService.sendDialogError(res.data)
+                    bookService.sendDialogError(resCopy.data)
                 }
             }
         });
@@ -128,4 +162,24 @@ $(async function () {
         table.ajax.reload();
     })
 
+    $('#btnDeleteSelected').on('click', async () => {
+        var rows = table.rows(function (idx, data, node) {
+            var cells = $(node).find('input[type="checkbox"]:checked');
+            return cells.length > 0;
+        });
+
+        var rowIds = rows.data().pluck('id').toArray();
+        if (rowIds.length > 0) {
+            bookService.sendDialogInfo(`Are you sure to delete ${rowIds.length} books?`, '', 'question', ['Yes', 'No']).then(async (res) => {
+                if (res == 0) {
+                    var resDelete = await bookService.deleteBooks(rowIds);
+                    if (resDelete.success) {
+                        global.location.reload();
+                    } else {
+                        bookService.sendDialogError(resDelete.data)
+                    }
+                }
+            })
+        }
+    })
 })

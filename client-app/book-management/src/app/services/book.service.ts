@@ -67,4 +67,14 @@ export class BookService extends IpcService {
             params: reqParams
         })
     }
+
+    public deleteBooks(ids: string[]) {
+        return this.wrapResponse({
+            params: {
+                [apiEndpointKey]: `api/books/delete-many?ids=${ids.join("&ids=")}`,
+                [apiMethodKey]: 'fetch',
+                method: 'delete'
+            }
+        })
+    }
 }

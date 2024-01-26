@@ -123,6 +123,25 @@ public class BooksController : BaseController
         });
     }
 
+    [HttpDelete("delete-many")]
+    public async Task<IActionResult> DeleteMany([FromQuery] string[] ids)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", ids == null || ids.Length == 0);
+
+        var result = await _booksService.RemoveManyAsync(ids!);
+        if (string.IsNullOrEmpty(result))
+        {
+            return Ok(new DataResponse<string>
+            {
+                Data = string.Empty
+            });
+        }
+        else
+        {
+            return BadRequest(result);
+        }
+    }
+
     [HttpGet("download-cover")]
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_GET_BOOK)]
     public async Task<IActionResult> DownloadCover(string id)
