@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Authentication;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
+using Microsoft.AspNetCore.SignalR;
 
 namespace WebApi.Controllers;
 
@@ -30,6 +31,7 @@ public class BooksController : BaseController
         {
             a.Category = catDict.ContainsKey(a.Category ?? "") ? catDict[a.Category!].CategoryName : string.Empty;
         });
+        await NotifyUser($"Home page loaded at: {DateTime.Now}", HttpContext.User.Identity!.Name!);
         return new DataResponse<GetBooksReply>
         {
             Data = new GetBooksReply

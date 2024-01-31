@@ -5,6 +5,7 @@ using CoreLibrary.Repository;
 using IdentityMongo.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,7 @@ using NLog.Extensions.Logging;
 using NLog;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Hubs;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -129,6 +131,16 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             options => { }
         );
 
+services.AddSignalR((options) =>
+        {
+            options.EnableDetailedErrors = true;
+            options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+        }).AddHubOptions<UserNotifications>((options) =>
+        {
+            options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+            options.EnableDetailedErrors = true;
+        });
+
 #region Nlog config
 var config = new ConfigurationBuilder()
    .SetBasePath(Directory.GetCurrentDirectory())
@@ -173,6 +185,7 @@ app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();
 app.UseCors(MyAllowSpecificOrigins);
+app.MapHub<UserNotifications>("/notifications");
 app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
 
 app.Run();
