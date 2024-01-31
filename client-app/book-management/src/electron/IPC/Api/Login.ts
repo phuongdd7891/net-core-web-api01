@@ -2,7 +2,6 @@ import { Net, session } from "electron";
 import { IpcRequest } from "../../../shared/IpcRequest";
 import { BaseApiChannel, appSessionKey } from "../BaseApiChannel";
 import { NetUtils } from "../../../utils";
-import appCookies from '../../main'
 
 export class LoginApiChannel extends BaseApiChannel {
 
@@ -24,7 +23,6 @@ export class LoginApiChannel extends BaseApiChannel {
                     name: appSessionKey,
                     value: JSON.stringify(data)
                 })
-                appCookies.setData(data);
             }
             event.reply(request.responseChannel, response);
         }).catch(err => {

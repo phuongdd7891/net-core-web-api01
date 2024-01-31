@@ -11,6 +11,7 @@ $(async function () {
         serverSide: true,
         paging: true,
         pageLength: 15,
+        lengthMenu: [15,30,50],
         ajax: function (data: any, callback, settings) {
             $.ajax({
                 url: `${apiHost}/api/books`,
@@ -72,8 +73,7 @@ $(async function () {
                 data: 'id',
                 title: 'Cover',
                 render: (data, type, row, meta) => {
-                    const imgSrc = bookService.getImageSrc(data);
-                    return row['coverPicture'] ? `<img src="${imgSrc}" style="max-width:20px;"/>` : '';
+                    return row['coverPicture'] ? `<img src="#" id="${data}" style="max-width:20px;"/>` : '';
                 },
             }
         ],
@@ -82,13 +82,20 @@ $(async function () {
             targets: [0, 1, 2, 3, 4, 5, 6, 7],
             orderable: false
         }],
+        drawCallback: () => {
+            table.rows().iterator('row', async function (context, index) {
+                var img = $(this.row(index).node()).find('td:nth-child(8) img');
+                var imgSrc = await bookService.getImageSrc(img.attr('id'));
+                img.attr('src', imgSrc);
+            }, false);
+        },
         initComplete: function () {
             this.api().column(0).every(function () {
                 var column = this;
                 var ckbAll = $('<input type="checkbox" id="ckbAll"/>')
                     .appendTo($(column.header()).empty());
                 ckbAll.on('change', () => {
-                    table.rows().iterator('row', function (context, index) {
+                    table.rows().iterator('row', async function (context, index) {
                         $(this.row(index).node()).find('td:first input').prop('checked', ckbAll.is(':checked'));
                     }, false);
                 });

@@ -1,5 +1,4 @@
 import { app, BrowserView, BrowserWindow, Cookie, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
-import * as remoteMain from '@electron/remote/main';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
 import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
@@ -8,23 +7,14 @@ import { BookApiChannel, BookCategoryApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
 import { channels } from '../utils';
 import Store from 'electron-store';
-
-remoteMain.initialize()
-
-const appCookies: any = {
-    data: null,
-    setData: (value) => {
-        appCookies.data = {...value}
-    }
-};
-
-export default appCookies;
+import { SignalRService } from '../app/services/signalr.service';
 
 class Main {
     private mainWindow: BrowserWindow;
     private mainView: BrowserView;
     private loadingView: BrowserView;
     private loadingWindow: BrowserWindow;
+    private signalRService = new SignalRService();
 
     public init(ipcChannels: IpcChannelInterface[]) {
         if (require('electron-squirrel-startup')) app.quit();
@@ -105,7 +95,6 @@ class Main {
         this.mainView.setBounds({ x: 0, y: 0, width: 800, height: 600 });
         this.mainView.webContents.openDevTools();
         this.mainView.webContents.loadFile('../../index.html');
-        remoteMain.enable(this.mainView.webContents);
 
         this.loadingWindow = new BrowserWindow({
             parent: this.mainWindow,
@@ -142,7 +131,7 @@ class Main {
                     message: request.params?.['message'],
                     type: request.params?.['type'],
                     buttons: buttons ?? [],
-                    cancelId: buttons?.length - 1 ?? 0
+                    cancelId: buttons?.length > 1 ? buttons?.length - 1 : 0
                 }).then(res => {
                     event.sender.send(channels.dialog, res.response);
                 })
@@ -158,6 +147,12 @@ class Main {
             } else {
                 if (channelName == channels.menu) {
                     if (request.params?.['type'] == 'user') {
+                        this.signalRService.connect(`${apiHost}/notifications`, sessionData.token).then(a => {
+                            this.signalRService.listenToMethod("Notify", (result) => {
+                                this.mainView.webContents.send(channels.notify, result);
+                            })
+                        });
+
                         const userMenu = new Menu();
                         userMenu.append(new MenuItem({
                             label: `Login: ${sessionData.username}`,

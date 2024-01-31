@@ -24,10 +24,9 @@ async function login() {
                 type: 'user'
             }
         }).then(() => {
+            ipcService.setAppStore(storeKeys.userStore, {username});
             if ($('#ckbRemember').is(':checked')) {
                 ipcService.setAppStore(storeKeys.userStore, {username, password});
-            } else {
-                ipcService.removeAppStore(storeKeys.userStore);
             }
             ipcService.sendOpenFile(ipcService.pagePaths.book);
         })
@@ -45,7 +44,7 @@ $(function() {
         if (res) {
             $('#txtUsername').val(res.username);
             $('#txtPwd').val(res.password);
-            $('#ckbRemember').attr('checked', 'checked');
+            $('#ckbRemember').prop('checked', !!res.password);
         }
     });
 

@@ -1,7 +1,8 @@
 import { IpcRenderer } from 'electron';
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { apiHost, apiNamePrefix } from '../electron/IPC/BaseApiChannel';
-import { channels } from '../utils';
+import { channels, storeKeys } from '../utils';
+//import appCookies from '../electron/main';
 
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
@@ -68,7 +69,7 @@ export class IpcService {
         }
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: typeof message == "string" ? message : (message.message || JSON.stringify(message)),
+                message: !message ? 'Unknown error' : typeof message == "string" ? message : (message.message || JSON.stringify(message)),
                 title: title,
                 type: "error"
             }
@@ -110,16 +111,11 @@ export class IpcService {
         }
     }
 
-    public getAppCookies() {
-        const cookies = require('@electron/remote').require('../electron/main').default;
-        return cookies;
-    }
-
-    public getImageSrc(id: string) {
-        const cookies = this.getAppCookies();
+    public async getImageSrc(id: string) {
+        var userStore = await this.getAppStore(storeKeys.userStore);
         let src: string = '';
-        if (cookies) {
-            src = `${apiHost}/api/books/download-cover?id=${id}&u=${cookies.data?.username}`
+        if (userStore) {
+            src = `${apiHost}/api/books/download-cover?id=${id}&u=${userStore.username}`
         }
         return src;
     }

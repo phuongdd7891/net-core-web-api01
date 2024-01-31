@@ -22,13 +22,13 @@ $(async function () {
     }
 
     if (isEdit) {
-        bookService.getBook(bookId).then(res => {
+        bookService.getBook(bookId).then(async res => {
             if (res.success) {
                 $('[name="bookName"]').val(res.data.name);
                 $('[name="author"]').val(res.data.author);
                 $('#ddlCategory').val(res.data.category);
                 if (res.data.coverPicture) {
-                    const imgSrc = bookService.getImageSrc(res.data.id);
+                    const imgSrc = await bookService.getImageSrc(res.data.id);
                     $('#coverImg').attr('src', `${imgSrc}`);
                 }
             } else {

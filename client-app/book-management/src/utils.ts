@@ -173,7 +173,8 @@ export const channels = {
     menuLogout: "menu-logout",
     setStore: "set-store",
     getStore: "get-store",
-    removeStore: "remove-store"
+    removeStore: "remove-store",
+    notify: "notify"
 }
 
 export const storeKeys = {
