@@ -51,3 +51,23 @@ body #contentWrapper form {
     padding: 10px;
     background-color: var(--app-bg-color);
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+p.noti-item:not(:last-child) {
+    border-bottom: solid 1px #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 10px !important;
+}
+
+p.noti-item .time {
+    font-size: 12px;
+    font-style: italic;
+}
+
+.popover-body {
+    overflow-y: auto;
+    max-height: 200px;
+} 

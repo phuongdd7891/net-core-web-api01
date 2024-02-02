@@ -171,12 +171,14 @@ export const channels = {
     message: "msg",
     menu: "menu",
     menuLogout: "menu-logout",
-    setStore: "set-store",
-    getStore: "get-store",
-    removeStore: "remove-store",
-    notify: "notify"
+    notify: "notify",
+    userStore: "user-store",
+    setUserStore: "set-user-store",
+    userNotifications: "user-notifications",
+    setUserNotifications: "set-user-notifications"
 }
 
 export const storeKeys = {
-    userStore: "user-store"
+    userStore: "user-store",
+    userNotification: "user-notification"
 }

@@ -1,13 +1,20 @@
-import { app, BrowserView, BrowserWindow, Cookie, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
+import { app, BrowserView, BrowserWindow, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
 import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
-import { apiHost, apiNamePrefix, appSessionKey } from './IPC/BaseApiChannel';
+import { apiHost, apiNamePrefix } from './IPC/BaseApiChannel';
 import { BookApiChannel, BookCategoryApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
-import { channels } from '../utils';
+import { channels, storeKeys } from '../utils';
 import Store from 'electron-store';
 import { SignalRService } from '../app/services/signalr.service';
+
+const appData = {
+    deviceId: new Date().getTime(),
+    username: ''
+};
+
+export default appData;
 
 class Main {
     private mainWindow: BrowserWindow;
@@ -15,6 +22,7 @@ class Main {
     private loadingView: BrowserView;
     private loadingWindow: BrowserWindow;
     private signalRService = new SignalRService();
+    private store: Store;
 
     public init(ipcChannels: IpcChannelInterface[]) {
         if (require('electron-squirrel-startup')) app.quit();
@@ -26,7 +34,7 @@ class Main {
             session.defaultSession.webRequest.onBeforeSendHeaders({
                 urls: [`${apiHost}/api/*`]
             }, async (details, callback) => {
-                const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: appSessionKey });
+                const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: `${appData.deviceId}` });
                 if (cookies) {
                     const sessionData = JSON.parse(cookies.value);
                     details.requestHeaders['Authorization'] = `Bearer ${sessionData.token}`;
@@ -53,16 +61,42 @@ class Main {
     }
 
     private initStore() {
-        const store = new Store();
-        ipcMain.on(channels.setStore, (event, key, data) => {
-            store.set(key, data);
-        })
-        ipcMain.on(channels.removeStore, (event, key) => {
-            store.delete(key);
-        })
-        ipcMain.handle(channels.getStore, (event, key) => {
-            return store.get(key);
-        })
+        this.store = new Store();
+        //user notification
+        ipcMain.handle(channels.userNotifications, () => {
+            var userNotifs = this.store.get(storeKeys.userNotification);
+            if (userNotifs && userNotifs[appData.username]) {
+                return [...userNotifs[appData.username]];
+            }
+            return [];
+        });
+        ipcMain.on(channels.setUserNotifications, (event, message) => {
+            const username = appData.username;
+            var userNotifs = this.store.get(storeKeys.userNotification);
+            var data = {
+                message,
+                time: new Date()
+            };
+            if (userNotifs) {
+                if (userNotifs[username]) {
+                    userNotifs[username].push(data);
+                } else {
+                    userNotifs[username] = [data];
+                }
+                this.store.set(storeKeys.userNotification, userNotifs)
+            } else {
+                this.store.set(storeKeys.userNotification, {
+                    [username]: [data]
+                })
+            }
+        });
+        //user store
+        ipcMain.on(channels.setUserStore, (event, data) => {
+            this.store.set(appData.username, data);
+        });
+        ipcMain.handle(channels.userStore, (event, username) => {
+            return this.store.get(username ?? appData.username);
+        });
     }
 
     private async onWindowAllClosed() {
@@ -113,7 +147,7 @@ class Main {
     private registerIpcChannels(ipcChannels: IpcChannelInterface[]) {
         ipcChannels.forEach(channel => ipcMain.on(channel.getName(), async (event, request) => {
             const channelName = channel.getName();
-            const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: appSessionKey });
+            const [cookies] = await session.defaultSession.cookies.get({ url: 'http://localhost/', name: `${appData.deviceId}` });
             const sessionData = cookies ? JSON.parse(cookies.value) : null;
             if (sessionData) {
                 request.params["username"] = sessionData.username;

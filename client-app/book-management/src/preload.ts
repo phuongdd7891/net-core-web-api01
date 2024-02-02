@@ -20,12 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     })
 
-    ipcRenderer.on(channels.notify, (_, message) => {
-        if (message) {
-            replaceText("notif-bar", message);
-        }
-    });
-
     const replaceText = (selector: string, text: string) => {
         const element = document.getElementById(selector);
         if (element) {

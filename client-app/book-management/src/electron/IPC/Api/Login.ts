@@ -1,7 +1,8 @@
 import { Net, session } from "electron";
 import { IpcRequest } from "../../../shared/IpcRequest";
-import { BaseApiChannel, appSessionKey } from "../BaseApiChannel";
+import { BaseApiChannel } from "../BaseApiChannel";
 import { NetUtils } from "../../../utils";
+import appData from "../../../electron/main";
 
 export class LoginApiChannel extends BaseApiChannel {
 
@@ -20,9 +21,10 @@ export class LoginApiChannel extends BaseApiChannel {
                     path: '/',
                     domain: 'localhost',
                     url: 'http://localhost/',
-                    name: appSessionKey,
+                    name: `${appData.deviceId}`,
                     value: JSON.stringify(data)
                 })
+                appData.username = data.username;
             }
             event.reply(request.responseChannel, response);
         }).catch(err => {
@@ -44,7 +46,7 @@ export class LogoutApiChannel extends BaseApiChannel {
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/logout', request, net).then(async (response: any) => {
             if (response.code == 200) {
-                await session.defaultSession.cookies.remove('http://localhost/', appSessionKey);
+                await session.defaultSession.cookies.remove('http://localhost/', `${appData.deviceId}`);
             }
             event.reply(request.responseChannel, response);
         }).catch(err => {

@@ -2,7 +2,6 @@ import { IpcRenderer } from 'electron';
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { apiHost, apiNamePrefix } from '../electron/IPC/BaseApiChannel';
 import { channels, storeKeys } from '../utils';
-//import appCookies from '../electron/main';
 
 export class IpcService {
     private ipcRenderer?: IpcRenderer;
@@ -120,16 +119,15 @@ export class IpcService {
         return src;
     }
 
-    public setAppStore(key, data) {
-        this.ipcRenderer!.send(channels.setStore, key, data);
+    private setAppStore(channel: string, data: any) {
+        this.ipcRenderer!.send(channel, data);
     }
 
-    public getAppStore(key: string) {
-        return this.ipcRenderer!.invoke(channels.getStore, key);
-    }
-
-    public removeAppStore(key: string) {
-        this.ipcRenderer!.send(channels.removeStore, key);
+    private getAppStore(channel: string, arg?: any) {
+        if (!this.ipcRenderer) {
+            this.initializeIpcRenderer();
+        }
+        return this.ipcRenderer!.invoke(channel, arg);
     }
 
     public showLoader(show: boolean) {
@@ -137,5 +135,28 @@ export class IpcService {
             this.initializeIpcRenderer();
         }
         this.ipcRenderer.send(channels.loaderShow, show);
+    }
+
+    public getRenderer() {
+        if (!this.ipcRenderer) {
+            this.initializeIpcRenderer();
+        }
+        return this.ipcRenderer;
+    }
+
+    public setUserNotifications(message: string) {
+        this.setAppStore(channels.setUserNotifications, message);
+    }
+
+    public getUserNotifications() {
+        return this.getAppStore(channels.userNotifications);
+    }
+
+    public setUserStore(data: any) {
+        this.setAppStore(channels.setUserStore, data);
+    }
+
+    public getUserStore(username?: string) {
+        return this.getAppStore(channels.userStore, username);
     }
 }

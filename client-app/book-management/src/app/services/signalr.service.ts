@@ -11,11 +11,7 @@ export class SignalRService {
                 .withAutomaticReconnect()
                 .build();
             this.connection.start()
-                .then(async (result) => {
-                    let connId = this.connection.connection.connectionId;
-                    await this.callMethod("Send", JSON.stringify({
-                        connectionId : connId
-                    }));
+                .then(result => {
                     resolve(true);
                 })
                 .catch((err) => {

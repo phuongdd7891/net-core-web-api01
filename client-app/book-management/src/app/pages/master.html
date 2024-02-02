@@ -14,11 +14,13 @@
 
 <body>
     <nav class="navbar navbar-light bg-light">
-        <div class="container-fluid">
-            <span class="navbar-brand">
-                <i class="bi bi-bell-fill text-primary"></i>
-            </span>
-            <span class="navbar-text" id="notif-bar">
+        <div class="container-fluid justify-content-end">
+            <span class="position-relative cursor-pointer" data-bs-toggle="popover">
+                (<span id="countNotif"></span>)
+                <i class="bi bi-bell-fill fs-5 text-warning"></i>
+                <span id="popNotifDot" class="position-absolute top-5 start-100 translate-middle p-1 bg-danger border border-light rounded-circle invisible">
+                    <span class="visually-hidden">New alerts</span>
+                </span>
             </span>
         </div>
     </nav>

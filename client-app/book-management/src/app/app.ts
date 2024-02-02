@@ -24,9 +24,9 @@ async function login() {
                 type: 'user'
             }
         }).then(() => {
-            ipcService.setAppStore(storeKeys.userStore, {username});
+            ipcService.setUserStore({username});
             if ($('#ckbRemember').is(':checked')) {
-                ipcService.setAppStore(storeKeys.userStore, {username, password});
+                ipcService.setUserStore({username, password});
             }
             ipcService.sendOpenFile(ipcService.pagePaths.book);
         })
@@ -39,14 +39,14 @@ $(function() {
     ipcService.send<{ kernel: string }>('system-info').then(res => {
         $('#os-info').html(res.kernel);
     })
-
-    ipcService.getAppStore(storeKeys.userStore).then(res => {
-        if (res) {
-            $('#txtUsername').val(res.username);
-            $('#txtPwd').val(res.password);
-            $('#ckbRemember').prop('checked', !!res.password);
-        }
-    });
+    $('#txtPwd').on('focus', function() {
+        ipcService.getUserStore($('#txtUsername').val().toString()).then(res => {
+            if (res) {
+                $('#txtPwd').val(res.password);
+                $('#ckbRemember').prop('checked', !!res.password);
+            }
+        });
+    })
 
     $('#btnExit').on('click', () => {
         ipcRenderer.send(channels.appExit)
