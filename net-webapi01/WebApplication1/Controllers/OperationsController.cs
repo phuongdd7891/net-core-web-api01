@@ -94,7 +94,7 @@ public class OperationsController : ControllerBase
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
     public async Task<IActionResult> Logout()
     {
-        var username = HttpContext.Request.Query["u"];
+        var username = HttpContext.User.Identity!.Name;
         await _apiKeyService.RemoveRedisToken(username!);
         return Ok();
     }

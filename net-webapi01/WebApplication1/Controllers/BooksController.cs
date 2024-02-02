@@ -3,10 +3,9 @@ using WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.Authentication;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
-using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace WebApi.Controllers;
 
@@ -31,7 +30,6 @@ public class BooksController : BaseController
         {
             a.Category = catDict.ContainsKey(a.Category ?? "") ? catDict[a.Category!].CategoryName : string.Empty;
         });
-        await NotifyUser($"Home page loaded at: {DateTime.Now}", HttpContext.User.Identity!.Name!);
         return new DataResponse<GetBooksReply>
         {
             Data = new GetBooksReply
@@ -61,11 +59,7 @@ public class BooksController : BaseController
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
         ErrorStatuses.ThrowBadRequest("Invalid author", string.IsNullOrEmpty(request.Data.Author));
-        var user = await GetRequestUser();
-        if (user != null)
-        {
-            request.Data.CreatedBy = user.UserName;
-        }
+        request.Data.CreatedBy = HttpContext.User.Identity!.Name;
         await _booksService.CreateAsync(request.Data, request.FileData);
 
         //return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
@@ -83,25 +77,22 @@ public class BooksController : BaseController
     }
 
     [HttpPut("{id:length(24)}")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Update(string id, [FromForm] CreateBookRequest request)
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
         book!.BookName = request.Data.BookName;
-        book!.Author = request.Data.Author;
-        book!.Category = request.Data.Category;
-        var user = await GetRequestUser();
-        if (user != null)
-        {
-            book.ModifiedBy = user.UserName;
-        }
-
+        book.Author = request.Data.Author;
+        book.Category = request.Data.Category;
+        book.ModifiedBy = HttpContext.User.Identity!.Name;
         await _booksService.UpdateAsync(book, request.FileData);
 
         return Ok(new DataResponse<string>());
     }
 
     [HttpDelete("{id:length(24)}")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Delete(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -126,6 +117,7 @@ public class BooksController : BaseController
     }
 
     [HttpDelete("delete-many")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> DeleteMany([FromQuery] string[] ids)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", ids == null || ids.Length == 0);

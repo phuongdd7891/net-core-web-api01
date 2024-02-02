@@ -21,19 +21,6 @@ namespace WebApi.Hubs
 
         public Task Send(string message)
         {
-            if (!string.IsNullOrEmpty(message))
-            {
-                try
-                {
-                    var obj = JsonConvert.DeserializeObject<dynamic>(message);
-                    if (obj?["connectionId"] != null)
-                    {
-                        var identity = Context.User!.Identity as ClaimsIdentity;
-                        _redisRepository.Set(identity!.FindFirst(ClaimTypes.Name)!.Value, obj["connectionId"].Value, 24 * 60);
-                    }
-                }
-                finally { }
-            }
             return Task.CompletedTask;
         }
 

@@ -1,5 +1,6 @@
 using CoreLibrary.Repository;
 using IdentityMongo.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
@@ -13,17 +14,11 @@ public class BaseController: ControllerBase
     protected IHubContext<UserNotifications> hubContext => _hubContext ?? (_hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<UserNotifications>>());
     private ApiKeyService? _apiKeyService;
     protected ApiKeyService apiKeyService => _apiKeyService ?? (_apiKeyService = HttpContext.RequestServices.GetService<ApiKeyService>())!;
-    private RedisRepository? _redisRepository;
-    protected RedisRepository redisRepository => _redisRepository ?? (_redisRepository = HttpContext.RequestServices.GetRequiredService<RedisRepository>());
+    private UserManager<ApplicationUser>? _userManager;
+    protected UserManager<ApplicationUser> userManager => _userManager ?? (_userManager = HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>());
 
-    [NonAction]
-    public async Task<ApplicationUser?> GetRequestUser()
-    {
-        return await apiKeyService.GetRequestUser(Request);
-    }
-
-    [NonAction]
-    public async Task NotifyUser(string message, string username = "")
+    [HttpPost("notify")]
+    public async Task NotifyUser([FromBody]string message, string username = "")
     {
         if (string.IsNullOrEmpty(username))
         {
@@ -31,8 +26,11 @@ public class BaseController: ControllerBase
         }
         else
         {
-            var connId = await redisRepository.Get(username);
-            await hubContext.Clients.Client(connId).SendAsync("Notify", $"{connId} => {message}");
+            var user = await userManager.FindByNameAsync(username);
+            if (user != null)
+            {
+                await hubContext.Clients.User(user.Id.ToString()).SendAsync("Notify", $"{message}");
+            }
         }
     }
 }
