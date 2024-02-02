@@ -65,10 +65,17 @@ class Main {
         //user notification
         ipcMain.handle(channels.userNotifications, () => {
             var userNotifs = this.store.get(storeKeys.userNotification);
-            if (userNotifs && userNotifs[appData.username]) {
-                return [...userNotifs[appData.username]];
+            return userNotifs?.[appData.username] ?? [];
+        });
+        ipcMain.on(channels.removeUserNotifications, (event, index) => {
+            var userNotifs = this.store.get(storeKeys.userNotification);
+            if (userNotifs?.[appData.username]) {
+                var data = userNotifs?.[appData.username];
+                data.splice(index, 1);
+                this.store.set(storeKeys.userNotification, {
+                    [appData.username]: data
+                })
             }
-            return [];
         });
         ipcMain.on(channels.setUserNotifications, (event, message) => {
             const username = appData.username;

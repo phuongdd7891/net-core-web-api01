@@ -175,10 +175,15 @@ export const channels = {
     userStore: "user-store",
     setUserStore: "set-user-store",
     userNotifications: "user-notifications",
-    setUserNotifications: "set-user-notifications"
+    setUserNotifications: "set-user-notifications",
+    removeUserNotifications: "remove-user-notifications"
 }
 
 export const storeKeys = {
     userStore: "user-store",
     userNotification: "user-notification"
+}
+
+export const dateTimeFormat = {
+    YYYYMMDD_HHmm: 'YYYY-MM-DD HH:mm'
 }

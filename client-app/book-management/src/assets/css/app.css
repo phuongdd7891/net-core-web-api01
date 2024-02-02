@@ -56,13 +56,13 @@ body #contentWrapper form {
     cursor: pointer;
 }
 
-p.noti-item:not(:last-child) {
+.noti-item:not(:last-child) {
     border-bottom: solid 1px #ccc;
     padding-bottom: 10px;
-    margin-bottom: 10px !important;
+    margin-bottom: 10px;
 }
 
-p.noti-item .time {
+.noti-item .time {
     font-size: 12px;
     font-style: italic;
 }

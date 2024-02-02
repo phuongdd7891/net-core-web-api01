@@ -152,6 +152,10 @@ export class IpcService {
         return this.getAppStore(channels.userNotifications);
     }
 
+    public removeUserNotifications(index: number) {
+        this.setAppStore(channels.removeUserNotifications, index);
+    }
+
     public setUserStore(data: any) {
         this.setAppStore(channels.setUserStore, data);
     }
