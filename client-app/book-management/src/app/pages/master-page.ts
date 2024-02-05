@@ -32,7 +32,6 @@ $(async function () {
     $('#countNotif').text(notiCount);
     ipcService.getRenderer().on(channels.notify, (_, message) => {
         if (message) {
-            const popover = bootstrap.Popover.getInstance(popoverEl);
             if (notiCount == 0) {
                 popover._config.content = '';
             }
@@ -42,17 +41,24 @@ $(async function () {
             ipcService.setUserNotifications(message);
             notiCount += 1;
             $('#countNotif').text(notiCount);
+            if (popover._isShown()) {
+                popover.show();
+            }
         }
     });
     popoverEl.addEventListener("shown.bs.popover", function () {
         $('#popNotifDot').addClass('invisible');
-        $('.remove-msg').on('click', function () {
+        $('.remove-msg').on('click', async function () {
             var index = Number($(this).attr('id'));
             ipcService.removeUserNotifications(index);
-            popover.hide();
+            await loadMessages();
             notiCount -= 1;
             $('#countNotif').text(notiCount);
-            loadMessages();
+            $(this).parent().remove();
+            if (notiCount == 0) {
+                popover._config.content = emptyMsg;
+                popover.show();
+            }
         });
     });
 
@@ -71,9 +77,10 @@ $(async function () {
     }
 
     function createMsgElement(message: string, time: Moment, index: number) {
-        let element = `<div class="noti-item d-flex">`;
-        element += `<a class="cursor-pointer remove-msg text-secondary" id="${index}"><i class="bi bi-x-circle-fill"></i></a> `;
-        element += `<div class="ps-2">${message}<br/><i class="time">@${time.format(dateTimeFormat.YYYYMMDD_HHmm)}</i></div>`;
+        let element = `<div class="noti-item d-flex flex-wrap">`;
+        element += `<div class="fw-bold">${message}</div>`;
+        element += `<a class="cursor-pointer remove-msg text-secondary ms-auto" id="${index}"><i class="bi bi-x-circle-fill"></i></a> `;
+        element += `<div class="w-100"><i class="time">@${time.format(dateTimeFormat.YYYYMMDD_HHmm)}</i></div>`;
         element += '</div>';
         return element;
     }
