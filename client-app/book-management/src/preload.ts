@@ -9,7 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
     ipcRenderer.on(channels.menuLogout, async (_event, value) => {
         const response = await ipcService.sendApi<IpcResponse>('logout');
         if (response.code == 200) {
-            ipcService.send("msg", {
+            ipcService.send(channels.message, {
                 params: {
                     type: 'logout',
                     data: value

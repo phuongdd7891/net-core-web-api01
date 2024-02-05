@@ -1,13 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using WebApi.Services;
 using IdentityMongo.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.ResourceModels;
-using CoreLibrary.Models;
-using WebApplication1.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using WebApi.Models.Requests;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -140,5 +137,18 @@ public class OperationsController : ControllerBase
         await _roleActionRepository.Add(request.Action, appRole!.Id.ToString());
         await _cacheService.LoadRoleActions();
         return Ok();
+    }
+
+    [HttpPost("change-password")]
+    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    public async Task<ActionResult<DataResponse<bool>>> ChangePassword(ChangePasswordRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword));
+        var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+        var result = await _userManager.ChangePasswordAsync(user!, request.CurrentPassword, request.NewPassword);
+        ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Change password failed", !result.Succeeded);
+        return Ok(new DataResponse<bool> {
+            Data = result.Succeeded
+        });
     }
 }

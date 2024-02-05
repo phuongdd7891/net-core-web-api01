@@ -58,3 +58,9 @@ export class LogoutApiChannel extends BaseApiChannel {
     }
 
 }
+
+export class ChangePasswordApiChannel extends BaseApiChannel {
+    constructor() {
+        super("change-password");
+    }
+}

@@ -1,11 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CoreLibrary.Repository;
 using IdentityMongo.Models;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using WebApplication1.ResourceModels;
+using WebApi.Models.Requests;
 
 namespace WebApi.Services;
 

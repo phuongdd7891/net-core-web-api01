@@ -3,6 +3,7 @@ import * as bootstrap from 'bootstrap';
 import { channels, dateTimeFormat } from '../../utils';
 import { IpcService } from '../IpcService';
 import moment, { Moment } from 'moment';
+import { apiEndpointKey, apiMethodKey } from '../../electron/IPC/BaseApiChannel';
 
 const pageTitles = {
     './book/book.html': 'List Book',
@@ -84,4 +85,31 @@ $(async function () {
         element += '</div>';
         return element;
     }
+
+    var changePwdElement = document.getElementById("modalChangePwd");
+    var modalChangePwd = new bootstrap.Modal(changePwdElement);
+    ipcService.getRenderer().on(channels.menuChangePassword, () => {
+        modalChangePwd.show();
+    })
+    changePwdElement.addEventListener("shown.bs.modal", function() {
+        $('#btnChangePwd').on('click', function() {
+            ipcService.sendApi("change-password", {
+                params: {
+                    body: {
+                        CurrentPassword: $('#txtCurrentPwd').val(),
+                        NewPassword: $('#txtNewPwd').val()
+                    },
+                    [apiEndpointKey]: "api/Operations/change-password",
+                    [apiMethodKey]: "post"
+                }
+            }).then(res => {
+                if (res.success) {
+                    ipcService.sendDialogInfo("Changed password successfully");
+                    modalChangePwd.hide();
+                } else {
+                    ipcService.sendDialogError(res.data);
+                }
+            });
+        })
+    });
 })

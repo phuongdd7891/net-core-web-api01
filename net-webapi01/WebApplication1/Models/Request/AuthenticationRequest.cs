@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace WebApplication1.ResourceModels
+namespace WebApi.Models.Requests
 {
     public class AuthenticationRequest
     {
@@ -27,5 +27,11 @@ namespace WebApplication1.ResourceModels
     {
         public required string Action { get; set; }
         public required string Role { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        public required string CurrentPassword { get; set; }
+        public required string NewPassword { get; set; }
     }
 }

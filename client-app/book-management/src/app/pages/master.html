@@ -15,10 +15,11 @@
 <body>
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid justify-content-end">
-            <span class="position-relative cursor-pointer" data-bs-toggle="popover">
-                (<span id="countNotif"></span>)
+            (<span id="countNotif"></span>)
+            <span class="position-relative cursor-pointer ms-1" data-bs-toggle="popover">
                 <i class="bi bi-bell-fill fs-5 text-warning"></i>
-                <span id="popNotifDot" class="position-absolute top-5 start-100 translate-middle p-1 bg-danger border border-light rounded-circle invisible">
+                <span id="popNotifDot"
+                    class="position-absolute top-5 start-100 translate-middle p-1 bg-danger border border-light rounded-circle invisible">
                     <span class="visually-hidden">New alerts</span>
                 </span>
             </span>
@@ -33,6 +34,35 @@
                 <span id="electron-version"></span>.
             </div>
         </footer>
+    </div>
+    <div class="modal" id="modalChangePwd">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="exampleModalToggleLabel">Change Password</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-sm">
+                        <div class="row mb-3">
+                            <label for="txtCurrentPwd" class="col-form-label">Current password</label>
+                            <div class="col-sm-5">
+                                <input type="text" class="form-control shadow-none" id="txtCurrentPwd" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="txtNewPwd" class="col-form-label">New password</label>
+                            <div class="col-sm-5">
+                                <input type="text" class="form-control shadow-none" id="txtNewPwd" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="btnChangePwd">Submit</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         require('./master-page.js');

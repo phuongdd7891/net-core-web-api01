@@ -176,7 +176,8 @@ export const channels = {
     setUserStore: "set-user-store",
     userNotifications: "user-notifications",
     setUserNotifications: "set-user-notifications",
-    removeUserNotifications: "remove-user-notifications"
+    removeUserNotifications: "remove-user-notifications",
+    menuChangePassword: "menu-change-password"
 }
 
 export const storeKeys = {

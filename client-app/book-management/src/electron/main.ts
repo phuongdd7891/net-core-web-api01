@@ -1,7 +1,7 @@
 import { app, BrowserView, BrowserWindow, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
-import { LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
+import { ChangePasswordApiChannel, LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
 import { apiHost, apiNamePrefix } from './IPC/BaseApiChannel';
 import { BookApiChannel, BookCategoryApiChannel } from './IPC/Api/Book';
 import * as path from 'node:path';
@@ -104,6 +104,7 @@ class Main {
             if (user) {
                 user.order += 1;
                 user.remember = data.remember;
+                user.password = data.password;
             } else {
                 users.push({
                     ...data,
@@ -210,6 +211,9 @@ class Main {
                         userMenu.append(new MenuItem({
                             label: `Login: ${sessionData.username}`,
                             submenu: [{
+                                label: 'Change password',
+                                click: () => this.mainView.webContents.send(channels.menuChangePassword)
+                            }, {
                                 label: 'Logout',
                                 click: () => this.mainView.webContents.send(channels.menuLogout)
                             }, {
@@ -281,5 +285,6 @@ class Main {
     new LoginApiChannel(),
     new LogoutApiChannel(),
     new BookApiChannel(),
-    new BookCategoryApiChannel()
+    new BookCategoryApiChannel(),
+    new ChangePasswordApiChannel()
 ]);
