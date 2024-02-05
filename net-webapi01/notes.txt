@@ -5,5 +5,8 @@
 - api gateway
 - rabbitmq
 - full-text search lucene.net
-#---IMPROVEMENT
-- merge token key with username key
+#---CLIENT APP
+- add show password to input
+- modify again stored user
+- modal view notification
+- user change/forgot password

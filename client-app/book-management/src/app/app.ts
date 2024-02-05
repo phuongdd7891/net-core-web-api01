@@ -2,7 +2,7 @@ import { ipcRenderer } from "electron";
 import { IpcRequest, IpcResponse } from "../shared/IpcRequest";
 import { IpcService } from "./IpcService";
 import $ from 'jquery';
-import { channels, storeKeys } from "../utils";
+import { channels } from "../utils";
 
 const ipcService = new IpcService();
 
@@ -24,10 +24,7 @@ async function login() {
                 type: 'user'
             }
         }).then(() => {
-            ipcService.setUserStore({username});
-            if ($('#ckbRemember').is(':checked')) {
-                ipcService.setUserStore({username, password});
-            }
+            ipcService.setUserStore({username, password, remember: $('#ckbRemember').is(':checked')});
             ipcService.sendOpenFile(ipcService.pagePaths.book);
         })
     } else {
@@ -39,18 +36,30 @@ $(function() {
     ipcService.send<{ kernel: string }>('system-info').then(res => {
         $('#os-info').html(res.kernel);
     })
-    $('#txtPwd').on('focus', function() {
-        ipcService.getUserStore($('#txtUsername').val().toString()).then(res => {
-            if (res) {
-                $('#txtPwd').val(res.password);
-                $('#ckbRemember').prop('checked', !!res.password);
-            }
-        });
-    })
+    ipcService.getUserStore().then(res => {
+        if (res) {
+            $('#txtUsername').val(res.username);
+            $('#txtPwd').val(res.password);
+            $('#ckbRemember').prop('checked', !!res.password);
+        }
+    });
 
     $('#btnExit').on('click', () => {
         ipcRenderer.send(channels.appExit)
-    })
+    });
 
-    $('#btnLogin').on('click', login)
+    $('#btnLogin').on('click', login);
+
+    $('#showPwd').on('click', () => {
+        const inputPwd = $('#txtPwd');
+        if (inputPwd.attr('type') == 'password') {
+            inputPwd.attr('type', 'text');
+            $('#showPwd').children().addClass('bi-eye-slash-fill');
+            $('#showPwd').children().removeClass('bi-eye-fill');
+        } else {
+            inputPwd.attr('type', 'password');
+            $('#showPwd').children().removeClass('bi-eye-slash-fill');
+            $('#showPwd').children().addClass('bi-eye-fill');
+        }
+    });
 })

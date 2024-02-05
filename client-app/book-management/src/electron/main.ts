@@ -99,10 +99,22 @@ class Main {
         });
         //user store
         ipcMain.on(channels.setUserStore, (event, data) => {
-            this.store.set(appData.username, data);
+            const users = this.store.get(storeKeys.rememberUsers, []) as any[];
+            let user = users.find(a => a.username == data["username"]);
+            if (user) {
+                user.order += 1;
+                user.remember = data.remember;
+            } else {
+                users.push({
+                    ...data,
+                    order: users.length
+                });
+            }
+            this.store.set(storeKeys.rememberUsers, users);
         });
-        ipcMain.handle(channels.userStore, (event, username) => {
-            return this.store.get(username ?? appData.username);
+        ipcMain.handle(channels.userStore, (event) => {
+            const user = (this.store.get(storeKeys.rememberUsers) as any[])?.filter(u => u.remember).reduce((max, user) => max.order > user.order ? max : user, {});
+            return user;
         });
     }
 

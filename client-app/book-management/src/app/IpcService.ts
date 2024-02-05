@@ -160,7 +160,7 @@ export class IpcService {
         this.setAppStore(channels.setUserStore, data);
     }
 
-    public getUserStore(username?: string) {
-        return this.getAppStore(channels.userStore, username);
+    public getUserStore() {
+        return this.getAppStore(channels.userStore);
     }
 }

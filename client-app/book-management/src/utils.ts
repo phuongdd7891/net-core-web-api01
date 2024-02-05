@@ -181,7 +181,8 @@ export const channels = {
 
 export const storeKeys = {
     userStore: "user-store",
-    userNotification: "user-notification"
+    userNotification: "user-notification",
+    rememberUsers: "remember-users"
 }
 
 export const dateTimeFormat = {
