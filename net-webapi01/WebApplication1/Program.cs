@@ -19,6 +19,7 @@ using NLog;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Hubs;
+using Microsoft.AspNetCore.Identity;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -75,6 +76,7 @@ services.AddControllers()
 var mongoDbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>();
 services.Configure<BookStoreDatabaseSettings>(builder.Configuration.GetSection("BookStoreDatabase"));
 services.AddIdentity<ApplicationUser, ApplicationRole>()
+        .AddDefaultTokenProviders()
         .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
         (
             mongoDbSettings?.ConnectionString, mongoDbSettings?.DatabaseName
@@ -141,6 +143,9 @@ services.AddSignalR((options) =>
             options.EnableDetailedErrors = true;
         });
 
+services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+services.AddSingleton<IEmailSender, EmailService>();
+
 #region Nlog config
 var config = new ConfigurationBuilder()
    .SetBasePath(Directory.GetCurrentDirectory())
@@ -159,26 +164,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.MapControllers();
@@ -187,10 +172,6 @@ app.UseErrorHandling();
 app.UseCors(MyAllowSpecificOrigins);
 app.MapHub<UserNotifications>("/notifications");
 app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
+AppSettingsHelper.ConfigureSetting(app.Services.GetRequiredService<IConfiguration>());
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

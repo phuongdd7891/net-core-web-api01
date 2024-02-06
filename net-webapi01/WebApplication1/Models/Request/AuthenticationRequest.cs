@@ -34,4 +34,10 @@ namespace WebApi.Models.Requests
         public required string CurrentPassword { get; set; }
         public required string NewPassword { get; set; }
     }
+
+    public class ConfirmEmailRequest
+    {
+        public string? Username { get; set; }
+        public string? Token { get; set; }
+    }
 }

@@ -10,3 +10,5 @@
 - modify again stored user
 - modal view notification
 - user change/forgot password
+- handle signalR disconnect
+- handle token expire

@@ -16,6 +16,7 @@ public class OperationsController : ControllerBase
     private readonly ApiKeyService _apiKeyService;
     private readonly CacheService _cacheService;
     private readonly RoleActionRepository _roleActionRepository;
+    private readonly IEmailSender _emailSender;
 
     public OperationsController(
         UserManager<ApplicationUser> userManager,
@@ -23,7 +24,8 @@ public class OperationsController : ControllerBase
         JwtService jwtService,
         ApiKeyService apiKeyService,
         CacheService cacheSrevice,
-        RoleActionRepository roleActionRepository
+        RoleActionRepository roleActionRepository,
+        IEmailSender emailSender
     )
     {
         _userManager = userManager;
@@ -32,30 +34,32 @@ public class OperationsController : ControllerBase
         _apiKeyService = apiKeyService;
         _cacheService = cacheSrevice;
         _roleActionRepository = roleActionRepository;
+        _emailSender = emailSender;
     }
 
-    [HttpPost("CreateUser")]
+    [HttpPost("create-user")]
     public async Task<ActionResult<User>> CreateUser(User user)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-
         var result = await _userManager.CreateAsync(
-            new ApplicationUser()
-            {
-                UserName = user.Username,
-                Email = user.Email
-            },
+             new ApplicationUser()
+             {
+                 UserName = user.Username,
+                 Email = user.Email
+             },
             user.Password
         );
-
         if (!result.Succeeded)
         {
             return BadRequest(result.Errors);
         }
-
+        var appUser = await _userManager.FindByNameAsync(user.Username);
+        var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
+        await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>");
+        
         user.Password = "";
         return Created("", user);
     }
@@ -74,14 +78,16 @@ public class OperationsController : ControllerBase
         if (tokenType == "jwt")
         {
             var token = await _jwtService.CreateToken(user!);
-            return Ok(new DataResponse<AuthenticationResponse>{
+            return Ok(new DataResponse<AuthenticationResponse>
+            {
                 Data = token
             });
         }
         else
         {
             var token = await _apiKeyService.CreateRedisToken(user!);
-            return Ok(new DataResponse<UserApiKey>{
+            return Ok(new DataResponse<UserApiKey>
+            {
                 Data = token
             });
         }
@@ -97,7 +103,7 @@ public class OperationsController : ControllerBase
     }
 
     #region Roles
-    [HttpPost("CreateRole")]
+    [HttpPost("create-role")]
     public async Task<IActionResult> CreateRole([FromBody] string name)
     {
         IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = name });
@@ -106,7 +112,7 @@ public class OperationsController : ControllerBase
         return Ok("Role Created Successfully");
     }
 
-    [HttpPost("UserRoles")]
+    [HttpPost("add-user-roles")]
     public async Task<IActionResult> AddUserRoles(UserRolesRequest req)
     {
         var user = await _userManager.FindByNameAsync(req.Username);
@@ -126,7 +132,7 @@ public class OperationsController : ControllerBase
 
     #endregion
 
-    [HttpPost("RoleAction")]
+    [HttpPost("add-role-action")]
     public async Task<IActionResult> AddRoleAction(RoleActionRequest request)
     {
         var appRole = await _roleManager.FindByNameAsync(request.Role);
@@ -147,8 +153,31 @@ public class OperationsController : ControllerBase
         var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
         var result = await _userManager.ChangePasswordAsync(user!, request.CurrentPassword, request.NewPassword);
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Change password failed", !result.Succeeded);
-        return Ok(new DataResponse<bool> {
+        return Ok(new DataResponse<bool>
+        {
             Data = result.Succeeded
         });
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<ActionResult<DataResponse<bool>>> ConfirmEmail(ConfirmEmailRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Token));
+        var user = await _userManager.FindByNameAsync(request.Username!);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        var result = await _userManager.ConfirmEmailAsync(user!, request.Token!);
+        ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Confirm failed", !result.Succeeded);
+        return Ok(new DataResponse<bool>
+        {
+            Data = result.Succeeded
+        });
+    }
+
+    [HttpGet("encrypt")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public ActionResult<string> Encrypt(string value)
+    {
+        var result = string.IsNullOrEmpty(value) ? string.Empty : AESHelpers.Encrypt(value);
+        return Content(result);
     }
 }
