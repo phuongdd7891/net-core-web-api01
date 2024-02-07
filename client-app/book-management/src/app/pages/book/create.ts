@@ -57,7 +57,6 @@ $(async function () {
             body['FileData'] = file;
         }
         const response = isEdit ? await bookService.updateBook(bookId, body) : await bookService.createBook(body);
-        console.log(response)
         if (response.success) {
             bookService.sendDialogInfo(`${isEdit ? 'Update' : 'Create'} successful!`).then(res => {
                 if (res == 0) { 

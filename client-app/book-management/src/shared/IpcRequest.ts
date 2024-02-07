@@ -4,7 +4,7 @@ export interface IpcRequest {
 }
 
 export interface IpcResponse {
-  code: number,
+  code: string,
   data: any,
   success: boolean
 }

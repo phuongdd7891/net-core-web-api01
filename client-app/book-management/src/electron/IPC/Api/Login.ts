@@ -12,7 +12,7 @@ export class LoginApiChannel extends BaseApiChannel {
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/login?t=jwt', request, net).then(async (response: any) => {
-            if (response.code == 200) {
+            if (response.code == "Ok") {
                 const data = {
                     username: response.data.username,
                     token: response.data.token
@@ -29,7 +29,6 @@ export class LoginApiChannel extends BaseApiChannel {
             event.reply(request.responseChannel, response);
         }).catch(err => {
             event.reply(request.responseChannel!, {
-                code: 500,
                 data: err
             });
         })
@@ -45,13 +44,12 @@ export class LogoutApiChannel extends BaseApiChannel {
 
     handleNet(event: Electron.IpcMainEvent, request: IpcRequest, net: Net): void {
         NetUtils.postRequest('api/Operations/logout', request, net).then(async (response: any) => {
-            if (response.code == 200) {
+            if (response.code == "Ok") {
                 await session.defaultSession.cookies.remove('http://localhost/', `${appData.deviceId}`);
             }
             event.reply(request.responseChannel, response);
         }).catch(err => {
             event.reply(request.responseChannel, {
-                code: 500,
                 data: err
             });
         })

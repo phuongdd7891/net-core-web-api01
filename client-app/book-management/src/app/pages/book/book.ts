@@ -30,7 +30,7 @@ $(async function () {
                     });
                 },
                 error: (err) => {
-                    bookService.sendDialogError(err.responseJSON?.data);
+                    bookService.sendDialogError(`[${err.status}] ${err.statusText}`);
                 },
                 beforeSend: () => {
                     bookService.showLoader(true);

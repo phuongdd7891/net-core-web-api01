@@ -18,7 +18,7 @@ async function login() {
         }
     };
     const loginResponse = await ipcService.sendApi<IpcResponse>("login", req);
-    if (loginResponse.code == 200) {
+    if (loginResponse.code == "Ok") {
         ipcService.send(channels.menu, {
             params: {
                 type: 'user'
@@ -28,7 +28,7 @@ async function login() {
             ipcService.sendOpenFile(ipcService.pagePaths.book);
         })
     } else {
-        ipcService.sendDialogError(loginResponse.data);
+        ipcService.sendDialogError(`${loginResponse.code}-${loginResponse.data}`);
     }
 }
 

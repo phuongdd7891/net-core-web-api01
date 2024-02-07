@@ -1,4 +1,4 @@
-import { app, BrowserView, BrowserWindow, dialog, ipcMain, Menu, MenuItem, net, session } from 'electron';
+import { app, BrowserView, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, net, session } from 'electron';
 import { IpcChannelInterface } from "./IPC/IpcChannelInterface";
 import { GeneralInfoChannel } from "./IPC/GeneralInfoChannel";
 import { ChangePasswordApiChannel, LoginApiChannel, LogoutApiChannel } from './IPC/Api/Login';
@@ -135,8 +135,8 @@ class Main {
         this.mainWindow = new BrowserWindow({
             height: 600,
             width: 800,
-            title: `Yet another Electron Application`,
-            resizable: false
+            resizable: false,
+            icon: path.join(__dirname, "../assets/imgs/app.ico")
         });
         this.mainView = new BrowserView({
             webPreferences: {
@@ -181,7 +181,7 @@ class Main {
             } else if (channelName == channels.dialog) {
                 const buttons = request.params?.['buttons']
                 dialog.showMessageBox(this.mainWindow, {
-                    title: request.params?.['title'],
+                    title: request.params?.['title'] || 'Book',
                     message: request.params?.['message'],
                     type: request.params?.['type'],
                     buttons: buttons ?? [],

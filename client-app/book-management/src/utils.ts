@@ -103,7 +103,7 @@ export class NetUtils {
                         if (responseBodyBuffer.length > 0) {
                             responseBodyJSON = JSON.parse(responseBodyBuffer.toString());
                         }
-                        resolve(responseBodyJSON ?? { code: 200 });
+                        resolve(responseBodyJSON);
                     } catch (error) {
                         reject(error);
                     }
@@ -118,7 +118,7 @@ export class NetUtils {
 
     static fetchRequest(endpoint: string, request: IpcRequest, net: Net) {
         const reqInit: RequestInit = {
-            method: request.params?.['method'] ?? 'post',
+            method: request.params?.['method'] ?? 'post'
         };
         if (request.params?.body) {
             const formData = new FormData();
@@ -132,14 +132,24 @@ export class NetUtils {
             });
             reqInit.body = formData;
         }
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             let reqUrl: string = `${apiHost}/${endpoint}${endpoint.indexOf('?') > 0 ? '&' : '?'}u=${request.params?.["username"] ?? ""}`;
-            net.fetch(reqUrl, reqInit).then(
-                async (res) => {
-                    resolve(await res.json())
-                }).catch(err => {
-                    reject(err.message)
-                });
+            const res = await net.fetch(reqUrl, reqInit);
+            if (res.ok) {
+                resolve(await res.json());
+            } else {
+                let errText = await res.text();
+                if (res.status == 403) {
+                    errText = `[${res.status}] ${res.statusText}`;
+                } else {
+                    try {
+                        errText = JSON.parse(errText);    
+                    } catch {
+                        errText = "Unknown error";
+                    }
+                }
+                reject(errText);
+            }
         })
     }
 

@@ -42,7 +42,7 @@ body .btn {
     font-size: var(--bs-body-font-size);
 }
 
-body #contentWrapper, nav #notif-bar {
+body #contentWrapper, nav #notif-bar, .modal-dialog .modal-body {
     font-size: 14px;
     position: relative;
 }

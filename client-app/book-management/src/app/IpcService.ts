@@ -57,7 +57,7 @@ export class IpcService {
         ipcRenderer.send(channels.loaderShow, true);
         return new Promise<T>(resolve => {
             ipcRenderer.once(channelName, (event, response) => resolve(response));
-        }).then(res => ({...res, success: res.code == 200})).finally(() => {
+        }).then(res => ({...res, success: res.code == "Ok"})).finally(() => {
             ipcRenderer.send(channels.loaderShow, false)
         });
     }
@@ -68,7 +68,7 @@ export class IpcService {
         }
         this.ipcRenderer.send(channels.dialog, {
             params: {
-                message: !message ? 'Unknown error' : typeof message == "string" ? message : (message.message || JSON.stringify(message)),
+                message: typeof message == "string" ? message : (message.data || JSON.stringify(message)),
                 title: title,
                 type: "error"
             }
