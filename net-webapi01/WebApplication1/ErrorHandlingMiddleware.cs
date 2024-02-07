@@ -31,23 +31,17 @@ public class ErrorHandlingMiddleware
             try
             {
                 // Log the exception
-                var errResp = JsonConvert.DeserializeObject<DataResponse<string>>(ex.Message);
+                var errResp = JsonConvert.DeserializeObject<ErrorStatusResponse>(ex.Message);
                 // Return consistent error response
-                context.Response.StatusCode = errResp?.Code ?? (int)HttpStatusCode.InternalServerError;
-
-                if (errResp != null)
-                {
-                    errResp.Data = errResp?.Data ?? "An error occurred while processing your request.";
-                }
-
-                var json = JsonConvert.SerializeObject(errResp, jsonSettings);
+                context.Response.StatusCode = errResp!.StatusCode;
+                var json = JsonConvert.SerializeObject(errResp.Data, jsonSettings);
                 await context.Response.WriteAsync(json);
             }
             catch
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 var json = JsonConvert.SerializeObject(new DataResponse<string> {
-                    Code = context.Response.StatusCode,
+                    Code = DataResponseCode.IternalError.ToString(),
                     Data = ex.Message
                 }, jsonSettings);
                 await context.Response.WriteAsync(json);

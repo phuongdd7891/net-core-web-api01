@@ -38,30 +38,38 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("create-user")]
-    public async Task<ActionResult<User>> CreateUser(User user)
+    public async Task<ActionResult<DataResponse<string>>> CreateUser(User user)
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
+            });
         }
         var result = await _userManager.CreateAsync(
-             new ApplicationUser()
-             {
-                 UserName = user.Username,
-                 Email = user.Email
-             },
+            new ApplicationUser()
+            {
+                UserName = user.Username,
+                Email = user.Email
+            },
             user.Password
         );
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = result.Errors.First()!.Description
+            });
         }
         var appUser = await _userManager.FindByNameAsync(user.Username);
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
-        await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>");
-        
+        //await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
+        Console.WriteLine($"{user.Username}: {emailToken}");
         user.Password = "";
-        return Created("", user);
+        return Ok(new DataResponse());
     }
 
     [HttpPost("Login")]
@@ -74,6 +82,9 @@ public class OperationsController : ControllerBase
 
         var isPasswordValid = await _userManager.CheckPasswordAsync(user!, request.Password);
         ErrorStatuses.ThrowBadRequest("Bad credentials", !isPasswordValid);
+
+        var isConfirmedEmail = await _userManager.IsEmailConfirmedAsync(user!);
+        ErrorStatuses.ThrowInternalErr("Email has been not confirmed yet", !isConfirmedEmail, DataResponseCode.EmailNotConfirm.ToString());
 
         if (tokenType == "jwt")
         {
@@ -95,11 +106,11 @@ public class OperationsController : ControllerBase
 
     [HttpPost("Logout")]
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
-    public async Task<IActionResult> Logout()
+    public async Task<ActionResult<DataResponse>> Logout()
     {
         var username = HttpContext.User.Identity!.Name;
         await _apiKeyService.RemoveRedisToken(username!);
-        return Ok();
+        return Ok(new DataResponse());
     }
 
     #region Roles

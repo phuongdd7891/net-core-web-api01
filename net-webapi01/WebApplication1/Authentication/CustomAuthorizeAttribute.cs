@@ -53,7 +53,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             context.Result = GetJsonResult(new DataResponse<string>
             {
                 Data = "Header key Not Found",
-                Code = StatusCodes.Status401Unauthorized
+                Code = DataResponseCode.Unauthorized.ToString()
             });
             return;
         }
@@ -64,7 +64,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             context.Result = GetJsonResult(new DataResponse<string>
             {
                 Data = "Username not found",
-                Code = StatusCodes.Status401Unauthorized
+                Code = DataResponseCode.Unauthorized.ToString()
             });
             return;
         }
@@ -76,7 +76,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             context.Result = GetJsonResult(new DataResponse<string>
             {
                 Data = "User key not found",
-                Code = StatusCodes.Status401Unauthorized
+                Code = DataResponseCode.Unauthorized.ToString()
             });
             return;
         }
@@ -88,7 +88,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
                 context.Result = GetJsonResult(new DataResponse<string>
                 {
                     Data = "Invalid api key",
-                    Code = StatusCodes.Status401Unauthorized
+                    Code = DataResponseCode.Unauthorized.ToString()
                 });
                 return;
             }
@@ -110,7 +110,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             context.Result = GetJsonResult(new DataResponse<string>
             {
                 Data = "Access denied",
-                Code = StatusCodes.Status403Forbidden
+                Code = DataResponseCode.Unauthorized.ToString()
             });
             return;
         }

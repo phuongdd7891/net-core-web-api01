@@ -62,8 +62,8 @@ public class BooksController : BaseController
         request.Data.CreatedBy = HttpContext.User.Identity!.Name;
         await _booksService.CreateAsync(request.Data, request.FileData);
 
-        //return CreatedAtAction(nameof(Get), new { id = request.Data.Id }, request.Data);
-        return Ok(new DataResponse<string>());
+        //return CreatedAtAction(nameof(Get), new { id = request.Data.Id });
+        return Ok(new DataResponse());
     }
 
     [HttpPost("copy")]
@@ -73,7 +73,7 @@ public class BooksController : BaseController
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
         await _booksService.CreateCopyAsync(book!, qty);
-        return Ok(new DataResponse<string>());
+        return Ok(new DataResponse());
     }
 
     [HttpPut("{id:length(24)}")]
@@ -88,7 +88,7 @@ public class BooksController : BaseController
         book.ModifiedBy = HttpContext.User.Identity!.Name;
         await _booksService.UpdateAsync(book, request.FileData);
 
-        return Ok(new DataResponse<string>());
+        return Ok(new DataResponse());
     }
 
     [HttpDelete("{id:length(24)}")]
@@ -125,10 +125,7 @@ public class BooksController : BaseController
         var result = await _booksService.RemoveManyAsync(ids!);
         if (string.IsNullOrEmpty(result))
         {
-            return Ok(new DataResponse<string>
-            {
-                Data = string.Empty
-            });
+            return Ok(new DataResponse());
         }
         else
         {

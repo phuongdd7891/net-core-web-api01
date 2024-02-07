@@ -2,6 +2,8 @@
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using NLog;
+using NLog.Web;
 using WebApi.Models;
 
 namespace WebApi.Services;
@@ -14,6 +16,9 @@ public interface IEmailSender
 public class EmailService : IEmailSender
 {
     private readonly EmailSettings _emailSettings;
+    private readonly Logger _logger = LogManager.Setup()
+                       .LoadConfigurationFromAppSettings()
+                       .GetCurrentClassLogger();
 
     public EmailService(
         IOptions<EmailSettings> emailSettings
@@ -48,6 +53,7 @@ public class EmailService : IEmailSender
         }
         catch (Exception ex)
         {
+            _logger.Error(ex, message);
             throw new InvalidOperationException(ex.Message);
         }
     }

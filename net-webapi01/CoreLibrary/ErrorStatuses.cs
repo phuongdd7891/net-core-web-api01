@@ -1,18 +1,29 @@
 using System.Net;
 using System.Text.Json;
 
+public class ErrorStatusResponse
+{
+    public int StatusCode { get; set; }
+    public DataResponse<string>? Data { get; set; }
+}
+
 public class ErrorStatuses
 {
-    private static DataResponse<string> GetErrorResponse(int code, string message) => new DataResponse<string> {
-        Code = code,
-        Data = message,
+    private static ErrorStatusResponse GetErrorResponse(int statusCode, string errCode, string message) => new ErrorStatusResponse
+    {
+        StatusCode = statusCode,
+        Data = new DataResponse<string>
+        {
+            Code = errCode,
+            Data = message,
+        }
     };
 
-    public static void ThrowInternalErr(string message, bool condition)
+    public static void ThrowInternalErr(string message, bool condition, string errCode = "")
     {
         if (condition)
         {
-            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.InternalServerError, message)));
+            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.InternalServerError, string.IsNullOrEmpty(errCode) ? DataResponseCode.IternalError.ToString() : errCode, message)));
         }
     }
 
@@ -20,7 +31,7 @@ public class ErrorStatuses
     {
         if (condition)
         {
-            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.NotFound, message)));
+            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.NotFound, DataResponseCode.NotFound.ToString(), message)));
         }
     }
 
@@ -28,7 +39,7 @@ public class ErrorStatuses
     {
         if (condition)
         {
-            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.BadRequest, message)));
+            throw new Exception(JsonSerializer.Serialize(GetErrorResponse((int)HttpStatusCode.BadRequest, DataResponseCode.InvalidRequest.ToString(), message)));
         }
     }
 }

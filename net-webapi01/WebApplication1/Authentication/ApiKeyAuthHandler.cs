@@ -87,7 +87,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
             };
             Response.WriteAsync(JsonConvert.SerializeObject(new DataResponse<string>
             {
-                Code = 401,
+                Code = DataResponseCode.Unauthorized.ToString(),
                 Data = errMessage
             }, jsonSettings));
         }

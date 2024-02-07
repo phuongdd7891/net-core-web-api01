@@ -69,6 +69,6 @@ public class BookCategoryController : BaseController
         }
         await _booksService.CreateCategoryAsync(request);
 
-        return Ok(new DataResponse<string>());
+        return Ok(new DataResponse());
     }
 }
