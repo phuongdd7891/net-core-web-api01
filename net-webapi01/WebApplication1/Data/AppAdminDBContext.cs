@@ -1,6 +1,7 @@
 using MongoDB.Driver;
 using CoreLibrary.DbContext;
 using WebApi.Models.Admin;
+using CoreLibrary.Helpers;
 
 public class AppAdminDBContext
 {
@@ -11,5 +12,5 @@ public class AppAdminDBContext
         _dbContext = new MongoDbContext(AESHelpers.Decrypt(connectionString), databaseName);
     }
 
-    public IMongoCollection<AdminUser> AdminUsers => _dbContext.GetCollection<AdminUser>("User");
+    public IMongoCollection<AdminUser> AdminUsers => _dbContext.GetCollection<AdminUser>("Users");
 }

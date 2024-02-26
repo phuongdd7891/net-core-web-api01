@@ -4,6 +4,7 @@ using CoreLibrary.Repository;
 using IdentityMongo.Models;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 
 namespace WebApi.Services;
@@ -81,4 +82,49 @@ public class JwtService
             ),
             SecurityAlgorithms.HmacSha256Signature
         );
+
+    public AuthenticationResponse CreateAdminToken(AdminUser user)
+    {
+        var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
+        var tokenHandler = new JsonWebTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[] {
+                new Claim(ClaimTypes.NameIdentifier, user.Id!),
+                new Claim(ClaimTypes.Name, user.Username),
+            }),
+            Audience = _configuration["Jwt:Audience"],
+            Issuer = _configuration["Jwt:Issuer"],
+            Expires = expiration,
+            SigningCredentials = CreateSigningCredentials()
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return new AuthenticationResponse
+        {
+            Token = token,
+            Expiration = expiration,
+            Username = user.Username
+        };
+    }
+
+    public async Task<bool> ValidateToken(string token, string username)
+    {
+        var tokenHandler = new JsonWebTokenHandler();
+        var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]!)),
+            ValidIssuer = _configuration["Jwt:Issuer"],
+            ValidAudience = _configuration["Jwt:Audience"],
+            ClockSkew = TimeSpan.Zero,
+            ValidateLifetime = true   
+        });
+        if (result.IsValid)
+        {
+            return result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
+        }
+        return false;
+    }
 }

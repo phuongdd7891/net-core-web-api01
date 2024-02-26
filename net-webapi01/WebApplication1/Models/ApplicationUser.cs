@@ -9,6 +9,6 @@ namespace IdentityMongo.Models
     [CollectionName("Users")]
     public class ApplicationUser : MongoIdentityUser<Guid>
     {
-        
+        public string? CustomerId { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-
+using CoreLibrary.Helpers;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;

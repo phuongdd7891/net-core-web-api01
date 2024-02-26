@@ -8,10 +8,11 @@ namespace WebApi.Models.Admin
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
-
-        [BsonElement("Name")]
-        [Newtonsoft.Json.JsonProperty("name")]
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
         public string? FullName { get; set; }
-
+        public bool IsSystem { get; set; }
+        public bool IsCustomer { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }

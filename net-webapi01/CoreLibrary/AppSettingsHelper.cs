@@ -1,3 +1,7 @@
+using Microsoft.Extensions.Configuration;
+
+namespace CoreLibrary.Helpers;
+
 public static class AppSettingsHelper
 {
     private static IConfiguration _config;

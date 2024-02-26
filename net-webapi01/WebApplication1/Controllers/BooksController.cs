@@ -5,13 +5,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
-using System.Security.Claims;
 
 namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController : BaseController
+public class BooksController: BaseController
 {
     private readonly BooksService _booksService;
 

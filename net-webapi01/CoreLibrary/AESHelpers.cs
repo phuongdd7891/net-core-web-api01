@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 
+namespace CoreLibrary.Helpers;
+
 public static class AESHelpers
 {
     private static readonly byte[] key = Encoding.UTF8.GetBytes("hcm1028304051987");

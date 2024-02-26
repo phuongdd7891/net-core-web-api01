@@ -13,5 +13,7 @@ namespace IdentityMongo.Models
  
         [Required]
         public required string Password { get; set; }
+
+        public string? CustomerId { get; set; }
     }
 }

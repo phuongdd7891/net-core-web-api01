@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using WebApi.Services;
 
 namespace WebApplication1.Authentication;
 
@@ -14,15 +15,24 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
 {
     public const string API_KEY_HEADER = "ApiKey";
     private readonly RedisRepository _redisRepository;
+    private readonly AdminService _adminSerivce;
+    private readonly JwtService _jwtService;
     private readonly string _requestAction;
+    private readonly bool _isSystem;
 
     public CustomAuthorizeFilter(
         RedisRepository redisRepository,
-        string requestAction
+        AdminService adminService,
+        JwtService jwtService,
+        string requestAction,
+        bool isSystem
     )
     {
         _redisRepository = redisRepository;
         _requestAction = requestAction;
+        _adminSerivce = adminService;
+        _jwtService = jwtService;
+        _isSystem = isSystem;
     }
 
     private JsonResult GetJsonResult(DataResponse<string> data)
@@ -47,18 +57,6 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         if (allowAnonymous)
             return;
 
-        // authorization
-        if (!context.HttpContext.Request.Headers.ContainsKey(API_KEY_HEADER))
-        {
-            context.Result = GetJsonResult(new DataResponse<string>
-            {
-                Data = "Header key Not Found",
-                Code = DataResponseCode.Unauthorized.ToString()
-            });
-            return;
-        }
-        string apiKeyToValidate = context.HttpContext.Request.Headers[API_KEY_HEADER]!;
-
         if (!context.HttpContext.Request.Query.ContainsKey("u"))
         {
             context.Result = GetJsonResult(new DataResponse<string>
@@ -70,61 +68,72 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         }
         string username = context.HttpContext.Request.Query["u"]!;
 
-        var apiKey = await _redisRepository.HasKey(username);
-        if (!apiKey)
+        // validate token
+        if (!context.HttpContext.Request.Headers.ContainsKey("Authorization"))
         {
             context.Result = GetJsonResult(new DataResponse<string>
             {
-                Data = "User key not found",
+                Data = "Header key Not Found",
                 Code = DataResponseCode.Unauthorized.ToString()
             });
             return;
         }
-        else
+        string authHeader = context.HttpContext.Request.Headers["Authorization"]!;
+        string token = authHeader.Split(' ')[1];
+        bool validToken = await _jwtService.ValidateToken(token, username);
+        if (!validToken)
         {
-            var keyValue = await _redisRepository.Get(username);
-            if (string.Compare(apiKeyToValidate, keyValue) != 0)
+            context.Result = GetJsonResult(new DataResponse<string>
+            {
+                Data = "Invalid api key",
+                Code = DataResponseCode.Unauthorized.ToString()
+            });
+            return;
+        }
+
+        // check system user
+        if (_isSystem)
+        {
+            var adminUser = await _adminSerivce.GetUser(username);
+            if (adminUser == null || !adminUser.IsSystem)
             {
                 context.Result = GetJsonResult(new DataResponse<string>
                 {
-                    Data = "Invalid api key",
+                    Data = "Account is not system user",
                     Code = DataResponseCode.Unauthorized.ToString()
                 });
-                return;
             }
-        }
-        var hashKey = $"{username}:{apiKeyToValidate}";
-        var user = await _redisRepository.GetEntity<ApplicationUser>(hashKey);
-        if (user == null)
-        {
-            context.Result = new ForbidResult(API_KEY_HEADER);
             return;
         }
+
+        // authorization
         if (string.IsNullOrEmpty(_requestAction))
         {
             return;
         }
-        var roles = await _redisRepository.GetHashByField<List<string>>(Const.ROLE_ACTION_KEY, _requestAction);
-        if ((roles?.Count > 0 && !roles.Any(a => user!.Roles.Contains(Guid.Parse(a)))) || roles == null)
-        {
-            context.Result = GetJsonResult(new DataResponse<string>
-            {
-                Data = "Access denied",
-                Code = DataResponseCode.Unauthorized.ToString()
-            });
-            return;
-        }
+        // var roles = await _redisRepository.GetHashByField<List<string>>(Const.ROLE_ACTION_KEY, _requestAction);
+        // if ((roles?.Count > 0 && !roles.Any(a => user!.Roles.Contains(Guid.Parse(a)))) || roles == null)
+        // {
+        //     context.Result = GetJsonResult(new DataResponse<string>
+        //     {
+        //         Data = "Access denied",
+        //         Code = DataResponseCode.Unauthorized.ToString()
+        //     });
+        //     return;
+        // }
     }
 }
 
 public class CustomAuthorizeAttribute : TypeFilterAttribute
 {
     public CustomAuthorizeAttribute(
-        string? requestAction = null
+        string? requestAction = null,
+        bool isSystem = false
     ) : base(typeof(CustomAuthorizeFilter))
     {
         Arguments = new object[] {
-            requestAction ?? ""
+            requestAction ?? "",
+            isSystem
         };
     }
 }

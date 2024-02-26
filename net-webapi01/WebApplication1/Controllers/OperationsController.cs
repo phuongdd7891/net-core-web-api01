@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebApi.Models.Requests;
+using CoreLibrary.Helpers;
+using WebApplication1.Authentication;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -38,7 +40,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("create-user")]
-    public async Task<ActionResult<DataResponse<string>>> CreateUser(User user)
+    public async Task<IActionResult> CreateUser(User user)
     {
         if (!ModelState.IsValid)
         {
@@ -52,7 +54,8 @@ public class OperationsController : ControllerBase
             new ApplicationUser()
             {
                 UserName = user.Username,
-                Email = user.Email
+                Email = user.Email,
+                CustomerId = user.CustomerId
             },
             user.Password
         );
@@ -68,7 +71,7 @@ public class OperationsController : ControllerBase
         try
         {
             var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
-            await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
+            //await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>You need to confirm your email account by using below token</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -79,11 +82,11 @@ public class OperationsController : ControllerBase
                 Data = ex.Message
             });
         }
-        return new DataResponse();
+        return Ok(new DataResponse());
     }
 
     [HttpPost("Login")]
-    public async Task<ActionResult<DataResponse<AuthenticationResponse>>> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
+    public async Task<IActionResult> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.UserName));
         ErrorStatuses.ThrowBadRequest("Password is required", string.IsNullOrEmpty(request.Password));
@@ -134,6 +137,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("add-user-roles")]
+    [CustomAuthorize(null, true)]
     public async Task<IActionResult> AddUserRoles(UserRolesRequest req)
     {
         var user = await _userManager.FindByNameAsync(req.Username);
@@ -154,6 +158,7 @@ public class OperationsController : ControllerBase
     #endregion
 
     [HttpPost("add-role-action")]
+    [CustomAuthorize(null, true)]
     public async Task<IActionResult> AddRoleAction(RoleActionRequest request)
     {
         var appRole = await _roleManager.FindByNameAsync(request.Role);

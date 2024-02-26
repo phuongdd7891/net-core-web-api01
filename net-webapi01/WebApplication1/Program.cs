@@ -20,6 +20,7 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Hubs;
 using Microsoft.AspNetCore.Identity;
+using CoreLibrary.Helpers;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -108,7 +109,7 @@ services.AddSingleton(serviceProvider =>
     var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new AppAdminDBContext(settings.AdminConnectionString, settings.AdminDatabaseName);
 });
-
+services.AddSingleton<AdminService>();
 services.AddSingleton<BooksService>();
 services.AddSingleton<JwtService>();
 services.AddSingleton<ApiKeyService>();
