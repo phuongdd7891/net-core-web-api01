@@ -73,8 +73,8 @@ services.AddControllers()
         });
 
 //db configs
-var mongoDbSettings = builder.Configuration.GetSection("BookStoreDatabase").Get<BookStoreDatabaseSettings>();
-services.Configure<BookStoreDatabaseSettings>(builder.Configuration.GetSection("BookStoreDatabase"));
+var mongoDbSettings = builder.Configuration.GetSection("BookDatabase").Get<BookDatabaseSettings>();
+services.Configure<BookDatabaseSettings>(builder.Configuration.GetSection("BookDatabase"));
 services.AddIdentity<ApplicationUser, ApplicationRole>(options => {
             options.Password.RequireDigit = false;
             options.Password.RequireLowercase = false;
@@ -93,16 +93,22 @@ var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConf
 services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
 
 // services
-services.AddSingleton<AppDBContext>(serviceProvider =>
+services.AddSingleton(serviceProvider =>
 {
-    var settings = serviceProvider.GetRequiredService<IOptions<BookStoreDatabaseSettings>>().Value;
+    var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new AppDBContext(settings.ConnectionString, settings.DatabaseName);
 });
-services.AddSingleton<MongoDbContext>(serviceProvider =>
+services.AddSingleton(serviceProvider =>
 {
-    var dbCtx = serviceProvider.GetRequiredService<AppDBContext>();
-    return dbCtx.GetContext();
+    var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
+    return new MongoDbContext(settings.ConnectionString, settings.DatabaseName);
 });
+services.AddSingleton(serviceProvider =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
+    return new AppAdminDBContext(settings.AdminConnectionString, settings.AdminDatabaseName);
+});
+
 services.AddSingleton<BooksService>();
 services.AddSingleton<JwtService>();
 services.AddSingleton<ApiKeyService>();

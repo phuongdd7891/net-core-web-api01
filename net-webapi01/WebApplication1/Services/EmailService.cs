@@ -43,8 +43,8 @@ public class EmailService : IEmailSender
             using (var client = new SmtpClient())
             {
                 await client.ConnectAsync(_emailSettings.MailServer, _emailSettings.MailPort, true);
-                var sender = AppSettingsHelper.GetSettingAsString("EmailSettings:Sender");
-                var password = AppSettingsHelper.GetSettingAsString("EmailSettings:Password");
+                var sender = AESHelpers.Decrypt(_emailSettings.Sender!);
+                var password = AESHelpers.Decrypt(_emailSettings.Password!);
                 await client.AuthenticateAsync(sender, password);
                 await client.SendAsync(mimeMessage);
                 await client.DisconnectAsync(true);

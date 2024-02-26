@@ -65,11 +65,21 @@ public class OperationsController : ControllerBase
             });
         }
         var appUser = await _userManager.FindByNameAsync(user.Username);
-        var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
-        //await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
-        Console.WriteLine($"{user.Username}: {emailToken}");
-        user.Password = "";
-        return Ok(new DataResponse());
+        try
+        {
+            var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
+            await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>Please use below token to confirm your account before login</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await _userManager.DeleteAsync(appUser!);
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.IternalError.ToString(),
+                Data = ex.Message
+            });
+        }
+        return new DataResponse();
     }
 
     [HttpPost("Login")]
@@ -106,11 +116,11 @@ public class OperationsController : ControllerBase
 
     [HttpPost("Logout")]
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
-    public async Task<ActionResult<DataResponse>> Logout()
+    public async Task<DataResponse> Logout()
     {
         var username = HttpContext.User.Identity!.Name;
         await _apiKeyService.RemoveRedisToken(username!);
-        return Ok(new DataResponse());
+        return new DataResponse();
     }
 
     #region Roles
@@ -158,30 +168,43 @@ public class OperationsController : ControllerBase
 
     [HttpPost("change-password")]
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
-    public async Task<ActionResult<DataResponse<bool>>> ChangePassword(ChangePasswordRequest request)
+    public async Task<DataResponse<bool>> ChangePassword(ChangePasswordRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword));
         var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
         var result = await _userManager.ChangePasswordAsync(user!, request.CurrentPassword, request.NewPassword);
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Change password failed", !result.Succeeded);
-        return Ok(new DataResponse<bool>
+        return new DataResponse<bool>
         {
             Data = result.Succeeded
-        });
+        };
     }
 
     [HttpPost("confirm-email")]
-    public async Task<ActionResult<DataResponse<bool>>> ConfirmEmail(ConfirmEmailRequest request)
+    public async Task<DataResponse<bool>> ConfirmEmail(ConfirmEmailRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Token));
         var user = await _userManager.FindByNameAsync(request.Username!);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
         var result = await _userManager.ConfirmEmailAsync(user!, request.Token!);
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Confirm failed", !result.Succeeded);
-        return Ok(new DataResponse<bool>
+        return new DataResponse<bool>
         {
             Data = result.Succeeded
-        });
+        };
+    }
+
+    [HttpGet("generate-email-token")]
+    public async Task<DataResponse<string>> GenerateConfirmationEmailToken(string username)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(username));
+        var user = await _userManager.FindByNameAsync(username!);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user!);
+        return new DataResponse<string>
+        {
+            Data = emailToken
+        };
     }
 
     [HttpGet("encrypt")]

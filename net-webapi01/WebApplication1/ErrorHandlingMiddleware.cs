@@ -30,9 +30,7 @@ public class ErrorHandlingMiddleware
             };
             try
             {
-                // Log the exception
                 var errResp = JsonConvert.DeserializeObject<ErrorStatusResponse>(ex.Message);
-                // Return consistent error response
                 context.Response.StatusCode = errResp!.StatusCode;
                 var json = JsonConvert.SerializeObject(errResp.Data, jsonSettings);
                 await context.Response.WriteAsync(json);

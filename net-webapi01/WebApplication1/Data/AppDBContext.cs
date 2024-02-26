@@ -12,7 +12,6 @@ public class AppDBContext
         _dbContext = new MongoDbContext(connectionString, databaseName);
     }
 
-    public MongoDbContext GetContext() => _dbContext;
     public IMongoCollection<Book> Books => _dbContext.GetCollection<Book>("Books");
     public IMongoCollection<BookCategory> BookCategories => _dbContext.GetCollection<BookCategory>("BookCategories");
     public IMongoCollection<UserApiKey> ApiKeys => _dbContext.GetCollection<UserApiKey>("UserApiKeys");
