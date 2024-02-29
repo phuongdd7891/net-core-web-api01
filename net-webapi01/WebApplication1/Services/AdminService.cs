@@ -1,3 +1,4 @@
+using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
 using WebApi.Models.Admin;
@@ -9,12 +10,15 @@ public class AdminService
 {
     private readonly IMongoCollection<AdminUser> _users;
     private PasswordHasher<AdminUser> passwordHasher;
+    private readonly RedisRepository _redisRepository;
 
     public AdminService(
-        AppAdminDBContext _context
+        AppAdminDBContext _context,
+        RedisRepository redisRepository
     )
     {
         _users = _context.AdminUsers;
+        _redisRepository = redisRepository;
         passwordHasher = new PasswordHasher<AdminUser>();
     }
 
@@ -31,5 +35,10 @@ public class AdminService
     {
         var user = await GetUser(username);
         return user != null && passwordHasher.VerifyHashedPassword(user, user.Password, password) != PasswordVerificationResult.Failed;
+    }
+
+    public async Task RemoveToken(string token)
+    {
+        await _redisRepository.Remove(token);
     }
 }

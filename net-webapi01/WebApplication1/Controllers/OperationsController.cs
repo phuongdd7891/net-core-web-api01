@@ -99,7 +99,7 @@ public class OperationsController : ControllerBase
         var isConfirmedEmail = await _userManager.IsEmailConfirmedAsync(user!);
         ErrorStatuses.ThrowInternalErr("Email has been not confirmed yet", !isConfirmedEmail, DataResponseCode.EmailNotConfirm.ToString());
 
-        if (tokenType == "jwt")
+        if (tokenType == null)
         {
             var token = await _jwtService.CreateToken(user!);
             return Ok(new DataResponse<AuthenticationResponse>

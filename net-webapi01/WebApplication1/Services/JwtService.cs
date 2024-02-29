@@ -38,6 +38,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
+        await _redisRepository.SetEntity(token, user, EXPIRATION_MINUTES);
         return new AuthenticationResponse
         {
             Token = token,
@@ -83,7 +84,7 @@ public class JwtService
             SecurityAlgorithms.HmacSha256Signature
         );
 
-    public AuthenticationResponse CreateAdminToken(AdminUser user)
+    public async Task<AuthenticationResponse> CreateAdminToken(AdminUser user)
     {
         var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
         var tokenHandler = new JsonWebTokenHandler();
@@ -99,6 +100,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
+        await _redisRepository.SetEntity(token, user, EXPIRATION_MINUTES);
         return new AuthenticationResponse
         {
             Token = token,

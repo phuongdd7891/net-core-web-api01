@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using WebApi.Services;
+using WebApplication1.Authentication;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -51,10 +51,20 @@ public class AdminController : ControllerBase
         ErrorStatuses.ThrowNotFound("User not found", user == null);
         var pwdResult = await _adminService.VerifyPassword(request.UserName, request.Password);
         ErrorStatuses.ThrowBadRequest("Bad credentials", !pwdResult);
-        var token = _jwtService.CreateAdminToken(user!);
+        var token = await _jwtService.CreateAdminToken(user!);
         return Ok(new DataResponse<AuthenticationResponse>
         {
             Data = token
         });
+    }
+
+    [HttpPost("Logout")]
+    [CustomAuthorize]
+    public async Task<DataResponse> Logout()
+    {
+        string? authHeader = HttpContext.Request.Headers["Authorization"];
+        string token = authHeader?.Split(' ')[1] ?? string.Empty;
+        await _adminService.RemoveToken(token);
+        return new DataResponse();
     }
 }

@@ -6,3 +6,4 @@ node_modules
 dist/
 out/
 */BookCover
+/client-app/admin-web/.vs/admin-web
