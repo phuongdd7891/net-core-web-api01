@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using CoreLibrary.Repository;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using WebApi.Models.Admin;
@@ -38,7 +38,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(token, user, EXPIRATION_MINUTES);
+        await _redisRepository.SetEntity(user.UserName!, user, EXPIRATION_MINUTES);
         return new AuthenticationResponse
         {
             Token = token,
@@ -100,7 +100,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(token, user, EXPIRATION_MINUTES);
+        await _redisRepository.SetEntity(user.Username, user, EXPIRATION_MINUTES);
         return new AuthenticationResponse
         {
             Token = token,

@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using CoreLibrary.Repository;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -19,18 +19,21 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
     private readonly JwtService _jwtService;
     private readonly string _requestAction;
     private readonly bool _isSystem;
+    private readonly bool _isCustomer;
 
     public CustomAuthorizeFilter(
         RedisRepository redisRepository,
         JwtService jwtService,
         string requestAction,
-        bool isSystem
+        bool isSystem,
+        bool isCustomer
     )
     {
         _redisRepository = redisRepository;
         _requestAction = requestAction;
         _jwtService = jwtService;
         _isSystem = isSystem;
+        _isCustomer = isCustomer;
     }
 
     private JsonResult GetJsonResult(DataResponse<string> data)
@@ -90,26 +93,26 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         }
 
         // check system user
-        if (_isSystem)
+        if (_isSystem || _isCustomer)
         {
-            var adminUser = await _redisRepository.GetEntity<AdminUser>(token);
-            if (adminUser == null || !adminUser.IsSystem)
+            var adminUser = await _redisRepository.GetEntity<AdminUser>(username);
+            if (adminUser == null || (adminUser.IsSystem != _isSystem && adminUser.IsCustomer != _isCustomer))
             {
                 context.Result = GetJsonResult(new DataResponse<string>
                 {
-                    Data = "Account is not system user",
+                    Data = "Access denied",
                     Code = DataResponseCode.Unauthorized.ToString()
                 });
             }
             return;
         }
-
+        
         // authorization
         if (string.IsNullOrEmpty(_requestAction))
         {
             return;
         }
-        var user = await _redisRepository.GetEntity<ApplicationUser>($"{token}");
+        var user = await _redisRepository.GetEntity<ApplicationUser>(username);
         var roles = await _redisRepository.GetHashByField<List<string>>(Const.ROLE_ACTION_KEY, _requestAction);
         if (roles?.Count == 0 || !roles!.Any(a => user!.Roles.Contains(Guid.Parse(a))) || user?.Roles.Count == 0)
         {
@@ -127,12 +130,14 @@ public class CustomAuthorizeAttribute : TypeFilterAttribute
 {
     public CustomAuthorizeAttribute(
         string? requestAction = null,
-        bool isSystem = false
+        bool isSystem = false,
+        bool isCustomer = false
     ) : base(typeof(CustomAuthorizeFilter))
     {
         Arguments = new object[] {
             requestAction ?? "",
-            isSystem
+            isSystem,
+            isCustomer
         };
     }
 }

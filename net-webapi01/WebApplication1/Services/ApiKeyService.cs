@@ -1,6 +1,6 @@
 using System.Text.Json;
 using CoreLibrary.Repository;
-using IdentityMongo.Models;
+using WebApi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -72,14 +72,12 @@ public class ApiKeyService
         return userKey;
     }
 
-    public async Task RemoveRedisToken(string username)
+    public async Task RemoveRedisToken(string token)
     {
-        var hasKey = await _redisRepository.HasKey(username);
+        var hasKey = await _redisRepository.HasKey(token);
         if (hasKey)
         {
-            var token = await _redisRepository.Get(username);
-            await _redisRepository.Remove(username);
-            await _redisRepository.Remove($"{username}:{token}");
+            await _redisRepository.Remove(token);
         }
     }
 

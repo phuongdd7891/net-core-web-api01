@@ -1,5 +1,5 @@
 using WebApi.Models;
-using IdentityMongo.Models;
+using WebApi.Models;
 using MongoDB.Driver;
 using CoreLibrary.DbContext;
 

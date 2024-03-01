@@ -1,6 +1,5 @@
 using WebApi.Models;
 using WebApi.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Requests;
@@ -17,7 +16,7 @@ public class BooksController: BaseController
     public BooksController(BooksService booksService) =>
         _booksService = booksService;
 
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_LIST_BOOK)]
+    [Authorize(Roles = Const.ACTION_GET_BOOKS)]
     [HttpGet]
     public async Task<DataResponse<GetBooksReply>> Get(int skip, int limit)
     {
@@ -40,7 +39,7 @@ public class BooksController: BaseController
     }
 
     [HttpGet("{id:length(24)}")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_GET_BOOK)]
+    [Authorize(Roles = Const.ACTION_GET_BOOK)]
     public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -53,7 +52,7 @@ public class BooksController: BaseController
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Post([FromForm] CreateBookRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
@@ -66,7 +65,7 @@ public class BooksController: BaseController
     }
 
     [HttpPost("copy")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Copy([FromQuery] string id, [FromQuery] int qty)
     {
         var book = await _booksService.GetAsync(id);
@@ -76,7 +75,7 @@ public class BooksController: BaseController
     }
 
     [HttpPut("{id:length(24)}")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Update(string id, [FromForm] CreateBookRequest request)
     {
         var book = await _booksService.GetAsync(id);
@@ -91,7 +90,7 @@ public class BooksController: BaseController
     }
 
     [HttpDelete("{id:length(24)}")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> Delete(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -116,7 +115,7 @@ public class BooksController: BaseController
     }
 
     [HttpDelete("delete-many")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_CREATE_BOOK)]
+    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
     public async Task<IActionResult> DeleteMany([FromQuery] string[] ids)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", ids == null || ids.Length == 0);
@@ -133,7 +132,7 @@ public class BooksController: BaseController
     }
 
     [HttpGet("download-cover")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}", Roles = Const.ACTION_GET_BOOK)]
+    [Authorize(Roles = Const.ACTION_GET_BOOK)]
     public async Task<IActionResult> DownloadCover(string id)
     {
         ErrorStatuses.ThrowBadRequest("Id cannot empty", string.IsNullOrEmpty(id));

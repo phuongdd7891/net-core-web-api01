@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
  
-namespace IdentityMongo.Models
+namespace WebApi.Models
 {
     public class User
     {
@@ -15,5 +15,13 @@ namespace IdentityMongo.Models
         public required string Password { get; set; }
 
         public string? CustomerId { get; set; }
+    }
+
+    public class GetUsersReply
+    {
+        public Guid Id { get; set; }
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string[]? Roles { get; set; }
     }
 }

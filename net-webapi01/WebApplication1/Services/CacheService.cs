@@ -1,7 +1,7 @@
 
 using CoreLibrary.Repository;
 using DnsClient.Protocol;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Identity;
 using NLog;
 using NLog.Web;

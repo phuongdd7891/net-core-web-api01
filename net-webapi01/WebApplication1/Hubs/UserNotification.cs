@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace WebApi.Hubs
 {
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     public class UserNotifications : Hub
     {
         private readonly RedisRepository _redisRepository;

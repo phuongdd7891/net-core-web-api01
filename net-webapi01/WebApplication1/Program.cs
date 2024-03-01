@@ -2,7 +2,7 @@ using System.Text;
 using WebApi.Models;
 using WebApi.Services;
 using CoreLibrary.Repository;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebApi.Hubs;
 using Microsoft.AspNetCore.Identity;
 using CoreLibrary.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -76,13 +77,14 @@ services.AddControllers()
 //db configs
 var mongoDbSettings = builder.Configuration.GetSection("BookDatabase").Get<BookDatabaseSettings>();
 services.Configure<BookDatabaseSettings>(builder.Configuration.GetSection("BookDatabase"));
-services.AddIdentity<ApplicationUser, ApplicationRole>(options => {
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequiredLength = 6;
-        })
+services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
         .AddDefaultTokenProviders()
         .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
         (
@@ -124,7 +126,12 @@ services.Configure<ApiBehaviorOptions>(opt =>
 });
 
 // authentication
-services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
         .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, x =>
         {
             x.RequireHttpsMetadata = false;
@@ -145,6 +152,14 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ApiKeyAuthenticationHandler.API_KEY_HEADER,
             options => { }
         );
+
+services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 services.AddSignalR((options) =>
         {
@@ -179,6 +194,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();

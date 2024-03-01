@@ -4,7 +4,7 @@ using MongoDbGenericRepository.Attributes;
 using System;
 using System.Text.Json.Serialization;
 
-namespace IdentityMongo.Models
+namespace WebApi.Models
 {
     [CollectionName("Users")]
     public class ApplicationUser : MongoIdentityUser<Guid>

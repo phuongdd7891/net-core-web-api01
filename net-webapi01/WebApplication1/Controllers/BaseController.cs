@@ -1,5 +1,5 @@
 using CoreLibrary.Repository;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -12,8 +12,6 @@ public class BaseController: ControllerBase
 {
     private IHubContext<UserNotifications>? _hubContext;
     protected IHubContext<UserNotifications> hubContext => _hubContext ?? (_hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<UserNotifications>>());
-    private ApiKeyService? _apiKeyService;
-    protected ApiKeyService apiKeyService => _apiKeyService ?? (_apiKeyService = HttpContext.RequestServices.GetService<ApiKeyService>())!;
     private UserManager<ApplicationUser>? _userManager;
     protected UserManager<ApplicationUser> userManager => _userManager ?? (_userManager = HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>());
 

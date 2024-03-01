@@ -2,7 +2,7 @@
 using System.Dynamic;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;

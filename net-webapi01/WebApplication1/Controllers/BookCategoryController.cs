@@ -16,7 +16,7 @@ public class BookCategoryController : BaseController
     public BookCategoryController(BooksService booksService) =>
         _booksService = booksService;
 
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     [HttpGet]
     public async Task<DataResponse<List<BookCategory>>> Get()
     {
@@ -43,7 +43,7 @@ public class BookCategoryController : BaseController
     }
 
     [HttpGet("{id}")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     public async Task<DataResponse<BookCategory>> Get(string id)
     {
         var book = await _booksService.GetCategoryAsync(id);
@@ -56,7 +56,7 @@ public class BookCategoryController : BaseController
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     public async Task<IActionResult> Post([FromBody] CreateBookCateogryRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Name));

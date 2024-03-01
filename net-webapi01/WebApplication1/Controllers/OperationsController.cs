@@ -1,5 +1,5 @@
 using WebApi.Services;
-using IdentityMongo.Models;
+using WebApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebApi.Models.Requests;
 using CoreLibrary.Helpers;
 using WebApplication1.Authentication;
+using WebApi.Controllers;
+using System.Runtime.InteropServices;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -118,7 +120,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("Logout")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     public async Task<DataResponse> Logout()
     {
         var username = HttpContext.User.Identity!.Name;
@@ -172,7 +174,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("change-password")]
-    [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme}")]
+    [Authorize]
     public async Task<DataResponse<bool>> ChangePassword(ChangePasswordRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword));
@@ -218,5 +220,33 @@ public class OperationsController : ControllerBase
     {
         var result = string.IsNullOrEmpty(value) ? string.Empty : AESHelpers.Encrypt(value);
         return Content(result);
+    }
+
+    [HttpGet("users")]
+    [CustomAuthorize(null, true, true)]
+    public async Task<DataResponse<List<GetUsersReply>>> GetUsers(int skip = 0, int limit = 100)
+    {
+        var users = _userManager.Users.Select(c => new GetUsersReply
+        {
+            Id = c.Id,
+            UserName = c.UserName,
+            Email = c.Email
+        }).Skip(skip).Take(limit).ToList();
+        var tasks = new List<Task>();
+        users.ForEach(u => {
+            tasks.Add(GetRolesByUser(u));
+        });
+        await Task.WhenAll(tasks);
+        return new DataResponse<List<GetUsersReply>>
+        {
+            Data = users
+        };
+    }
+
+    private async Task GetRolesByUser(GetUsersReply user)
+    {
+        var appUser = await _userManager.FindByNameAsync(user.UserName!);
+        var roles = await _userManager.GetRolesAsync(appUser!);
+        user.Roles = roles.ToArray();
     }
 }
