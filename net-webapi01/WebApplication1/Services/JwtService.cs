@@ -109,7 +109,7 @@ public class JwtService
         };
     }
 
-    public async Task<bool> ValidateToken(string token, string username)
+    public async Task<string> ValidateToken(string token, string username)
     {
         var tokenHandler = new JsonWebTokenHandler();
         var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
@@ -125,8 +125,9 @@ public class JwtService
         });
         if (result.IsValid)
         {
-            return result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
+            bool validUsername = result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
+            return validUsername ? string.Empty : "Username not match";
         }
-        return false;
+        return "Invalid Token";
     }
 }

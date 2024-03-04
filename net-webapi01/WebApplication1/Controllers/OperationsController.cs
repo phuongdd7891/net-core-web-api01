@@ -98,6 +98,8 @@ public class OperationsController : ControllerBase
         var isPasswordValid = await _userManager.CheckPasswordAsync(user!, request.Password);
         ErrorStatuses.ThrowBadRequest("Bad credentials", !isPasswordValid);
 
+        ErrorStatuses.ThrowBadRequest("User is locked out", user!.LockoutEnd.HasValue && DateTimeOffset.Compare(user!.LockoutEnd.Value, DateTimeOffset.Now) > 0);
+
         var isConfirmedEmail = await _userManager.IsEmailConfirmedAsync(user!);
         ErrorStatuses.ThrowInternalErr("Email has been not confirmed yet", !isConfirmedEmail, DataResponseCode.EmailNotConfirm.ToString());
 
@@ -139,22 +141,14 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("add-user-roles")]
-    [CustomAuthorize(null, true)]
+    [CustomAuthorize(null, true, true)]
     public async Task<IActionResult> AddUserRoles(UserRolesRequest req)
     {
         var user = await _userManager.FindByNameAsync(req.Username);
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-        var result = await _userManager.AddToRolesAsync(user, req.Roles);
-        if (result.Succeeded)
-            return Ok("Add user role Successfully");
-        else
-        {
-            return BadRequest(result.Errors);
-        }
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        var result = await _userManager.AddToRolesAsync(user!, req.Roles);
+        ErrorStatuses.ThrowInternalErr(result.Errors.First().Description, !result.Succeeded);
+        return Ok();
     }
 
     #endregion
@@ -222,28 +216,53 @@ public class OperationsController : ControllerBase
         return Content(result);
     }
 
+    [HttpGet("lock-user")]
+    [CustomAuthorize(null, true)]
+    public async Task<IActionResult> LockUser(string username, bool isLock)
+    {
+        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
+        var user = await _userManager.FindByNameAsync(username!);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        if (isLock)
+        {
+            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.Now.AddYears(100));
+            ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Lock failed", !result.Succeeded);
+        }
+        else
+        {
+            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.Now.AddDays(-1));
+            ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Unlock failed", !result.Succeeded);
+        }
+        return Ok();
+    }
+
     [HttpGet("users")]
     [CustomAuthorize(null, true, true)]
-    public async Task<DataResponse<List<GetUsersReply>>> GetUsers(int skip = 0, int limit = 100)
+    public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100)
     {
-        var users = _userManager.Users.Select(c => new GetUsersReply
+        var users = _userManager.Users.Select(c => new UserViewModel
         {
             Id = c.Id,
             UserName = c.UserName,
             Email = c.Email
         }).Skip(skip).Take(limit).ToList();
         var tasks = new List<Task>();
-        users.ForEach(u => {
+        users.ForEach(u =>
+        {
             tasks.Add(GetRolesByUser(u));
         });
         await Task.WhenAll(tasks);
-        return new DataResponse<List<GetUsersReply>>
+        return new DataResponse<GetUsersReply>
         {
-            Data = users
+            Data = new GetUsersReply
+            {
+                List = users,
+                Total = _userManager.Users.Count()
+            }
         };
     }
 
-    private async Task GetRolesByUser(GetUsersReply user)
+    private async Task GetRolesByUser(UserViewModel user)
     {
         var appUser = await _userManager.FindByNameAsync(user.UserName!);
         var roles = await _userManager.GetRolesAsync(appUser!);

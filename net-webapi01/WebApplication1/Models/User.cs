@@ -19,6 +19,12 @@ namespace WebApi.Models
 
     public class GetUsersReply
     {
+        public List<UserViewModel>? List { get; set; }
+        public int Total { get; set; }
+    }
+
+    public class UserViewModel
+    {
         public Guid Id { get; set; }
         public string? UserName { get; set; }
         public string? Email { get; set; }
