@@ -28,6 +28,7 @@ namespace WebApi.Models
         public Guid Id { get; set; }
         public string? UserName { get; set; }
         public string? Email { get; set; }
+        public bool IsLocked { get; set; }
         public string[]? Roles { get; set; }
     }
 }

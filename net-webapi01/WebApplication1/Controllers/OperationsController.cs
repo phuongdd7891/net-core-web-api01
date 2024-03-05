@@ -98,7 +98,7 @@ public class OperationsController : ControllerBase
         var isPasswordValid = await _userManager.CheckPasswordAsync(user!, request.Password);
         ErrorStatuses.ThrowBadRequest("Bad credentials", !isPasswordValid);
 
-        ErrorStatuses.ThrowBadRequest("User is locked out", user!.LockoutEnd.HasValue && DateTimeOffset.Compare(user!.LockoutEnd.Value, DateTimeOffset.Now) > 0);
+        ErrorStatuses.ThrowBadRequest("User is locked out", user!.LockoutEnd.HasValue && DateTimeOffset.Compare(user!.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0);
 
         var isConfirmedEmail = await _userManager.IsEmailConfirmedAsync(user!);
         ErrorStatuses.ThrowInternalErr("Email has been not confirmed yet", !isConfirmedEmail, DataResponseCode.EmailNotConfirm.ToString());
@@ -216,21 +216,21 @@ public class OperationsController : ControllerBase
         return Content(result);
     }
 
-    [HttpGet("lock-user")]
+    [HttpPost("lock-user")]
     [CustomAuthorize(null, true)]
-    public async Task<IActionResult> LockUser(string username, bool isLock)
+    public async Task<IActionResult> LockUser([FromBody]LockUserRequest request)
     {
-        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
-        var user = await _userManager.FindByNameAsync(username!);
+        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
+        var user = await _userManager.FindByNameAsync(request.Username!);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
-        if (isLock)
+        if (request.IsLock)
         {
-            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.Now.AddYears(100));
+            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.MaxValue);
             ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Lock failed", !result.Succeeded);
         }
         else
         {
-            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.Now.AddDays(-1));
+            var result = await _userManager.SetLockoutEndDateAsync(user!, DateTimeOffset.UtcNow.AddDays(-1));
             ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Unlock failed", !result.Succeeded);
         }
         return Ok();
@@ -267,5 +267,6 @@ public class OperationsController : ControllerBase
         var appUser = await _userManager.FindByNameAsync(user.UserName!);
         var roles = await _userManager.GetRolesAsync(appUser!);
         user.Roles = roles.ToArray();
+        user.IsLocked = appUser!.LockoutEnd.HasValue && DateTimeOffset.Compare(appUser!.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0;
     }
 }

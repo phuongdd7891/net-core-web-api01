@@ -40,4 +40,10 @@ namespace WebApi.Models.Requests
         public string? Username { get; set; }
         public string? Token { get; set; }
     }
+
+    public class LockUserRequest
+    {
+        public string? Username { get; set; }
+        public bool IsLock { get; set; }
+    }
 }
