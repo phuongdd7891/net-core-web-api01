@@ -9,4 +9,10 @@ namespace WebApi.Models
     {
  
     }
+
+    public class GetRolesReply
+    {
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+    }
 }

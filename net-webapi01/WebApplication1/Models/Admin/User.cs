@@ -14,5 +14,7 @@ namespace WebApi.Models.Admin
         public bool IsSystem { get; set; }
         public bool IsCustomer { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryDate { get; set; }
     }
 }

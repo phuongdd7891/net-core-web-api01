@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
 
 namespace WebApi.Services;
 
@@ -84,15 +86,16 @@ public class JwtService
             SecurityAlgorithms.HmacSha256Signature
         );
 
-    public async Task<AuthenticationResponse> CreateAdminToken(AdminUser user)
+    public async Task<AuthenticationResponse> CreateAdminToken(AdminUser user, Claim[]? claims = null)
     {
         var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
         var tokenHandler = new JsonWebTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[] {
+            Subject = new ClaimsIdentity(claims ?? new[] {
                 new Claim(ClaimTypes.NameIdentifier, user.Id!),
                 new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(user))
             }),
             Audience = _configuration["Jwt:Audience"],
             Issuer = _configuration["Jwt:Issuer"],
@@ -121,13 +124,43 @@ public class JwtService
             ValidIssuer = _configuration["Jwt:Issuer"],
             ValidAudience = _configuration["Jwt:Audience"],
             ClockSkew = TimeSpan.Zero,
-            ValidateLifetime = true   
+            ValidateLifetime = true
         });
         if (result.IsValid)
         {
             bool validUsername = result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
             return validUsername ? string.Empty : "Username not match";
         }
-        return "Invalid Token";
+        return Type.Equals(result.Exception.GetType(), typeof(SecurityTokenExpiredException)) ? "Token expired" : result.Exception.Message;
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+    }
+
+    public async Task<ClaimsIdentity> GetClaimsFromToken(string token)
+    {
+        var tokenHandler = new JsonWebTokenHandler();
+        var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]!)),
+            ValidIssuer = _configuration["Jwt:Issuer"],
+            ValidAudience = _configuration["Jwt:Audience"],
+            ValidateLifetime = false
+        });
+        if (result.IsValid)
+        {
+            return result.ClaimsIdentity;
+        }
+        throw result.Exception;
     }
 }

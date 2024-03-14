@@ -1,6 +1,7 @@
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
+using NLog.LayoutRenderers;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 
@@ -37,8 +38,9 @@ public class AdminService
         return user != null && passwordHasher.VerifyHashedPassword(user, user.Password, password) != PasswordVerificationResult.Failed;
     }
 
-    public async Task RemoveToken(string token)
+    public async Task UpdateUser(AdminUser user)
     {
-        await _redisRepository.Remove(token);
+        var filter = Builders<AdminUser>.Filter.Where(u => u.Username == user.Username);
+        await _users.ReplaceOneAsync(filter, user);
     }
 }

@@ -10,3 +10,9 @@ public class AdminUserRequest
     public bool IsSystem { get; set; }
     public bool IsCustomer { get; set; }
 }
+
+public class AdminRefreshTokenRequest
+{
+    public required string AccessToken { get; set; }
+    public required string RefreshToken { get; set; }
+}

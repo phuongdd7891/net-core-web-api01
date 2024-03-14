@@ -9,6 +9,9 @@ using CoreLibrary.Helpers;
 using WebApplication1.Authentication;
 using WebApi.Controllers;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
+using Newtonsoft.Json;
+using WebApi.Models.Admin;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -137,7 +140,7 @@ public class OperationsController : ControllerBase
         IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = name });
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
         await _cacheService.LoadUserRoles();
-        return Ok("Role Created Successfully");
+        return Ok();
     }
 
     [HttpPost("add-user-roles")]
@@ -151,6 +154,18 @@ public class OperationsController : ControllerBase
         return Ok();
     }
 
+    [HttpGet("user-roles")]
+    [CustomAuthorize(null, true)]
+    public DataResponse<List<GetRolesReply>> GetUserRoles()
+    {
+        var roles = _roleManager.Roles.Select(a => new GetRolesReply {
+            Id = a.Id,
+            Name = a.Name
+        }).ToList();
+        return new DataResponse<List<GetRolesReply>> {
+            Data = roles
+        };
+    }
     #endregion
 
     [HttpPost("add-role-action")]
@@ -240,7 +255,9 @@ public class OperationsController : ControllerBase
     [CustomAuthorize(null, true, true)]
     public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100)
     {
-        var users = _userManager.Users.Select(c => new UserViewModel
+        var claimData = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData)!.Value;
+        var userData = JsonConvert.DeserializeObject<AdminUser>(claimData);
+        var users = _userManager.Users.Where(u => (u.CustomerId == userData!.Id && userData.IsCustomer) || userData.IsSystem).Select(c => new UserViewModel
         {
             Id = c.Id,
             UserName = c.UserName,
@@ -257,7 +274,7 @@ public class OperationsController : ControllerBase
             Data = new GetUsersReply
             {
                 List = users,
-                Total = _userManager.Users.Count()
+                Total = users.Count()
             }
         };
     }
@@ -268,5 +285,25 @@ public class OperationsController : ControllerBase
         var roles = await _userManager.GetRolesAsync(appUser!);
         user.Roles = roles.ToArray();
         user.IsLocked = appUser!.LockoutEnd.HasValue && DateTimeOffset.Compare(appUser!.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0;
+    }
+
+    [HttpPost("update-user")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUser(User user)
+    {
+        var appUser = await _userManager.FindByNameAsync(user.Username);
+        ErrorStatuses.ThrowNotFound("User not found", appUser == null);
+        appUser!.PasswordHash = _userManager.PasswordHasher.HashPassword(appUser, user.Password);
+        appUser.Email = user.Email;
+        var result = await _userManager.UpdateAsync(appUser);
+        if (!result.Succeeded)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.IternalError.ToString(),
+                Data = result.Errors.First()!.Description
+            });
+        }
+        return Ok(new DataResponse());
     }
 }
