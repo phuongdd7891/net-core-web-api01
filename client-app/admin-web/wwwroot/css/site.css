@@ -1,22 +1,30 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
+    font-size: 14px;
 }
+
+.bg-login-image {
+    background-image: url("imgs/app-bg.jpg");
+    background-position: center;
+    background-size: cover;
+}
+
+.bg-main {
+    background-color: #756a77;
+    background-image: linear-gradient(180deg, #756a77 10%, #252126 100%);
+    background-size: cover;
+}
+
+.btn {
+    font-size: 14px;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #756a77;
+    border-color: #756a77;
+}
+
+    .btn-primary:hover {
+        background-color: #6a6c72;
+        border-color: #9d90a0;
+    }

@@ -1,41 +1,48 @@
 ﻿using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace AdminWeb.Controllers
 {
+    [Route("[controller]")]
     public class UsersController : Controller
     {
-        private readonly BookService _bookService;
+        private readonly OperationService _opService;
         private readonly INotyfService _notyfService;
 
         public UsersController(
             INotyfService notyfService,
-            BookService bookService
+            OperationService opService
         )
         {
             _notyfService = notyfService;
-            _bookService = bookService;
+            _opService = opService;
         }
 
+        [Authorize]
+        [Route("")]
         public IActionResult Index()
         {
             return View();
         }
 
+        [Route("getUsers")]
         public async Task<IActionResult> GetUsers(int skip, int limit)
         {
             try
             {
-                var users = await _bookService.GetUsers(skip, limit);
+                var users = await _opService.GetUsers(skip, limit);
                 return Json(new
                 {
                     Total = users.Data!.Total,
                     List = users.Data.List
                 });
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
+                Response.StatusCode = (int)ex.StatusCode!;
                 return Json(ex.Message);
             }
         }
@@ -45,7 +52,7 @@ namespace AdminWeb.Controllers
         {
             try
             {
-                var result = await _bookService.SetLockUser(username, locked);
+                var result = await _opService.SetLockUser(username, locked);
                 return Json(result);
             }
             catch (Exception ex)

@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using AdminWeb.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using AdminWeb.Models.Response;
 
 namespace AdminWeb.Handlers
 {
@@ -21,10 +21,14 @@ namespace AdminWeb.Handlers
 
         protected async override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var username = Request.HttpContext.Session.GetString("Username");
-            if (!string.IsNullOrEmpty(username))
+            var authData = string.Empty;
+            if (Request.HttpContext.Request.Cookies.TryGetValue(Const.AuthenticationKey, out authData))
             {
-                var claims = new[] { new Claim(ClaimTypes.Name, username) };
+                var data = JsonConvert.DeserializeObject<AuthCookie>(authData);
+                var claims = new[] {
+                    new Claim(ClaimTypes.Name, data!.Username),
+                    new Claim("Token", data.Token)
+                };
                 var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme.Name));
                 var ticket = new AuthenticationTicket(principal, Scheme.Name);
                 return AuthenticateResult.Success(ticket);
@@ -34,10 +38,7 @@ namespace AdminWeb.Handlers
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
-            Response.StatusCode = 401;
-            Response.ContentType = "application/json";
-            Response.WriteAsync(errMessage);
-
+            Response.Redirect($"/home/error?code={Const.ErrCode_InvalidToken}");
             return Task.CompletedTask;
         }
     }

@@ -2,6 +2,7 @@ using AdminWeb.Handler;
 using AdminWeb.Handlers;
 using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification;
+using AspNetCoreHero.ToastNotification.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
@@ -14,7 +15,7 @@ builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<AuthorizationRequestHandler>();
-builder.Services.AddHttpClient<BookService>()
+builder.Services.AddHttpClient<OperationService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
 
 builder.Services.AddAuthentication("SessionTokens")
@@ -37,6 +38,9 @@ builder.Services.AddNotyf(config =>
     config.Position = NotyfPosition.TopCenter;
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ToastMessageService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -56,8 +60,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseNotyf();
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

@@ -1,14 +1,13 @@
-﻿using System.Diagnostics; using Microsoft.AspNetCore.Mvc; using AdminWeb.Models; using AdminWeb.Services; using Newtonsoft.Json; using Microsoft.AspNetCore.Authorization; using AdminWeb.Models.Response; using static System.Runtime.InteropServices.JavaScript.JSType; using AspNetCoreHero.ToastNotification.Abstractions;  namespace AdminWeb.Controllers;  public class HomeController : Controller {     private readonly ILogger<HomeController> _logger;     private readonly INotyfService _notyfService;     private readonly BookService _bookService;      public HomeController(ILogger<HomeController> logger, BookService bookService, INotyfService notyfService)     {         _logger = logger;         _notyfService = notyfService;         _bookService = bookService;     }      public IActionResult Index()     {         return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     public IActionResult Error()     {         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });     }      [AllowAnonymous]     [Route("login")]     [HttpPost]     public async Task<IActionResult> Login(LoginModel loginModel)     {         try
+﻿using System.Diagnostics; using Microsoft.AspNetCore.Mvc; using AdminWeb.Models; using AdminWeb.Services; using Newtonsoft.Json; using Microsoft.AspNetCore.Authorization; using AdminWeb.Models.Response; using static System.Runtime.InteropServices.JavaScript.JSType; using AspNetCoreHero.ToastNotification.Abstractions; using Microsoft.Extensions.Primitives;  namespace AdminWeb.Controllers;  public class HomeController : Controller {     private readonly ILogger<HomeController> _logger;     private readonly INotyfService _notyfService;     private readonly ToastMessageService _toastMsgService;          public HomeController(ILogger<HomeController> logger, INotyfService notyfService, ToastMessageService toastMsgService)     {         _logger = logger;         _notyfService = notyfService;         _toastMsgService = toastMsgService;     }      public IActionResult Index()     {                  return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     public IActionResult Error()     {         if (Request.QueryString.HasValue)
         {
-            var result = await _bookService.Login(loginModel.UserName, loginModel.Password);
-            HttpContext.Session.SetString("Token", result!.Data!.Token);
-            HttpContext.Session.SetString("Username", result.Data.Username);
-        }
-        catch (Exception ex)
-        {             _notyfService.Error(ex.Message);             return View("Index", loginModel);
-        }         return RedirectToAction("Index", "Users");     }      [Authorize]     public async Task<IActionResult> Logout()
-    {
-        var result = await _bookService.Logout();
-        HttpContext.Session.Clear();
-        return RedirectToAction("Index");
-    } } 
+            var values = new StringValues();
+            if (Request.Query.TryGetValue("code", out values))
+            {
+                var errCode = values.FirstOrDefault() ?? string.Empty;
+                _toastMsgService.AddError("", errCode);
+                if (string.Compare(errCode, Const.ErrCode_InvalidToken) == 0)
+                {
+                    return RedirectToAction("login", "account");
+                }
+            }
+        }         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });     } } 

@@ -1,32 +1,34 @@
 ﻿@{
     ViewData["Title"] = "Users";
+    ViewData["useDataTable"] = true;
 }
 
-<div class="container">
-    <br />
-    <div style="width:90%; margin:0 auto;">
-        <table id="example" class="table table-striped table-bordered dt-responsive nowrap" width="100%" cellspacing="0">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>UserName</th>
-                    <th>Email</th>
-                    <th>Roles</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+<div class="row">
+    <table id="tbUsers" class="table table-striped table-bordered" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>UserName</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
 </div>
-@section Scripts {
+@section PageScripts {
     <script>
-
+        var dtTable;
         $(document).ready(function () {
-            $("#example").DataTable({
-                "processing": true,
+            dtTable = $("#tbUsers").on('xhr.dt', function (e, settings, json, xhr) {
+                console.log(settings)
+                return true;
+            }).DataTable({
                 "serverSide": true,
+                "processing": true,
                 "filter": true,
+                "searching": false,
                 "orderMulti": false,
                 "pageLength": 15,
                 "lengthMenu": [15, 30, 50],
@@ -45,27 +47,36 @@
                             });
                         },
                         error: (err) => {
-                            alert(`[${err.status}] ${err.statusText}`);
+                            alert(`[${err.status}] ${err.responseJSON}`);
                         }
                     });
                 },
-                // "columnDefs": [{
-                //     "targets": [0],
-                //     "visible": false,
-                //     "searchable": false
-                // }],
+                "columnDefs": [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
                 "columns": [
                     { "data": "id", "name": "CustomerID", "autoWidth": true },
-                    { "data": "username", "name": "Name", "autoWidth": true },
+                    { 
+                        "data": "username",
+                        "name": "Name",
+                        "autoWidth": true,
+                        "render": function (data, type, row) { 
+                            return "<span class='" + (row.isLocked ? "text-danger" : "") + "'>" + data + "</span>";
+                        }
+                    },
                     { "data": "email", "name": "Address", "autoWidth": true },
                     { "data": "roles", "name": "Country", "autoWidth": true },
                     {
-                        "render": function (data, type, full, meta) { return '<a class="btn btn-info" href="/DemoGrid/Edit/' + full.id + '">Edit</a>'; }
+                        "render": function (data, type, row, meta) { return '<a class="btn btn-info" href="/Users/Edit/' + row.id + '">Edit</a>'; }
                     },
                     {
-                        data: null,
-                        render: function (data, type, row) {
-                            return "<a href='#' class='btn btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i> Lock</a>";
+                        "data": "isLocked",
+                        "render": function (data, type, row) {
+                            return data ? 
+                                "<a href='#' tilte='Unlock' class='btn btn-circle btn-secondary' onclick=onUnlockUser('" + row.username + "'); ><i class='bi bi-unlock'></i></a>"
+                            : "<a href='#' title='Lock' class='btn btn-circle btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
                         }
                     },
                 ]
@@ -75,18 +86,25 @@
 
         function onLockUser(username) {
             if (confirm("Are you sure you want to lock user " + username + "?")) {
-                LockUser(username);
+                LockUser(username, true);
             } else {
                 return false;
             }
         }
 
-        function LockUser(username) {
+        function onUnlockUser(username) {
+            if (confirm("Are you sure you want to unlock user " + username + "?")) {
+                LockUser(username, false);
+            } else {
+                return false;
+            }
+        }
+
+        function LockUser(username, locked) {
             var url = '@Url.Action("LockUser", "Users")';
-            url = url.replace("%u%", username);
-            $.post(url, { username: username, locked: true }, function (data) {
+            $.post(url, { username, locked }, function (data) {
                 if (!data) {
-                    oTable = $('#example').DataTable();
+                    oTable = $('#tbUsers').DataTable();
                     oTable.draw();
                 } else {
                     alert(data);

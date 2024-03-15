@@ -38,12 +38,12 @@ namespace AdminWeb.Services
                 var json = JsonConvert.SerializeObject(requestBody);
                 request.Content = new StringContent(json, Encoding.UTF8, Application.Json);
             }
-            var response = await _httpClient.SendAsync(request);
-            var responseJson = await response.Content.ReadAsStringAsync();
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
-                throw new HttpRequestException($"{responseErrData!.Data}");
+                throw new HttpRequestException($"{responseErrData!.Data}", null, response.StatusCode);
             }
             var responseData = JsonConvert.DeserializeObject<TResponse>(responseJson);
             return responseData!;
