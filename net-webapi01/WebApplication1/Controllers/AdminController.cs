@@ -114,4 +114,21 @@ public class AdminController : ControllerBase
         await _adminService.UpdateUser(user);
         return Ok();
     }
+
+    [HttpGet("user-profile"), CustomAuthorize(null, true, true)]
+    public async Task<IActionResult> GetUserProfile()
+    {
+        var username = User.Identity!.Name;
+        var user = await _adminService.GetUser(username!);
+        return Ok(new DataResponse<AdminProfile>
+        {
+            Data = new AdminProfile
+            {
+                Id = user.Id,
+                Username = user.Username,
+                IsSystem = user.IsSystem,
+                IsCustomer = user.IsCustomer
+            }
+        });
+    }
 }

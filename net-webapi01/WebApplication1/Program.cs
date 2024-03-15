@@ -2,7 +2,6 @@ using System.Text;
 using WebApi.Models;
 using WebApi.Services;
 using CoreLibrary.Repository;
-using WebApi.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
@@ -141,7 +140,7 @@ services.AddAuthentication(options =>
                 ValidateIssuerSigningKey = true,
                 ValidateIssuer = true,
                 ValidateAudience = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Secret"]!)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AESHelpers.Decrypt(builder.Configuration["Jwt:Secret"]!))),
                 ValidIssuer = builder.Configuration["Jwt:Issuer"],
                 ValidAudience = builder.Configuration["Jwt:Audience"],
                 ClockSkew = TimeSpan.Zero,

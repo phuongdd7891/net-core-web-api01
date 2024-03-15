@@ -6,8 +6,8 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
-using Newtonsoft.Json;
 using System.Security.Cryptography;
+using CoreLibrary.Helpers;
 
 namespace WebApi.Services;
 
@@ -78,10 +78,12 @@ public class JwtService
         return claims;
     }
 
+    private byte[] GetSecretKey() => Encoding.UTF8.GetBytes(AESHelpers.Decrypt(_configuration["Jwt:Secret"]!));
+
     private SigningCredentials CreateSigningCredentials() =>
         new SigningCredentials(
             new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!)
+                GetSecretKey()
             ),
             SecurityAlgorithms.HmacSha256Signature
         );
@@ -95,7 +97,7 @@ public class JwtService
             Subject = new ClaimsIdentity(claims ?? new[] {
                 new Claim(ClaimTypes.NameIdentifier, user.Id!),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(user))
+                new Claim(ClaimTypes.UserData, user.ToClaimData())
             }),
             Audience = _configuration["Jwt:Audience"],
             Issuer = _configuration["Jwt:Issuer"],
@@ -120,7 +122,7 @@ public class JwtService
             ValidateIssuerSigningKey = true,
             ValidateIssuer = true,
             ValidateAudience = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(GetSecretKey()),
             ValidIssuer = _configuration["Jwt:Issuer"],
             ValidAudience = _configuration["Jwt:Audience"],
             ClockSkew = TimeSpan.Zero,
@@ -152,7 +154,7 @@ public class JwtService
             ValidateIssuerSigningKey = true,
             ValidateIssuer = true,
             ValidateAudience = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(GetSecretKey()),
             ValidIssuer = _configuration["Jwt:Issuer"],
             ValidAudience = _configuration["Jwt:Audience"],
             ValidateLifetime = false
