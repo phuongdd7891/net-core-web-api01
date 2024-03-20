@@ -5,9 +5,9 @@
             {
                 var errCode = values.FirstOrDefault() ?? string.Empty;
                 _toastMsgService.AddError("", errCode);
-                if (string.Compare(errCode, Const.ErrCode_InvalidToken) == 0)
+                if (Request.Query.TryGetValue("redirectUrl", out values))
                 {
-                    return RedirectToAction("login", "account");
+                    return Redirect(values.FirstOrDefault()!);
                 }
             }
         }         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });     } } 

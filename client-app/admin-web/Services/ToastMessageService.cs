@@ -16,7 +16,8 @@ namespace AdminWeb.Services
             _tempDataService = tempDataService;
             _messageDictionary = new Dictionary<string, string>()
             {
-                {Const.ErrCode_InvalidToken, "Invalid token"}
+                {Const.ErrCode_InvalidToken, "Invalid token"},
+                {Const.ErrCode_TokenExpired, "Token expired"}
             };
 
         }
@@ -26,7 +27,7 @@ namespace AdminWeb.Services
             _tempDataService.Add(Key, new object[] {
                 new {
                     Type = "Error",
-                    Message = string.IsNullOrEmpty(code) ? message : _messageDictionary.ContainsKey(code) ? _messageDictionary[code] : message
+                    Message = string.IsNullOrEmpty(code) ? message : _messageDictionary.ContainsKey(code) ? _messageDictionary[code] : code
                 }
             });
         }

@@ -63,7 +63,9 @@
     @await RenderSectionAsync("PageScripts", required: false)
     <script>
         $(function () {
-            $.getJSON('/account/profile');
+            $.ajax({
+                url: '@Url.Action("profile", "account")'
+            });
         });
     </script>
 </body>

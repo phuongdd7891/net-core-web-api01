@@ -2,7 +2,6 @@
 using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace AdminWeb.Controllers
 {
@@ -31,34 +30,19 @@ namespace AdminWeb.Controllers
         [Route("getUsers")]
         public async Task<IActionResult> GetUsers(int skip, int limit)
         {
-            try
+            var users = await _opService.GetUsers(skip, limit);
+            return Json(new
             {
-                var users = await _opService.GetUsers(skip, limit);
-                return Json(new
-                {
-                    Total = users.Data!.Total,
-                    List = users.Data.List
-                });
-            }
-            catch (HttpRequestException ex)
-            {
-                Response.StatusCode = (int)ex.StatusCode!;
-                return Json(ex.Message);
-            }
+                Total = users.Data!.Total,
+                List = users.Data.List
+            });
         }
 
         [HttpPost]
         public async Task<IActionResult> LockUser(string username, bool locked)
         {
-            try
-            {
-                var result = await _opService.SetLockUser(username, locked);
-                return Json(result);
-            }
-            catch (Exception ex)
-            {
-                return Json(ex.Message);
-            }
+            var result = await _opService.SetLockUser(username, locked);
+            return Json(result);
         }
     }
 }

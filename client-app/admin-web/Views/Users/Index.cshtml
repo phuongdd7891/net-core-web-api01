@@ -22,7 +22,6 @@
         var dtTable;
         $(document).ready(function () {
             dtTable = $("#tbUsers").on('xhr.dt', function (e, settings, json, xhr) {
-                console.log(settings)
                 return true;
             }).DataTable({
                 "serverSide": true,
@@ -39,15 +38,15 @@
                             skip: data.start,
                             limit: data.length
                         },
-                        success: (res) => {
+                        success: (res, textStatus, xhr) => {
                             callback({
                                 data: res.list,
                                 recordsTotal: res.total,
                                 recordsFiltered: res.total
                             });
                         },
-                        error: (err) => {
-                            alert(`[${err.status}] ${err.responseJSON}`);
+                        error: (xhr, status, err) => {
+                            alert(`[${xhr.status}] ${xhr.responseJSON.error}`);
                         }
                     });
                 },
@@ -103,12 +102,10 @@
         function LockUser(username, locked) {
             var url = '@Url.Action("LockUser", "Users")';
             $.post(url, { username, locked }, function (data) {
-                if (!data) {
-                    oTable = $('#tbUsers').DataTable();
-                    oTable.draw();
-                } else {
-                    alert(data);
-                }
+                oTable = $('#tbUsers').DataTable();
+                oTable.draw();
+            }).fail((xhr, status, err) => {
+                alert(`[${xhr.status}] ${xhr.responseJSON.error}`);
             });
         }
 

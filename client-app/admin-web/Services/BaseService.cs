@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using AdminWeb.Models.Response;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AdminWeb.Services
 {
@@ -43,7 +44,7 @@ namespace AdminWeb.Services
             if (!response.IsSuccessStatusCode)
             {
                 var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
-                throw new HttpRequestException($"{responseErrData!.Data}", null, response.StatusCode);
+                throw new HttpRequestException($"{responseErrData!.Code}", new Exception(responseErrData.Data), response.StatusCode);
             }
             var responseData = JsonConvert.DeserializeObject<TResponse>(responseJson);
             return responseData!;

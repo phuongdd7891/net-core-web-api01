@@ -45,7 +45,7 @@ namespace AdminWeb.Controllers
             }
             catch (Exception ex)
             {
-                _notyfService.Error(ex.Message);
+                _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
                 return View("Login", loginModel);
             }
             return RedirectToAction("Index", "Users");
@@ -70,7 +70,7 @@ namespace AdminWeb.Controllers
             };
             authCookie.Profile = profile.Data;
             HttpContext.Response.Cookies.Append(Const.AuthenticationKey, JsonConvert.SerializeObject(authCookie));
-            return Json(null);
+            return Json(profile.Data);
         }
     }
 }

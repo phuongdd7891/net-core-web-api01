@@ -1,5 +1,7 @@
+using AdminWeb;
 using AdminWeb.Handler;
 using AdminWeb.Handlers;
+using AdminWeb.Middlewares;
 using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification;
 using AspNetCoreHero.ToastNotification.Extensions;
@@ -14,6 +16,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 
+//builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddTransient<AuthorizationRequestHandler>();
 builder.Services.AddHttpClient<OperationService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
@@ -56,6 +59,8 @@ app.UseStaticFiles();
 app.UseSession();
 
 app.UseRouting();
+//app.UseExceptionHandler(_ => { });
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
