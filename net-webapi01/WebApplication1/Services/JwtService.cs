@@ -8,8 +8,19 @@ using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using System.Security.Cryptography;
 using CoreLibrary.Helpers;
+using NLog.LayoutRenderers;
 
 namespace WebApi.Services;
+
+public class ValidateTokenResult
+{
+    public string Code { get; set; } = DataResponseCode.Ok.ToString();
+    public string Message { get; set; } = string.Empty;
+    public bool IsOk
+    {
+        get => Code == DataResponseCode.Ok.ToString();
+    }
+}
 
 public class JwtService
 {
@@ -114,8 +125,9 @@ public class JwtService
         };
     }
 
-    public async Task<string> ValidateToken(string token, string username)
+    public async Task<ValidateTokenResult> ValidateToken(string token, string username)
     {
+        var tokenResult = new ValidateTokenResult();
         var tokenHandler = new JsonWebTokenHandler();
         var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
         {
@@ -131,9 +143,25 @@ public class JwtService
         if (result.IsValid)
         {
             bool validUsername = result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
-            return validUsername ? string.Empty : "Username not match";
+            if (!validUsername)
+            {
+                tokenResult.Message = "Username not match";
+            }
         }
-        return Type.Equals(result.Exception.GetType(), typeof(SecurityTokenExpiredException)) ? "Token expired" : result.Exception.Message;
+        else
+        {
+            if (Type.Equals(result.Exception.GetType(), typeof(SecurityTokenExpiredException)))
+            {
+                tokenResult.Code = DataResponseCode.TokenExpired.ToString();
+                tokenResult.Message = "Token expired";
+            }
+            else
+            {
+                tokenResult.Code = DataResponseCode.InvalidToken.ToString();
+                tokenResult.Message = result.Exception.Message;
+            }
+        }
+        return tokenResult;
     }
 
     public string GenerateRefreshToken()

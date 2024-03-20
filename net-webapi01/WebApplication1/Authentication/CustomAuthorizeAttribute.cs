@@ -81,13 +81,13 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
         }
         string? authHeader = context.HttpContext.Request.Headers["Authorization"];
         string token = authHeader?.Split(' ')[1] ?? string.Empty;
-        string validToken = await _jwtService.ValidateToken(token, username);
-        if (!string.IsNullOrEmpty(validToken))
+        var validateResult = await _jwtService.ValidateToken(token, username);
+        if (!validateResult.IsOk)
         {
             context.Result = GetJsonResult(new DataResponse<string>
             {
-                Data = validToken,
-                Code = DataResponseCode.Unauthorized.ToString()
+                Data = validateResult.Message,
+                Code = validateResult.Code
             });
             return;
         }

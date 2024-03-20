@@ -10,7 +10,9 @@ public enum DataResponseCode
     NotFound = 3,
     InvalidRequest = 4,
     Unauthorized = 5,
-    EmailNotConfirm = 6
+    EmailNotConfirm = 6,
+    InvalidToken = 7,
+    TokenExpired = 8
 }
 
 public class DataResponse: DataResponse<string>
