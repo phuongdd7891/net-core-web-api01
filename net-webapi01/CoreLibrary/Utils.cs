@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+
 namespace CoreLibrary.Utils;
 
 public class Utils
@@ -24,5 +27,18 @@ public class Utils
         }
 
         return fileByteArray;
+    }
+
+    public static bool ValidEmailAddress(string emailAddress)
+    {
+        var pattern = @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$";
+        var regex = new Regex(pattern);
+        return regex.IsMatch(emailAddress);
+    }
+
+    public static bool ValidPhoneNumber(string phoneNumber)
+    {
+        var phoneValidation = new PhoneAttribute();
+        return phoneValidation.IsValid(phoneNumber);
     }
 }

@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security.Claims;
 using Newtonsoft.Json;
 using WebApi.Models.Admin;
+using CoreLibrary.Utils;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -62,7 +63,7 @@ public class OperationsController : ControllerBase
                 Email = user.Email,
                 CustomerId = user.CustomerId
             },
-            user.Password
+            user.Password!
         );
         if (!result.Succeeded)
         {
@@ -149,8 +150,17 @@ public class OperationsController : ControllerBase
     {
         var user = await _userManager.FindByNameAsync(req.Username);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
-        var result = await _userManager.AddToRolesAsync(user!, req.Roles);
-        ErrorStatuses.ThrowInternalErr(result.Errors.First().Description, !result.Succeeded);
+        if (user!.Roles.Count > 0)
+        {
+            var roles = _roleManager.Roles.Where(a => user.Roles.Contains(a.Id)).Select(a => a.Name).ToList();
+            var result = await _userManager.RemoveFromRolesAsync(user, roles!);
+            ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Remove role fail", !result.Succeeded);
+        }
+        if (req.Roles.Length > 0)
+        {
+            var addResult = await _userManager.AddToRolesAsync(user!, req.Roles);
+            ErrorStatuses.ThrowInternalErr(addResult.Errors.FirstOrDefault()?.Description ?? "Add role fail", !addResult.Succeeded);
+        }
         return Ok();
     }
 
@@ -158,11 +168,13 @@ public class OperationsController : ControllerBase
     [CustomAuthorize(null, true)]
     public DataResponse<List<GetRolesReply>> GetUserRoles()
     {
-        var roles = _roleManager.Roles.Select(a => new GetRolesReply {
+        var roles = _roleManager.Roles.Select(a => new GetRolesReply
+        {
             Id = a.Id,
             Name = a.Name
         }).ToList();
-        return new DataResponse<List<GetRolesReply>> {
+        return new DataResponse<List<GetRolesReply>>
+        {
             Data = roles
         };
     }
@@ -233,7 +245,7 @@ public class OperationsController : ControllerBase
 
     [HttpPost("lock-user")]
     [CustomAuthorize(null, true)]
-    public async Task<IActionResult> LockUser([FromBody]LockUserRequest request)
+    public async Task<IActionResult> LockUser([FromBody] LockUserRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
         var user = await _userManager.FindByNameAsync(request.Username!);
@@ -293,8 +305,14 @@ public class OperationsController : ControllerBase
     {
         var appUser = await _userManager.FindByNameAsync(user.Username);
         ErrorStatuses.ThrowNotFound("User not found", appUser == null);
-        appUser!.PasswordHash = _userManager.PasswordHasher.HashPassword(appUser, user.Password);
-        appUser.Email = user.Email;
+        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
+        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
+        if (!string.IsNullOrEmpty(user.Password))
+        {
+            appUser!.PasswordHash = _userManager.PasswordHasher.HashPassword(appUser, user.Password);
+        }
+        appUser!.Email = user.Email;
+        appUser.PhoneNumber = user.PhoneNumber;
         var result = await _userManager.UpdateAsync(appUser);
         if (!result.Succeeded)
         {
@@ -305,5 +323,26 @@ public class OperationsController : ControllerBase
             });
         }
         return Ok(new DataResponse());
+    }
+
+    [HttpGet("user"), CustomAuthorize(null, true, true)]
+    public async Task<IActionResult> GetUser(string username)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(username));
+        var user = await _userManager.FindByNameAsync(username);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        var roles = await _userManager.GetRolesAsync(user!);
+        return Ok(new DataResponse<UserViewModel>
+        {
+            Data = new UserViewModel
+            {
+                Id = user!.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Roles = roles.ToArray(),
+                IsLocked = user.LockoutEnd.HasValue && DateTimeOffset.Compare(user.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0
+            }
+        });
     }
 }
