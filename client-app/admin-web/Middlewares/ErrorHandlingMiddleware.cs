@@ -1,9 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Newtonsoft.Json;
-using System.Net;
-using System.Security.Policy;
+﻿using Newtonsoft.Json;
+using System.Text;
 
 namespace AdminWeb.Middlewares
 {
@@ -44,7 +40,15 @@ namespace AdminWeb.Middlewares
                     return context.Response.WriteAsync(result);
                 }
             }
-            context.Response.Redirect($"/home/error");
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html>");
+            sb.AppendFormat("<body onload='document.forms[\"form\"].submit()'>");
+            sb.AppendFormat("<form name='form' action='{0}' method='post'>", "/home/error");
+            sb.AppendFormat("<input type='hidden' name='{0}' value=\"{1}\" />", "Message", msg);
+            sb.Append("</form></body></html>");
+
+            context.Response.WriteAsync(sb.ToString());
             return Task.CompletedTask;
         }
     }

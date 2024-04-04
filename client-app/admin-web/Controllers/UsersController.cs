@@ -1,4 +1,5 @@
-﻿using AdminWeb.Services;
+﻿using AdminWeb.Models;
+using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,6 +44,32 @@ namespace AdminWeb.Controllers
         {
             var result = await _opService.SetLockUser(username, locked);
             return Json(result);
+        }
+
+        [Authorize]
+        [Route("edit/{username}")]
+        public async Task<IActionResult> Edit(string username)
+        {
+            var user = await _opService.GetUser(username);
+            return View(user.Data);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("edit/{username}")]
+        public async Task<IActionResult> Edit([FromForm] UserViewModel model)
+        {
+            try
+            {
+                await _opService.UpdateUser(model);
+                _notyfService.Success(Messages.SaveSuccessfully);
+            }
+            catch (Exception ex)
+            {
+                _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
+                return View(model);
+            }
+            return RedirectToAction("index");
         }
     }
 }

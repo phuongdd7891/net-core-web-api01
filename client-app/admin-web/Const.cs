@@ -6,4 +6,9 @@
         public static string ErrCode_InvalidToken = "InvalidToken";
         public static string ErrCode_TokenExpired = "TokenExpired";
     }
+
+    public static class Messages
+    {
+        public static string SaveSuccessfully = "Saved Successfully";
+    }
 }

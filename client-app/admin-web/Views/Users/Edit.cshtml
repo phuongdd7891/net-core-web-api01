@@ -1,0 +1,28 @@
+﻿@model UserViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<form class="row g-3" asp-action="edit" asp-controller="users" method="post">
+    <div class="col-md-6">
+        <label for="inputEmail4" class="form-label">Username</label>
+        <input type="text" class="form-control" id="inputEmail4" name="Username" value="@Model.Username">
+    </div>
+    <div class="col-md-6">
+        <label for="inputPassword4" class="form-label">Password</label>
+        <input type="password" class="form-control" id="inputPassword4" name="Password">
+    </div>
+    <div class="col-md-6">
+        <label for="inputAddress" class="form-label">Email</label>
+        <input type="text" class="form-control" id="inputAddress" placeholder="email..." name="Email" value="@Model.Email">
+    </div>
+    <div class="col-md-6">
+        <label for="inputCity" class="form-label">Phone</label>
+        <input type="text" class="form-control" id="inputCity" placeholder="phone..." name="PhoneNumber" value="@Model.PhoneNumber">
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save
+        </button>
+    </div>
+</form>
