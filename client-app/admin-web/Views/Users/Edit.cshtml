@@ -1,24 +1,39 @@
 ﻿@model UserViewModel
 @{
     ViewData["Title"] = "Edit User";
+    var tempRoles = TempData.Peek("Roles") as string;
+    var roles = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminWeb.Models.Response.UserRolesResponse[]>(tempRoles!);
 }
 
 <form class="row g-3" asp-action="edit" asp-controller="users" method="post">
+    @Html.HiddenFor(a => a.Id)
+    @Html.HiddenFor(a => a.Roles)
     <div class="col-md-6">
-        <label for="inputEmail4" class="form-label">Username</label>
-        <input type="text" class="form-control" id="inputEmail4" name="Username" value="@Model.Username">
+        <label for="inputUsername" class="form-label">Username</label>
+        <input type="text" class="form-control" id="inputUsername" name="Username" value="@Model.Username" readonly>
     </div>
     <div class="col-md-6">
-        <label for="inputPassword4" class="form-label">Password</label>
-        <input type="password" class="form-control" id="inputPassword4" name="Password">
+        <label for="inputPassword" class="form-label">Password</label>
+        <input type="password" class="form-control" id="inputPassword" name="Password">
     </div>
     <div class="col-md-6">
-        <label for="inputAddress" class="form-label">Email</label>
-        <input type="text" class="form-control" id="inputAddress" placeholder="email..." name="Email" value="@Model.Email">
+        <label for="inputEmail" class="form-label">Email</label>
+        <input type="text" class="form-control" id="inputEmail" placeholder="email..." name="Email" value="@Model.Email">
     </div>
     <div class="col-md-6">
-        <label for="inputCity" class="form-label">Phone</label>
-        <input type="text" class="form-control" id="inputCity" placeholder="phone..." name="PhoneNumber" value="@Model.PhoneNumber">
+        <label for="inputPhone" class="form-label">Phone</label>
+        <input type="text" class="form-control" id="inputPhone" placeholder="phone..." name="PhoneNumber" value="@Model.PhoneNumber">
+    </div>
+    <div class="col-12">
+        @for (int i = 0; i < roles?.Length; i++)
+        {
+            var role = roles[i];
+            <label for="ckbRole_@i" class="ps-2">
+                <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles!.Contains(role.Name) ? "checked" : "")/>
+                @role.Name
+            </label>
+            <input type="hidden" asp-for="ckbRole_@i" id="hdckbRole_@i" />
+        }
     </div>
     <div class="col-12">
         <button type="submit" class="btn btn-primary">

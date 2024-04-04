@@ -1,12 +1,12 @@
 ﻿namespace AdminWeb.Models.Response
 {
-    public class GetUsersResponse
+    public class UsersResponse
     {
         public List<UserViewModel> List { get; set; }
         public int Total { get; set; }
     }
 
-    public class GetUserRolesResponse
+    public class UserRolesResponse
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }

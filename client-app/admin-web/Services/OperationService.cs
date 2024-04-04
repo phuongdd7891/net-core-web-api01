@@ -48,9 +48,9 @@ namespace AdminWeb.Services
             });
         }
 
-        public Task<ApiResponse<GetUsersResponse>> GetUsers(int skip = 0, int limit = 100)
+        public Task<ApiResponse<UsersResponse>> GetUsers(int skip = 0, int limit = 100)
         {
-            return GetAsync<ApiResponse<GetUsersResponse>>($"api/operations/users?skip={skip}&limit={limit}");
+            return GetAsync<ApiResponse<UsersResponse>>($"api/operations/users?skip={skip}&limit={limit}");
         }
 
         public Task<ApiResponse<string>> SetLockUser(string username, bool isLock)
@@ -62,9 +62,9 @@ namespace AdminWeb.Services
             });
         }
 
-        public Task<ApiResponse<GetUserRolesResponse>> GetUserRoles()
+        public Task<ApiResponse<UserRolesResponse[]>> GetUserRoles()
         {
-            return GetAsync<ApiResponse<GetUserRolesResponse>>("api/operations/user-roles");
+            return GetAsync<ApiResponse<UserRolesResponse[]>>("api/operations/user-roles");
         }
 
         public Task<ApiResponse<AdminProfile>> GetProfile()

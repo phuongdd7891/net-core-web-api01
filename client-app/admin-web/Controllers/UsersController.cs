@@ -3,6 +3,7 @@ using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace AdminWeb.Controllers
 {
@@ -51,17 +52,20 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Edit(string username)
         {
             var user = await _opService.GetUser(username);
+            var roles = await _opService.GetUserRoles();
+            TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
             return View(user.Data);
         }
 
         [Authorize]
         [HttpPost]
         [Route("edit/{username}")]
-        public async Task<IActionResult> Edit([FromForm] UserViewModel model)
+        public async Task<IActionResult> Edit([FromForm] UserViewModel model, string[] usrRoles)
         {
             try
             {
                 await _opService.UpdateUser(model);
+                await _opService.AddUserToRoles(model.Username, usrRoles);
                 _notyfService.Success(Messages.SaveSuccessfully);
             }
             catch (Exception ex)

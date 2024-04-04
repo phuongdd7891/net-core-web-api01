@@ -44,6 +44,10 @@ namespace AdminWeb.Services
             if (!response.IsSuccessStatusCode)
             {
                 var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
+                if (!string.IsNullOrEmpty(responseErrData?.Data))
+                {
+                    responseErrData.Data = responseErrData.Data.Replace("'", "\"");
+                }
                 throw new HttpRequestException($"{responseErrData!.Code}", new Exception(responseErrData.Data), response.StatusCode);
             }
             var responseData = JsonConvert.DeserializeObject<TResponse>(responseJson);
