@@ -34,6 +34,7 @@ namespace WebApi.Models.Admin
     {
         public string? Id { get; set; }
         public required string Username { get; set; }
+        public string? FullName { get; set; }
         public bool IsSystem { get; set; }
         public bool IsCustomer { get; set; }
     }

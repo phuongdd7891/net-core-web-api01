@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using NLog.LayoutRenderers;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
+using MongoDB.Driver.Linq;
 
 namespace WebApi.Services;
 
@@ -30,7 +31,11 @@ public class AdminService
         await _users.InsertOneAsync(user);
     }
 
+    public async Task<List<AdminUser>> ListUsers(bool isCustomer = false) => await _users.Find(a => a.IsCustomer == isCustomer || isCustomer == false).ToListAsync();
+
     public async Task<AdminUser> GetUser(string username) => await _users.Find(a => a.Username == username).FirstOrDefaultAsync();
+
+    public async Task<AdminUser> GetUserById(string id) => await _users.Find(a => a.Id == id).FirstOrDefaultAsync();
 
     public async Task<bool> VerifyPassword(string username, string password)
     {

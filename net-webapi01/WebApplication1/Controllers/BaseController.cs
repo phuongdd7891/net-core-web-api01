@@ -16,6 +16,7 @@ public class BaseController: ControllerBase
     protected UserManager<ApplicationUser> userManager => _userManager ?? (_userManager = HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>());
 
     [HttpPost("notify")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task NotifyUser([FromBody]string message, string username = "")
     {
         if (string.IsNullOrEmpty(username))

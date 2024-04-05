@@ -127,8 +127,19 @@ public class AdminController : ControllerBase
                 Id = user.Id,
                 Username = user.Username,
                 IsSystem = user.IsSystem,
-                IsCustomer = user.IsCustomer
+                IsCustomer = user.IsCustomer,
+                FullName = user.FullName
             }
+        });
+    }
+
+    [HttpGet("customer-users"), CustomAuthorize(null, true)]
+    public async Task<IActionResult> GetCustomerUsers()
+    {
+        var users = await _adminService.ListUsers(true);
+        return Ok(new DataResponse<List<AdminUser>>
+        {
+            Data = users
         });
     }
 }

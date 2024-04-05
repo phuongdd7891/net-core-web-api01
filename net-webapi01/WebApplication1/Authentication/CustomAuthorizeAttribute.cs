@@ -100,7 +100,7 @@ public class CustomAuthorizeFilter : IAsyncAuthorizationFilter
             {
                 context.Result = GetJsonResult(new DataResponse<string>
                 {
-                    Data = "Access denied",
+                    Data = $"Access denied to \"{context.HttpContext.Request.Path}\"",
                     Code = DataResponseCode.Unauthorized.ToString()
                 });
             }

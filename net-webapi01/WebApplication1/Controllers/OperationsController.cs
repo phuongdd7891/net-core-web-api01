@@ -26,6 +26,8 @@ public class OperationsController : ControllerBase
     private readonly RoleActionRepository _roleActionRepository;
     private readonly IEmailSender _emailSender;
 
+    private readonly AdminService _adminService;
+
     public OperationsController(
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
@@ -33,7 +35,8 @@ public class OperationsController : ControllerBase
         ApiKeyService apiKeyService,
         CacheService cacheSrevice,
         RoleActionRepository roleActionRepository,
-        IEmailSender emailSender
+        IEmailSender emailSender,
+        AdminService adminService
     )
     {
         _userManager = userManager;
@@ -43,6 +46,7 @@ public class OperationsController : ControllerBase
         _cacheService = cacheSrevice;
         _roleActionRepository = roleActionRepository;
         _emailSender = emailSender;
+        _adminService = adminService;
     }
 
     [HttpPost("create-user")]
@@ -165,13 +169,14 @@ public class OperationsController : ControllerBase
     }
 
     [HttpGet("user-roles")]
-    [CustomAuthorize(null, true)]
+    [CustomAuthorize(null, true, true)]
     public DataResponse<List<GetRolesReply>> GetUserRoles()
     {
         var roles = _roleManager.Roles.Select(a => new GetRolesReply
         {
             Id = a.Id,
-            Name = a.Name
+            Name = a.Name,
+            DisplayName = a.NormalizedName
         }).ToList();
         return new DataResponse<List<GetRolesReply>>
         {
@@ -269,16 +274,21 @@ public class OperationsController : ControllerBase
     {
         var claimData = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData)!.Value;
         var userData = JsonConvert.DeserializeObject<AdminUser>(claimData);
-        var users = _userManager.Users.Where(u => (u.CustomerId == userData!.Id && userData.IsCustomer) || userData.IsSystem).Select(c => new UserViewModel
-        {
-            Id = c.Id,
-            UserName = c.UserName,
-            Email = c.Email
-        }).Skip(skip).Take(limit).ToList();
+        var adminUsers = await _adminService.ListUsers(userData!.IsCustomer);
+        var appUsers = _userManager.Users.Where(u => (u.CustomerId == userData.Id && userData.IsCustomer) || userData.IsSystem)
+            .Skip(skip).Take(limit).ToList();
+        var users = appUsers
+            .GroupJoin(adminUsers, u => u.CustomerId, a => a.Id, (u, a) => new { Admins = a, User = u })
+            .SelectMany(a => a.Admins.DefaultIfEmpty(), (u, a) => new UserViewModel(u.User)
+            {
+                CustomerName = a?.FullName ?? string.Empty
+            }).ToList();
         var tasks = new List<Task>();
         users.ForEach(u =>
         {
-            tasks.Add(GetRolesByUser(u));
+            tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x => {
+                u.Roles = x.Result;
+            }));
         });
         await Task.WhenAll(tasks);
         return new DataResponse<GetUsersReply>
@@ -291,12 +301,11 @@ public class OperationsController : ControllerBase
         };
     }
 
-    private async Task GetRolesByUser(UserViewModel user)
+    private async Task<string[]> GetRolesByUser(string username)
     {
-        var appUser = await _userManager.FindByNameAsync(user.UserName!);
+        var appUser = await _userManager.FindByNameAsync(username);
         var roles = await _userManager.GetRolesAsync(appUser!);
-        user.Roles = roles.ToArray();
-        user.IsLocked = appUser!.LockoutEnd.HasValue && DateTimeOffset.Compare(appUser!.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0;
+        return roles.ToArray();
     }
 
     [HttpPost("update-user")]
@@ -332,16 +341,17 @@ public class OperationsController : ControllerBase
         var user = await _userManager.FindByNameAsync(username);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
         var roles = await _userManager.GetRolesAsync(user!);
+        AdminUser? customer = null;
+        if (!string.IsNullOrEmpty(user!.CustomerId))
+        {
+            customer = await _adminService.GetUserById(user.CustomerId);
+        }
         return Ok(new DataResponse<UserViewModel>
         {
-            Data = new UserViewModel
+            Data = new UserViewModel(user)
             {
-                Id = user!.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
                 Roles = roles.ToArray(),
-                IsLocked = user.LockoutEnd.HasValue && DateTimeOffset.Compare(user.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0
+                CustomerName = customer?.FullName ?? string.Empty
             }
         });
     }
