@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using WebApi.Services;
@@ -23,6 +24,16 @@ public class AdminController : ControllerBase
         _adminService = adminService;
         _jwtService = jwtService;
         _apiKeyService = apiKeyService;
+    }
+
+    private AdminUser? GetUserClaim()
+    {
+        var userData = User.FindFirstValue(ClaimTypes.UserData);
+        if (!string.IsNullOrEmpty(userData))
+        {
+            return JsonConvert.DeserializeObject<AdminUser>(userData)!;
+        }
+        return null;
     }
 
     [HttpPost("create-user")]
@@ -133,10 +144,22 @@ public class AdminController : ControllerBase
         });
     }
 
-    [HttpGet("customer-users"), CustomAuthorize(null, true)]
+    [HttpGet("customer-users"), CustomAuthorize(null, true, true)]
     public async Task<IActionResult> GetCustomerUsers()
     {
-        var users = await _adminService.ListUsers(true);
+        var users = new List<AdminUser>();
+        var claimUser = GetUserClaim();
+        if (claimUser != null)
+        {
+            if (claimUser.IsSystem)
+            {
+                users.AddRange(await _adminService.ListUsers(true));
+            }
+            if (claimUser.IsCustomer)
+            {
+                users.Add(await _adminService.GetUser(claimUser.Username));
+            }
+        }
         return Ok(new DataResponse<List<AdminUser>>
         {
             Data = users
