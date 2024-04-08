@@ -10,5 +10,6 @@
     public static class Messages
     {
         public static string SaveSuccessfully = "Saved Successfully";
+        public static string CreateSuccessfully = "Created Successfully";
     }
 }

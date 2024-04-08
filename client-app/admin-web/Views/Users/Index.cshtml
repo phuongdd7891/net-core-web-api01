@@ -2,14 +2,20 @@
     ViewData["Title"] = "Users";
     ViewData["useDataTable"] = true;
 }
-
+<div class="mb-3">
+    <a class="btn btn-success" asp-action="create" asp-controller="users">
+        <i class="bi bi-plus-circle"></i>
+        Create
+    </a>
+</div>
 <div class="row">
-    <table id="tbUsers" class="table table-striped table-bordered" cellspacing="0">
+    <table id="tbUsers" class="table table-striped table-bordered table-responsive" cellspacing="0">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>UserName</th>
                 <th>Email</th>
+                <th>Customer</th>
                 <th>Roles</th>
                 <th></th>
                 <th></th>
@@ -56,7 +62,7 @@
                     "searchable": false
                 }],
                 "columns": [
-                    { "data": "id", "name": "CustomerID", "autoWidth": true },
+                    { "data": "id", "autoWidth": true },
                     { 
                         "data": "username",
                         "name": "Name",
@@ -65,8 +71,9 @@
                             return "<span class='" + (row.isLocked ? "text-danger" : "") + "'>" + data + "</span>";
                         }
                     },
-                    { "data": "email", "name": "Address", "autoWidth": true },
-                    { "data": "roles", "name": "Country", "autoWidth": true },
+                    { "data": "email", "autoWidth": true },
+                    { "data": "customerName", "autoWidth": true },
+                    { "data": "roles", "autoWidth": true },
                     {
                         "render": function (data, type, row, meta) { return '<a class="btn btn-info" href="/Users/Edit/' + row.username + '">Edit</a>'; }
                     },
@@ -75,7 +82,7 @@
                         "render": function (data, type, row) {
                             return data ? 
                                 "<a href='#' tilte='Unlock' class='btn btn-circle btn-secondary' onclick=onUnlockUser('" + row.username + "'); ><i class='bi bi-unlock'></i></a>"
-                            : "<a href='#' title='Lock' class='btn btn-circle btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
+                                : "<a href='#' title='Lock' class='btn btn-circle btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
                         }
                     },
                 ]

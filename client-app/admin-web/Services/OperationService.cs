@@ -81,5 +81,15 @@ namespace AdminWeb.Services
         {
             return PostAsync<Object, ApiResponse<string>>("api/operations/update-user", req);
         }
+
+        public Task<ApiResponse<string>> CreateUser(UserViewModel req)
+        {
+            return PostAsync<Object, ApiResponse<string>>("api/operations/create-user", req);
+        }
+
+        public Task<ApiResponse<List<AdminProfile>>> GetCustomers()
+        {
+            return GetAsync<ApiResponse<List<AdminProfile>>>("api/admin/customer-users");
+        }
     }
 }

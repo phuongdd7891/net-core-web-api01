@@ -14,8 +14,8 @@ namespace AdminWeb.Handlers
         public SessionTokenAuthSchemeHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
-            UrlEncoder encoder,
-            ISystemClock clock) : base(options, logger, encoder, clock)
+            UrlEncoder encoder
+            ) : base(options, logger, encoder)
         {
         }
 
@@ -27,7 +27,8 @@ namespace AdminWeb.Handlers
                 var data = JsonConvert.DeserializeObject<AuthCookie>(authData);
                 var claims = new[] {
                     new Claim(ClaimTypes.Name, data!.Username),
-                    new Claim("Token", data.Token)
+                    new Claim("Token", data.Token),
+                    new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(data.Profile))
                 };
                 var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme.Name));
                 var ticket = new AuthenticationTicket(principal, Scheme.Name);

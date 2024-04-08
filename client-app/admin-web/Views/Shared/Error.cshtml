@@ -8,7 +8,7 @@
 @if (Model.ShowRequestId)
 {
     <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+        <strong>Request ID:</strong> <span class="text-info">@Model.RequestId</span>
     </p>
 }
 
@@ -20,7 +20,7 @@
 }
 
 <p>
-    <a href="javascript: history.go(-1);">
-        <i class="bi bi-rewind pr-2"></i>Back
+    <a href="javascript: history.go(-1);" class="btn btn-outline-info">
+        <i class="bi bi-backspace pr-2"></i>Back
     </a>
 </p>

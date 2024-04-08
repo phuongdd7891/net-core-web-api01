@@ -11,6 +11,8 @@ namespace AdminWeb.Models
         public bool IsLocked { get; set; }
         public string[]? Roles { get; set; }
         public string? Password { get; set; }
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
     }
 
     public class AuthCookie

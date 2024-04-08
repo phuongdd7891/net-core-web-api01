@@ -2,9 +2,9 @@
 @using AdminWeb.Helpers
 @model UserViewModel
 @{
-    ViewData["Title"] = "Edit User";
+    ViewData["Title"] = "Create User";
     var tempRoles = TempData.Peek("Roles") as string;
-    var roles = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminWeb.Models.Response.UserRolesResponse[]>(tempRoles!);
+    var roles = JsonConvert.DeserializeObject<AdminWeb.Models.Response.UserRolesResponse[]>(tempRoles!);
     var tempCustomers = TempData.Peek("Customers") as string;
     var customers = JsonConvert.DeserializeObject<AdminWeb.Models.Response.AdminProfile[]>(tempCustomers!);
     var selectCustomers = new List<SelectListItem>();
@@ -18,24 +18,22 @@
     }
 }
 
-<form class="row g-3" asp-action="edit" asp-controller="users" method="post">
-    @Html.HiddenFor(a => a.Id)
-    @Html.HiddenFor(a => a.Roles)
+<form class="row g-3" asp-action="create" asp-controller="users" method="post">
     <div class="col-md-6">
-        <label for="inputUsername" class="form-label">Username</label>
-        <input type="text" class="form-control" id="inputUsername" name="Username" value="@Model.Username" readonly>
+        <label asp-for="@Model.Username" class="form-label">Username</label>
+        @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder="Username..." })
     </div>
     <div class="col-md-6">
-        <label for="inputPassword" class="form-label">Password</label>
-        <input type="password" class="form-control" id="inputPassword" name="Password">
+        <label asp-for="@Model.Password" class="form-label">Password</label>
+        @Html.PasswordFor(a => a.Password, new { @class = "form-control", placeholder = "Password..." })
     </div>
     <div class="col-md-6">
-        <label for="inputEmail" class="form-label">Email</label>
-        <input type="text" class="form-control" id="inputEmail" placeholder="email..." name="Email" value="@Model.Email">
+        <label asp-for="@Model.Email" class="form-label">Email</label>
+        @Html.TextBoxFor(a => a.Email, new { @class = "form-control", placeholder = "Email..." })
     </div>
     <div class="col-md-6">
-        <label for="inputPhone" class="form-label">Phone</label>
-        <input type="text" class="form-control" id="inputPhone" placeholder="phone..." name="PhoneNumber" value="@Model.PhoneNumber">
+        <label asp-for="@Model.PhoneNumber" class="form-label">Phone Number</label>
+        @Html.TextBoxFor(a => a.PhoneNumber, new { @class = "form-control", placeholder = "Phone Number..." })
     </div>
     <div class="col-md-6">
         <label asp-for="@Model.CustomerId" class="form-label">Customer</label>
@@ -45,7 +43,7 @@
         }
         else
         {
-            @Html.DropDownListFor(a => a.CustomerId, selectCustomers, new { @class = "form-control", @readonly = "" })
+            @Html.DropDownListFor(a => a.CustomerId, selectCustomers, new { @class = "form-control", @readonly="" })
         }
     </div>
     <div class="col-12">
@@ -56,7 +54,7 @@
                 var role = roles[i];
                 <div class="pe-3">
                     <label for="ckbRole_@i">
-                        <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles!.Contains(role.Name) ? "checked" : "")/>
+                        <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles != null && Model.Roles.Contains(role.Name) ? "checked" : "") />
                         @role.DisplayName
                     </label>
                     <input type="hidden" asp-for="ckbRole_@i" id="hdckbRole_@i" />
@@ -66,7 +64,7 @@
     </div>
     <div class="col-12">
         <button type="submit" class="btn btn-success">
-            <i class="bi bi-save"></i> Save
+            <i class="bi bi-plus-circle"></i> Create
         </button>
         <a class="btn btn-secondary" asp-action="index" asp-controller="users">
             <i class="bi bi-x-circle"></i> Cancel

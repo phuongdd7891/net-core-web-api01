@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace AdminWeb.Controllers
 {
     [Route("[controller]")]
-    public class UsersController : Controller
+    public class UsersController : BaseController
     {
         private readonly OperationService _opService;
         private readonly INotyfService _notyfService;
@@ -54,6 +54,8 @@ namespace AdminWeb.Controllers
             var user = await _opService.GetUser(username);
             var roles = await _opService.GetUserRoles();
             TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            var customers = await _opService.GetCustomers();
+            TempData["Customers"] = JsonConvert.SerializeObject(customers.Data);
             return View(user.Data);
         }
 
@@ -71,6 +73,37 @@ namespace AdminWeb.Controllers
             catch (Exception ex)
             {
                 _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
+                return View(model);
+            }
+            return RedirectToAction("index");
+        }
+
+        [Authorize]
+        [Route("create")]
+        public async Task<IActionResult> Create()
+        {
+            var roles = await _opService.GetUserRoles();
+            TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            var customers = await _opService.GetCustomers();
+            TempData["Customers"] = JsonConvert.SerializeObject(customers.Data);
+            return View(new UserViewModel());
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("create")]
+        public async Task<IActionResult> Create([FromForm] UserViewModel model, string[] usrRoles)
+        {
+            try
+            {
+                await _opService.CreateUser(model);
+                await _opService.AddUserToRoles(model.Username, usrRoles);
+                _notyfService.Success(Messages.CreateSuccessfully);
+            }
+            catch (Exception ex)
+            {
+                _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
+                model.Roles = usrRoles;
                 return View(model);
             }
             return RedirectToAction("index");

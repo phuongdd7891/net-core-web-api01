@@ -11,6 +11,7 @@
     @await RenderSectionAsync("PageStyles", required: false)
 </head>
 <body>
+    @await Component.InvokeAsync("Profile")
     <!-- Page Wrapper -->
     <div id="wrapper">
 
@@ -31,7 +32,7 @@
 
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">@ViewData["Title"]</h1>
+                        <h1 class="h5 mb-0 text-gray-800">@ViewData["Title"]</h1>
                     </div>
 
                     <!-- Content Row -->
@@ -61,12 +62,5 @@
     @await Html.PartialAsync("Sections/_Scripts")
     @await Component.InvokeAsync("Notyf")
     @await RenderSectionAsync("PageScripts", required: false)
-    <script>
-        $(function () {
-            $.ajax({
-                url: '@Url.Action("profile", "account")'
-            });
-        });
-    </script>
 </body>
 </html>

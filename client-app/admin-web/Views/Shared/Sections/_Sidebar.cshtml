@@ -1,4 +1,5 @@
-﻿<!-- Sidebar -->
+﻿@using AdminWeb.Helpers
+<!-- Sidebar -->
 <ul class="navbar-nav bg-main sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
@@ -19,6 +20,23 @@
             <span>Dashboard</span>
         </a>
     </li>
+
+    <li class="nav-item active">
+        <a class="nav-link" asp-action="index" asp-controller="users">
+            <i class="fas fa-fw fa-user"></i>
+            <span>Users</span>
+        </a>
+    </li>
+
+    @if (Html.IsSystemUsr())
+    {
+        <li class="nav-item active">
+            <a class="nav-link" asp-action="index" asp-controller="users">
+                <i class="fas fa-fw fa-user"></i>
+                <span>Customer Users</span>
+            </a>
+        </li>
+    }
 
     <!-- Divider -->
     <hr class="sidebar-divider">

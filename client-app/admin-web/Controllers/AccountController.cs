@@ -57,20 +57,5 @@ namespace AdminWeb.Controllers
             await _opService.Logout();
             return RedirectToAction("Login");
         }
-
-        [Authorize]
-        public async Task<IActionResult> Profile()
-        {
-            var profile = await _opService.GetProfile();
-            var authCookie = new AuthCookie
-            {
-                Username = User.Identity!.Name!,
-                Token = User.Claims.FirstOrDefault(a => a.Type == "Token")!.Value,
-                Profile = profile.Data
-            };
-            authCookie.Profile = profile.Data;
-            HttpContext.Response.Cookies.Append(Const.AuthenticationKey, JsonConvert.SerializeObject(authCookie));
-            return Json(profile.Data);
-        }
     }
 }
