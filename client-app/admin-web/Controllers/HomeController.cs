@@ -1,4 +1,4 @@
-﻿using System.Diagnostics; using Microsoft.AspNetCore.Mvc; using AdminWeb.Models; using AdminWeb.Services; using Newtonsoft.Json; using Microsoft.AspNetCore.Authorization; using AdminWeb.Models.Response; using static System.Runtime.InteropServices.JavaScript.JSType; using AspNetCoreHero.ToastNotification.Abstractions; using Microsoft.Extensions.Primitives;  namespace AdminWeb.Controllers;  public class HomeController : Controller {     private readonly ILogger<HomeController> _logger;     private readonly INotyfService _notyfService;     private readonly ToastMessageService _toastMsgService;
+﻿using System.Diagnostics; using Microsoft.AspNetCore.Mvc; using AdminWeb.Models; using AdminWeb.Services; using AspNetCoreHero.ToastNotification.Abstractions; using Microsoft.Extensions.Primitives; using Microsoft.AspNetCore.Authorization;  namespace AdminWeb.Controllers;  public class HomeController : Controller {     private readonly ILogger<HomeController> _logger;     private readonly INotyfService _notyfService;     private readonly ToastMessageService _toastMsgService;
 
     public HomeController(ILogger<HomeController> logger, INotyfService notyfService, ToastMessageService toastMsgService)     {         _logger = logger;         _notyfService = notyfService;         _toastMsgService = toastMsgService;     }      public IActionResult Index()     {
 
@@ -8,14 +8,19 @@
             if (Request.Query.TryGetValue("code", out values))
             {
                 var errCode = values.FirstOrDefault() ?? string.Empty;
-                _toastMsgService.AddError("", errCode);
                 if (Request.Query.TryGetValue("redirectUrl", out values))
                 {
+                    _toastMsgService.AddError("", errCode);
                     return Redirect(values.FirstOrDefault()!);
+                }
+                else
+                {
+                    message = errCode;
                 }
             }
         }         return View(new ErrorViewModel
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-            Message = message
-        });     } } 
+            Message = message,
+            BackUrl = Request.Headers["Referer"].ToString()
+    });     } } 

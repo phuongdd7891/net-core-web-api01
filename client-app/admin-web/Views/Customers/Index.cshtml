@@ -1,9 +1,9 @@
 ﻿@{
-    ViewData["Title"] = "Users";
+    ViewData["Title"] = "Customers";
     ViewData["useDataTable"] = true;
 }
 <div class="mb-3">
-    <a class="btn btn-success" asp-action="create" asp-controller="users" asp-route-customerId="@ViewBag.cid">
+    <a class="btn btn-success" asp-action="create" asp-controller="customers">
         <i class="bi bi-plus-circle"></i>
         Create
     </a>
@@ -15,9 +15,10 @@
                 <th>ID</th>
                 <th>UserName</th>
                 <th>Email</th>
-                <th>Customer</th>
-                <th>Roles</th>
-                <th></th>
+                <th>Full Name</th>
+                <th>Disabled</th>
+                <th>Users</th>
+                <th>Created</th>
                 <th></th>
             </tr>
         </thead>
@@ -39,7 +40,7 @@
                 "lengthMenu": [15, 30, 50],
                 "ajax": function (data, callback, settings) {
                     $.ajax({
-                        url: "@Url.Action("getUsers")@(ViewBag.cid != null ? "?customerId=" + ViewBag.cid : "")",
+                        url: "@Url.Action("getCustomers")",
                         data: {
                             skip: data.start,
                             limit: data.length
@@ -59,62 +60,44 @@
                 "columnDefs": [{
                     "targets": [0],
                     "visible": false,
-                    "searchable": false
+                }, {
+                    targets: [4,6],
+                    searchable: false,
+                    orderable: false
                 }],
                 "columns": [
                     { "data": "id", "autoWidth": true },
-                    { 
+                    {
                         "data": "username",
                         "name": "Name",
                         "autoWidth": true,
                         "render": function (data, type, row) {
-                            return "<span class='" + (row.isLocked ? "text-danger" : "") + "'>" + data + (row.isLocked ? "<i class='bi bi-lock ml-2'></i>" : "") + "</span>";
+                            return "<span class='" + (row.disabled ? "text-danger" : "") + "'>" + data + "</span>";
                         }
                     },
                     { "data": "email", "autoWidth": true },
-                    { "data": "customerName", "autoWidth": true },
-                    { "data": "roles", "autoWidth": true },
+                    { "data": "fullName", "autoWidth": true },
                     {
-                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info" href="/Users/Edit/' + row.username + '@(ViewBag.cid != null ? "/" + ViewBag.cid : "")"><i class="bi bi-pen"></i></a>'; }
-                    },
-                    {
-                        "data": "isLocked",
-                        "render": function (data, type, row) {
-                            return data ? 
-                                "<a href='#' tilte='Unlock' class='btn btn-circle btn-secondary' onclick=onUnlockUser('" + row.username + "'); ><i class='bi bi-unlock'></i></a>"
-                                : "<a href='#' title='Lock' class='btn btn-circle btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
+                        "render": function (data, type, row, meta) { 
+                            return row.disabled ? "<div class='text-center fs-3'><i class='bi bi-check'></i></div>" : ""; 
                         }
                     },
+                    {
+                        data: "userCount",
+                        render: function (data, type, row, meta) {
+                            return "<div class='text-center text-decoration-underline'><a href='@Url.Action("", "users")/" + row.id + "'>" + data + "</a></div>";
+                        }
+                    },
+                    {
+                        data: "createdDateDisplay"
+                    },
+                    {
+                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info" href="/Customers/Edit/' + row.username + '"><i class="bi bi-pen"></i></a>'; }
+                    }
                 ]
 
             });
         });
-
-        function onLockUser(username) {
-            if (confirm("Are you sure you want to lock user " + username + "?")) {
-                LockUser(username, true);
-            } else {
-                return false;
-            }
-        }
-
-        function onUnlockUser(username) {
-            if (confirm("Are you sure you want to unlock user " + username + "?")) {
-                LockUser(username, false);
-            } else {
-                return false;
-            }
-        }
-
-        function LockUser(username, locked) {
-            var url = '@Url.Action("LockUser", "Users")';
-            $.post(url, { username, locked }, function (data) {
-                oTable = $('#tbUsers').DataTable();
-                oTable.draw();
-            }).fail((xhr, status, err) => {
-                alert(`[${xhr.status}] ${xhr.responseJSON.error}`);
-            });
-        }
 
     </script>
 }

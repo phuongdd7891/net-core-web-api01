@@ -1,6 +1,6 @@
 ﻿using AdminWeb.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Security.Claims;
@@ -21,6 +21,12 @@ namespace AdminWeb.Handlers
 
         protected async override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
+            var endpoint = Request.HttpContext.GetEndpoint();
+            if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() is object)
+            {
+                return AuthenticateResult.NoResult();
+            }
+
             var authData = string.Empty;
             if (Request.HttpContext.Request.Cookies.TryGetValue(Const.AuthenticationKey, out authData))
             {
@@ -34,7 +40,7 @@ namespace AdminWeb.Handlers
                 var ticket = new AuthenticationTicket(principal, Scheme.Name);
                 return AuthenticateResult.Success(ticket);
             }
-            return AuthenticateResult.Fail(errMessage = "Authentication failed");
+            return AuthenticateResult.Fail(errMessage = string.Format("Authentication failed - {0}", Request.HttpContext.Request.Path));
         }
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)

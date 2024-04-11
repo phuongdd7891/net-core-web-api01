@@ -21,14 +21,12 @@ namespace AdminWeb.Controllers
             _opService = opService;
         }
 
-        public IActionResult Index() { return View(); }
-
+        [AllowAnonymous]
         public IActionResult Login()
         {
             return View();
         }
 
-        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login(LoginModel loginModel)
         {
@@ -55,7 +53,7 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Logout()
         {
             await _opService.Logout();
-            return RedirectToAction("Login");
+            return RedirectToAction("Login", "account");
         }
     }
 }

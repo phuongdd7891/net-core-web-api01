@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Security.Claims;
 
-namespace AdminWeb.Views.Shared.Components
+namespace AdminWeb.Views.Shared.Components.Profile
 {
     public class ProfileViewComponent : ViewComponent
     {
@@ -16,8 +16,11 @@ namespace AdminWeb.Views.Shared.Components
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var profile = await _opService.GetProfile();
-            TempData["Profile"] = JsonConvert.SerializeObject(profile.Data);
+            if (User.Identity!.IsAuthenticated)
+            {
+                var profile = await _opService.GetProfile();
+                TempData["Profile"] = JsonConvert.SerializeObject(profile.Data);
+            }
             return View();
         }
     }

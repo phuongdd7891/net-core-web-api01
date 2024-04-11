@@ -4,6 +4,7 @@ using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Net.Sockets;
 
 namespace AdminWeb.Controllers
 {
@@ -23,16 +24,17 @@ namespace AdminWeb.Controllers
         }
 
         [Authorize]
-        [Route("")]
-        public IActionResult Index()
+        [Route("{customerId?}")]
+        public IActionResult Index(string? customerId)
         {
+            ViewBag.cid = customerId;
             return View();
         }
 
         [Route("getUsers")]
-        public async Task<IActionResult> GetUsers(int skip, int limit)
+        public async Task<IActionResult> GetUsers(int skip, int limit, string? customerId)
         {
-            var users = await _opService.GetUsers(skip, limit);
+            var users = await _opService.GetUsers(skip, limit, customerId);
             return Json(new
             {
                 Total = users.Data!.Total,
@@ -48,52 +50,55 @@ namespace AdminWeb.Controllers
         }
 
         [Authorize]
-        [Route("edit/{username}")]
-        public async Task<IActionResult> Edit(string username)
+        [Route("edit/{username}/{customerId?}")]
+        public async Task<IActionResult> Edit(string username, string? customerId)
         {
             var user = await _opService.GetUser(username);
             var roles = await _opService.GetUserRoles();
             TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
-            var customers = await _opService.GetCustomers();
-            TempData["Customers"] = JsonConvert.SerializeObject(customers.Data);
+            ViewBag.cid = customerId;
             return View(user.Data);
         }
 
         [Authorize]
         [HttpPost]
-        [Route("edit/{username}")]
-        public async Task<IActionResult> Edit([FromForm] UserViewModel model, string[] usrRoles)
+        [Route("edit/{username}/{customerId?}")]
+        public async Task<IActionResult> Edit([FromForm] UserViewModel model, string[] usrRoles, IFormCollection formCol)
         {
+            var customerId = formCol["cid"];
             try
             {
                 await _opService.UpdateUser(model);
                 await _opService.AddUserToRoles(model.Username, usrRoles);
+                await _opService.SetLockUser(model.Username, model.IsLocked);
                 _notyfService.Success(Messages.SaveSuccessfully);
             }
             catch (Exception ex)
             {
                 _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
+                ViewBag.cid = customerId;
                 return View(model);
             }
-            return RedirectToAction("index");
+            return RedirectToAction("index", new { customerId });
         }
 
         [Authorize]
-        [Route("create")]
-        public async Task<IActionResult> Create()
+        [Route("create/{customerId?}")]
+        public async Task<IActionResult> Create(string? customerId)
         {
             var roles = await _opService.GetUserRoles();
             TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
-            var customers = await _opService.GetCustomers();
-            TempData["Customers"] = JsonConvert.SerializeObject(customers.Data);
-            return View(new UserViewModel());
+            ViewBag.cid = customerId;
+            var vm = new UserViewModel { CustomerId = customerId };
+            return View(vm);
         }
 
         [Authorize]
         [HttpPost]
-        [Route("create")]
-        public async Task<IActionResult> Create([FromForm] UserViewModel model, string[] usrRoles)
+        [Route("create/{customerId?}")]
+        public async Task<IActionResult> Create([FromForm] UserViewModel model, string[] usrRoles, IFormCollection formCol)
         {
+            var customerId = formCol["cid"];
             try
             {
                 await _opService.CreateUser(model);
@@ -104,9 +109,10 @@ namespace AdminWeb.Controllers
             {
                 _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
                 model.Roles = usrRoles;
+                ViewBag.cid = customerId;
                 return View(model);
             }
-            return RedirectToAction("index");
+            return RedirectToAction("index", new { customerId });
         }
     }
 }

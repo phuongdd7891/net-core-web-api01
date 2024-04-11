@@ -1,0 +1,29 @@
+﻿@using Newtonsoft.Json
+@model string
+@{
+    var tempCustomers = TempData.Peek("Customers") as string;
+    var customers = JsonConvert.DeserializeObject<AdminWeb.Models.Response.AdminProfile[]>(tempCustomers!);
+    var selectCustomers = new List<SelectListItem>();
+    selectCustomers.Add(new SelectListItem
+    {
+        Text = "-None-",
+        Value = string.Empty
+    });
+    if (customers != null)
+    {
+        selectCustomers.AddRange(customers.Select(a => new SelectListItem
+        {
+            Text = a.FullName ?? a.Username,
+            Value = a.Id,
+            Selected = ViewBag.value == a.Id
+        }));
+    }
+}
+@if (Html.IsSystemUsr())
+{
+    <select name="@Model" id="@Model" asp-items="selectCustomers" class="form-control"></select>
+}
+else
+{
+    <select name="@Model" id="@Model" asp-items="selectCustomers" class="form-control" readonly></select>
+}

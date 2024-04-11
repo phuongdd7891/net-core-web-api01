@@ -1,26 +1,28 @@
 ﻿@model ErrorViewModel
 @{
+    Layout = "_BlankLayout";
     ViewData["Title"] = "Error";
 }
+<div class="container my-3">
+    <h5 class="text-danger">An error occurred while processing your request.</h5>
 
-<h5 class="text-danger">An error occurred while processing your request.</h5>
+    @if (Model.ShowRequestId)
+    {
+        <p>
+            <strong>Request ID:</strong> <span class="text-info">@Model.RequestId</span>
+        </p>
+    }
 
-@if (Model.ShowRequestId)
-{
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="border border-danger text-danger bg-light p-3 mb-3">
+            @Model.Message
+        </div>
+    }
+
     <p>
-        <strong>Request ID:</strong> <span class="text-info">@Model.RequestId</span>
+        <a href="@Model.BackUrl" class="btn btn-outline-info">
+            <i class="bi bi-backspace pr-2"></i>Back
+        </a>
     </p>
-}
-
-@if (!string.IsNullOrEmpty(Model.Message))
-{
-    <div class="border border-danger text-danger bg-light p-3 mb-3">
-        @Model.Message
-    </div>
-}
-
-<p>
-    <a href="javascript: history.go(-1);" class="btn btn-outline-info">
-        <i class="bi bi-backspace pr-2"></i>Back
-    </a>
-</p>
+</div>

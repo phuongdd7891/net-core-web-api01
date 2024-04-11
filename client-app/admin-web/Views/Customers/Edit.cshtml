@@ -1,0 +1,38 @@
+﻿@model CustomerViewModel
+@{
+    ViewData["Title"] = "Edit Customer";
+}
+
+<form class="row g-3" asp-action="edit" asp-controller="customers" method="post">
+    @Html.HiddenFor(a => a.Id)
+    <div class="col-md-6">
+        <label asp-for="Username" class="form-label">Username</label>
+        @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder = "Username..." })
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Password" class="form-label">Password</label>
+        @Html.PasswordFor(a => a.Password, new { @class = "form-control", placeholder = "Password..." })
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label">Email</label>
+        @Html.TextBoxFor(a => a.Email, new { @class = "form-control", placeholder = "Email..." })
+    </div>
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label">Full Name</label>
+        @Html.TextBoxFor(a => a.FullName, new { @class = "form-control", placeholder = "Full Name..." })
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Disabled" class="form-label">
+            @Html.CheckBoxFor(a => a.Disabled, new { @class = "pr-2" })
+            Disabled
+        </label>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-save"></i> Save
+        </button>
+        <a class="btn btn-secondary" asp-action="index" asp-controller="customers">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </div>
+</form>

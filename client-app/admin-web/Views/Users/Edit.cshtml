@@ -1,26 +1,15 @@
 ﻿@using Newtonsoft.Json
-@using AdminWeb.Helpers
 @model UserViewModel
 @{
     ViewData["Title"] = "Edit User";
     var tempRoles = TempData.Peek("Roles") as string;
     var roles = Newtonsoft.Json.JsonConvert.DeserializeObject<AdminWeb.Models.Response.UserRolesResponse[]>(tempRoles!);
-    var tempCustomers = TempData.Peek("Customers") as string;
-    var customers = JsonConvert.DeserializeObject<AdminWeb.Models.Response.AdminProfile[]>(tempCustomers!);
-    var selectCustomers = new List<SelectListItem>();
-    if (customers != null)
-    {
-        selectCustomers.AddRange(customers.Select(a => new SelectListItem
-        {
-            Text = a.FullName,
-            Value = a.Id
-        }));
-    }
 }
 
 <form class="row g-3" asp-action="edit" asp-controller="users" method="post">
     @Html.HiddenFor(a => a.Id)
     @Html.HiddenFor(a => a.Roles)
+    @Html.Hidden("cid", ViewBag.cid, null)
     <div class="col-md-6">
         <label for="inputUsername" class="form-label">Username</label>
         <input type="text" class="form-control" id="inputUsername" name="Username" value="@Model.Username" readonly>
@@ -39,14 +28,12 @@
     </div>
     <div class="col-md-6">
         <label asp-for="@Model.CustomerId" class="form-label">Customer</label>
-        @if (Html.IsSystemUsr())
-        {
-            @Html.DropDownListFor(a => a.CustomerId, selectCustomers, new { @class = "form-control" })
-        }
-        else
-        {
-            @Html.DropDownListFor(a => a.CustomerId, selectCustomers, new { @class = "form-control", @readonly = "" })
-        }
+        @await Component.InvokeAsync("Customer", new { model = "CustomerId", value = Model.CustomerId })
+    </div>
+    <div class="col-md-6 d-flex flex-column justify-content-center">
+        <label asp-for="@Model.IsLocked" class="form-label">
+            @Html.CheckBoxFor(a => a.IsLocked, new { @class = "pr-2" }) Locked
+        </label>
     </div>
     <div class="col-12">
         <label class="form-label">Roles</label>
@@ -68,7 +55,7 @@
         <button type="submit" class="btn btn-success">
             <i class="bi bi-save"></i> Save
         </button>
-        <a class="btn btn-secondary" asp-action="index" asp-controller="users">
+        <a class="btn btn-secondary" asp-action="index" asp-controller="users" asp-route-customerId="@ViewBag.cid">
             <i class="bi bi-x-circle"></i> Cancel
         </a>
     </div>
