@@ -12,9 +12,12 @@ namespace WebApi.Models.Admin
         public required string Username { get; set; }
         public required string Password { get; set; }
         public string? FullName { get; set; }
+        public string? Email { get; set; }
         public bool IsSystem { get; set; }
         public bool IsCustomer { get; set; }
+        public bool Disabled { get; set; }
         public DateTime CreatedDate { get; set; }
+        public DateTime? ModifiedDate { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryDate { get; set; }
 
@@ -35,7 +38,11 @@ namespace WebApi.Models.Admin
         public string? Id { get; set; }
         public required string Username { get; set; }
         public string? FullName { get; set; }
+        public string? Email { get; set; }
         public bool IsSystem { get; set; }
         public bool IsCustomer { get; set; }
+        public bool Disabled { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public int UserCount { get; set; }
     }
 }

@@ -57,6 +57,8 @@ public class OperationsController : ControllerBase
                 Data = ModelState.Values.First().Errors.First()!.ErrorMessage
             });
         }
+        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
+        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
         var result = await _userManager.CreateAsync(
             new ApplicationUser()
             {
@@ -267,13 +269,14 @@ public class OperationsController : ControllerBase
 
     [HttpGet("users")]
     [CustomAuthorize(null, true, true)]
-    public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100)
+    public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100, string? customerId = null)
     {
         var claimData = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData)!.Value;
         var userData = JsonConvert.DeserializeObject<AdminUser>(claimData);
         var adminUsers = await _adminService.ListUsers(userData!.IsCustomer);
-        var appUsers = _userManager.Users.Where(u => (u.CustomerId == userData.Id && userData.IsCustomer) || userData.IsSystem)
-            .Skip(skip).Take(limit).ToList();
+        var qUsers = _userManager.Users.Where(u => string.IsNullOrEmpty(customerId) ? ((u.CustomerId == userData.Id && userData.IsCustomer) || userData.IsSystem) : (u.CustomerId == customerId));
+        var appUsers = qUsers.Skip(skip).Take(limit).ToList();
+        var total = qUsers.Count();
         var users = appUsers
             .GroupJoin(adminUsers, u => u.CustomerId, a => a.Id, (u, a) => new { Admins = a, User = u })
             .SelectMany(a => a.Admins.DefaultIfEmpty(), (u, a) => new UserViewModel(u.User)
@@ -293,7 +296,7 @@ public class OperationsController : ControllerBase
             Data = new GetUsersReply
             {
                 List = users,
-                Total = users.Count()
+                Total = total
             }
         };
     }
@@ -319,6 +322,7 @@ public class OperationsController : ControllerBase
         }
         appUser!.Email = user.Email;
         appUser.PhoneNumber = user.PhoneNumber;
+        appUser.CustomerId = user.CustomerId;
         var result = await _userManager.UpdateAsync(appUser);
         if (!result.Succeeded)
         {

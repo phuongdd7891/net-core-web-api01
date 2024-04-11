@@ -1,9 +1,7 @@
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
-using NLog.LayoutRenderers;
 using WebApi.Models.Admin;
-using WebApi.Models.Requests;
 using MongoDB.Driver.Linq;
 
 namespace WebApi.Services;
@@ -28,10 +26,14 @@ public class AdminService
     {
         var hashedPwd = passwordHasher.HashPassword(user, user.Password);
         user.Password = hashedPwd;
+        user.CreatedDate = DateTime.Now;
         await _users.InsertOneAsync(user);
     }
 
-    public async Task<List<AdminUser>> ListUsers(bool isCustomer = false) => await _users.Find(a => a.IsCustomer == isCustomer || isCustomer == false).ToListAsync();
+    public async Task<List<AdminUser>> ListUsers(bool isCustomer = false)
+    {
+        return await _users.Find(a => a.IsCustomer == isCustomer || isCustomer == false).ToListAsync();
+    }
 
     public async Task<AdminUser> GetUser(string username) => await _users.Find(a => a.Username == username).FirstOrDefaultAsync();
 
@@ -43,9 +45,14 @@ public class AdminService
         return user != null && passwordHasher.VerifyHashedPassword(user, user.Password, password) != PasswordVerificationResult.Failed;
     }
 
-    public async Task UpdateUser(AdminUser user)
+    public async Task UpdateUser(AdminUser user, string? password = null)
     {
         var filter = Builders<AdminUser>.Filter.Where(u => u.Username == user.Username);
+        user.ModifiedDate = DateTime.Now;
+        if (!string.IsNullOrEmpty(password))
+        {
+            user.Password = passwordHasher.HashPassword(user, password);
+        }
         await _users.ReplaceOneAsync(filter, user);
     }
 }

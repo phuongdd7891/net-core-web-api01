@@ -1,7 +1,10 @@
 using System.Security.Claims;
+using CoreLibrary.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using WebApi.Models;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using WebApi.Services;
@@ -14,16 +17,19 @@ public class AdminController : ControllerBase
     private readonly AdminService _adminService;
     private readonly JwtService _jwtService;
     private readonly ApiKeyService _apiKeyService;
+    private UserManager<ApplicationUser> _userManager;
 
     public AdminController(
         AdminService adminService,
         JwtService jwtService,
-        ApiKeyService apiKeyService
+        ApiKeyService apiKeyService,
+        UserManager<ApplicationUser> userManager
     )
     {
         _adminService = adminService;
         _jwtService = jwtService;
         _apiKeyService = apiKeyService;
+        _userManager = userManager;
     }
 
     private AdminUser? GetUserClaim()
@@ -36,14 +42,25 @@ public class AdminController : ControllerBase
         return null;
     }
 
-    [HttpPost("create-user")]
+    private void ValidatePasswordRequest(string password)
+    {
+        ErrorStatuses.ThrowBadRequest("Min length of password is 8", password.Length < 8);
+        ErrorStatuses.ThrowBadRequest("Password should have at least a number", !password.Any(c => Char.IsNumber(c)));
+        ErrorStatuses.ThrowBadRequest("Password should have at least an upper character", !password.Any(c => !Char.IsNumber(c) && Char.IsUpper(c)));
+    }
+
+    [HttpPost("create-user"), CustomAuthorize(null, true)]
     public async Task<IActionResult> CreateUser(AdminUserRequest request)
     {
-        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
-        ErrorStatuses.ThrowBadRequest("Password is required", string.IsNullOrEmpty(request.Password));
-        ErrorStatuses.ThrowBadRequest("Min length of password is 8", request.Password.Length < 8);
-        ErrorStatuses.ThrowBadRequest("Password should have at least a number", !request.Password.Any(c => Char.IsNumber(c)));
-        ErrorStatuses.ThrowBadRequest("Password should have at least an upper character", !request.Password.Any(c => !Char.IsNumber(c) && Char.IsUpper(c)));
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
+            });
+        }
+        ValidatePasswordRequest(request.Password);
         var user = await _adminService.GetUser(request.Username);
         ErrorStatuses.ThrowBadRequest("Username is duplicated", user != null);
         await _adminService.CreateUser(new AdminUser
@@ -51,10 +68,56 @@ public class AdminController : ControllerBase
             Username = request.Username,
             Password = request.Password,
             FullName = request.FullName,
+            Email = request.Email,
             IsSystem = request.IsSystem,
             IsCustomer = request.IsCustomer,
-            CreatedDate = DateTime.Now
+            Disabled = request.Disabled,
         });
+        return Ok(new DataResponse());
+    }
+
+    [HttpPost("update-user"), CustomAuthorize(null, true)]
+    public async Task<IActionResult> EditUser(AdminUserRequest request)
+    {
+        var user = await _adminService.GetUser(request.Username);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        if (!string.IsNullOrEmpty(request.Password))
+        {
+            ValidatePasswordRequest(request.Password);
+        }
+        else
+        {
+            request.Password = user!.Password;
+            ModelState.Remove("Password");
+        }
+        if (!string.IsNullOrEmpty(request.Email))
+        {
+            ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(request.Email));
+        }
+        else
+        {
+            request.Email = user!.Email!;
+            ModelState.Remove("Email");
+        }
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
+            });
+        }
+        await _adminService.UpdateUser(new AdminUser
+        {
+            Id = user!.Id,
+            Username = request.Username,
+            Password = request.Password,
+            FullName = request.FullName,
+            Email = request.Email,
+            Disabled = request.Disabled,
+            CreatedDate = user.CreatedDate,
+            IsCustomer = true,
+        }, request.Password);
         return Ok(new DataResponse());
     }
 
@@ -68,6 +131,7 @@ public class AdminController : ControllerBase
         var pwdResult = await _adminService.VerifyPassword(request.UserName, request.Password);
         ErrorStatuses.ThrowBadRequest("Bad credentials", !pwdResult);
         ErrorStatuses.ThrowInternalErr("Invalid user", !user!.IsSystem && !user.IsCustomer);
+        ErrorStatuses.ThrowInternalErr("Account is disabled", user.Disabled);
 
         var refreshToken = _jwtService.GenerateRefreshToken();
         user.RefreshToken = refreshToken;
@@ -153,16 +217,42 @@ public class AdminController : ControllerBase
         {
             if (claimUser.IsSystem)
             {
-                users.AddRange(await _adminService.ListUsers(true));
+                var listUsers = await _adminService.ListUsers(true);
+                users.AddRange(listUsers);
             }
             if (claimUser.IsCustomer)
             {
                 users.Add(await _adminService.GetUser(claimUser.Username));
             }
         }
-        return Ok(new DataResponse<List<AdminUser>>
+        var appUsers = _userManager.Users;
+        var list = users.GroupJoin(appUsers, u => u.Id, a => a.CustomerId, (u, a) => new { Admin = u, UserCount = a.Count() }).ToList();
+        return Ok(new DataResponse<List<AdminProfile>>
         {
-            Data = users
+            Data = list.Select(x => new AdminProfile
+            {
+                Id = x.Admin.Id,
+                Username = x.Admin.Username,
+                FullName = x.Admin.FullName,
+                IsCustomer = x.Admin.IsCustomer,
+                IsSystem = x.Admin.IsSystem,
+                Email = x.Admin.Email,
+                Disabled = x.Admin.Disabled,
+                CreatedDate = x.Admin.CreatedDate,
+                UserCount = x.UserCount,
+            }).ToList()
+        });
+    }
+
+    [HttpGet("get-user"), CustomAuthorize(null, true)]
+    public async Task<IActionResult> GetUser(string username)
+    {
+        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
+        var user = await _adminService.GetUser(username);
+        ErrorStatuses.ThrowNotFound("User not found", user == null);
+        return Ok(new DataResponse<AdminUser>
+        {
+            Data = user 
         });
     }
 }
