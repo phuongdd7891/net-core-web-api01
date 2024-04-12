@@ -15,5 +15,6 @@ namespace WebApi.Models
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public string? DisplayName { get; set; }
+        public List<string>? Actions { get; set; }
     }
 }

@@ -46,54 +46,6 @@ public class OperationsController : ControllerBase
         _adminService = adminService;
     }
 
-    [HttpPost("create-user")]
-    public async Task<IActionResult> CreateUser(User user)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new DataResponse<string>
-            {
-                Code = DataResponseCode.InvalidRequest.ToString(),
-                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
-            });
-        }
-        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
-        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
-        var result = await _userManager.CreateAsync(
-            new ApplicationUser()
-            {
-                UserName = user.Username,
-                Email = user.Email,
-                CustomerId = user.CustomerId
-            },
-            user.Password!
-        );
-        if (!result.Succeeded)
-        {
-            return BadRequest(new DataResponse<string>
-            {
-                Code = DataResponseCode.InvalidRequest.ToString(),
-                Data = result.Errors.First()!.Description
-            });
-        }
-        var appUser = await _userManager.FindByNameAsync(user.Username);
-        try
-        {
-            var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
-            //await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>You need to confirm your email account by using below token</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            await _userManager.DeleteAsync(appUser!);
-            return BadRequest(new DataResponse<string>
-            {
-                Code = DataResponseCode.IternalError.ToString(),
-                Data = ex.Message
-            });
-        }
-        return Ok(new DataResponse());
-    }
-
     [HttpPost("Login")]
     public async Task<IActionResult> Login(AuthenticationRequest request, [FromQuery(Name = "t")] string? tokenType)
     {
@@ -169,34 +121,71 @@ public class OperationsController : ControllerBase
 
     [HttpGet("user-roles")]
     [CustomAuthorize(null, true, true)]
-    public DataResponse<List<GetRolesReply>> GetUserRoles()
+    public async Task<DataResponse<List<GetRolesReply>>> GetUserRoles()
     {
-        var roles = _roleManager.Roles.Select(a => new GetRolesReply
+        var dict = new Dictionary<string, List<string>>();
+        var roleActions = await _roleActionRepository.GetAll();
+        roleActions.ForEach(a =>
         {
-            Id = a.Id,
-            Name = a.Name,
-            DisplayName = a.NormalizedName
-        }).ToList();
+            a.Roles.ForEach(x =>
+            {
+                if (!dict.ContainsKey(x))
+                {
+                    dict[x] = new List<string>();
+                }
+                dict[x].Add(a.RequestAction);
+            });
+        });
+        var roles = new List<GetRolesReply>();
+        _roleManager.Roles.ToList().ForEach(a =>
+        {
+            roles.Add(new GetRolesReply
+            {
+                Id = a.Id,
+                Name = a.Name,
+                DisplayName = a.NormalizedName,
+                Actions = dict[a.Id.ToString()]
+            });
+        });
         return new DataResponse<List<GetRolesReply>>
         {
             Data = roles
         };
     }
-    #endregion
 
-    [HttpPost("add-role-action")]
-    [CustomAuthorize(null, true)]
-    public async Task<IActionResult> AddRoleAction(RoleActionRequest request)
+    private IEnumerable<ApplicationRole> GetRolesByNames(string[] names)
     {
-        var appRole = await _roleManager.FindByNameAsync(request.Role);
-        if (appRole == null)
+        foreach (var role in names)
         {
-            return NotFound("Role not found");
+            var appRole = _roleManager.Roles.FirstOrDefault(a => a.Name == role);
+            if (appRole != null)
+            {
+                yield return appRole;
+            }
         }
-        await _roleActionRepository.Add(request.Action, appRole!.Id.ToString());
+    }
+
+    [HttpPost("add-roles-actions")]
+    [CustomAuthorize(null, true)]
+    public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
+    {
+        var appRoles = GetRolesByNames(request.Roles);
+        await _roleActionRepository.Add(request.Actions, appRoles.Select(a => Convert.ToString(a.Id)).ToArray()!);
         await _cacheService.LoadRoleActions();
         return Ok();
     }
+
+    [HttpPost("delete-action")]
+    [CustomAuthorize(null, true)]
+    public async Task<IActionResult> DeleteRoleAction(string action)
+    {
+        var result = await _roleActionRepository.Delete(action);
+        return Ok(new DataResponse<bool>
+        {
+            Data = result.DeletedCount > 0
+        });
+    }
+    #endregion
 
     [HttpPost("change-password")]
     [Authorize]
@@ -247,6 +236,55 @@ public class OperationsController : ControllerBase
         return Content(result);
     }
 
+    #region User
+    [HttpPost("create-user")]
+    public async Task<IActionResult> CreateUser(User user)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
+            });
+        }
+        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
+        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
+        var result = await _userManager.CreateAsync(
+            new ApplicationUser()
+            {
+                UserName = user.Username,
+                Email = user.Email,
+                CustomerId = user.CustomerId
+            },
+            user.Password!
+        );
+        if (!result.Succeeded)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = result.Errors.First()!.Description
+            });
+        }
+        var appUser = await _userManager.FindByNameAsync(user.Username);
+        try
+        {
+            var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(appUser!);
+            //await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>You need to confirm your email account by using below token</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await _userManager.DeleteAsync(appUser!);
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.IternalError.ToString(),
+                Data = ex.Message
+            });
+        }
+        return Ok(new DataResponse());
+    }
+
     [HttpPost("lock-user")]
     [CustomAuthorize(null, true)]
     public async Task<IActionResult> LockUser([FromBody] LockUserRequest request)
@@ -286,7 +324,8 @@ public class OperationsController : ControllerBase
         var tasks = new List<Task>();
         users.ForEach(u =>
         {
-            tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x => {
+            tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x =>
+            {
                 u.Roles = x.Result;
             }));
         });
@@ -356,4 +395,5 @@ public class OperationsController : ControllerBase
             }
         });
     }
+    #endregion
 }

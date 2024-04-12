@@ -75,7 +75,7 @@ public class JwtService
             {
                 foreach (var item in roleActions)
                 {
-                    if (item.Value.Contains(role.ToString()))
+                    if (item.Value.Contains(role.ToString()) && !actions.Contains(item.Key))
                     {
                         actions.Add(item.Key);
                     }

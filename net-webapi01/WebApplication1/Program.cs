@@ -41,6 +41,13 @@ services.AddSwaggerGen(options =>
         Description = "Bearer Authentication with JWT Token",
         Type = SecuritySchemeType.Http
     });
+    options.AddSecurityDefinition("Username", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Query,
+        Name = "u",
+        Description = "Username",
+        Type = SecuritySchemeType.ApiKey
+    });
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -49,6 +56,17 @@ services.AddSwaggerGen(options =>
                 Reference = new OpenApiReference
                 {
                     Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
+                }
+            },
+            new List<string>()
+        },
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Id = "Username",
                     Type = ReferenceType.SecurityScheme
                 }
             },

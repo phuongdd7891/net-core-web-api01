@@ -26,8 +26,8 @@ namespace WebApi.Models.Requests
 
     public class RoleActionRequest
     {
-        public required string Action { get; set; }
-        public required string Role { get; set; }
+        public required string[] Actions { get; set; }
+        public required string[] Roles { get; set; }
     }
 
     public class ChangePasswordRequest

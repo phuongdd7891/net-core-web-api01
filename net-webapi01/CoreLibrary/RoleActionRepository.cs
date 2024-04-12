@@ -13,33 +13,49 @@ public class RoleActionRepository
         _collection = context.RoleActions;
     }
 
-    public async Task Add(string action, string role)
+    public async Task Add(string[] actions, string[] roles)
     {
-        var filter = Builders<RoleAction>.Filter.Where(x => x.RequestAction == action);
-        var roleAction = await _collection.Find(filter).FirstOrDefaultAsync();
-        if (roleAction == null)
+        var filter = Builders<RoleAction>.Filter.Where(x => actions.Contains(x.RequestAction));
+        var roleActions = await _collection.Find(filter).ToListAsync();
+        var roleList = roles.ToList();
+        if (roleActions == null)
         {
-            await _collection.InsertOneAsync(new RoleAction
+            foreach (var action in actions)
             {
-                RequestAction = action,
-                Roles = new List<string> { role }
-            });
+                await _collection.InsertOneAsync(new RoleAction
+                {
+                    RequestAction = action,
+                    Roles = roleList
+                });
+            }
         }
         else
         {
-            var roles = roleAction.Roles;
-            if (!roles.Contains(role))
-            {
-                roles.Add(role);
-            }
             var builder = Builders<RoleAction>.Update;
-            var update = builder.Set("Roles", roles);
-            await _collection.UpdateOneAsync(filter, update);
+            var reqActions = new List<string>(roleActions.Count);
+            foreach (var item in roleActions)
+            {
+                reqActions.Add(item.RequestAction);
+                var update = builder.Set("Roles", roleList);
+                await _collection.UpdateManyAsync(filter, update);
+            }
+            var newActions = actions.Where(x => !reqActions.Contains(x)).ToList();
+            newActions.ForEach(async x => await _collection.InsertOneAsync(new RoleAction
+            {
+                RequestAction = x,
+                Roles = roleList
+            }));
         }
     }
 
     public async Task<List<RoleAction>> GetAll()
     {
         return await _collection.Find(_ => true).ToListAsync();
+    }
+
+    public async Task<DeleteResult> Delete(string action)
+    {
+        var filter = Builders<RoleAction>.Filter.Where(x => x.RequestAction == action);
+        return await _collection.DeleteOneAsync(filter);
     }
 }
