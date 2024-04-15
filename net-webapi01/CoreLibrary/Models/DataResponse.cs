@@ -11,8 +11,8 @@ public enum DataResponseCode
     InvalidRequest = 4,
     Unauthorized = 5,
     EmailNotConfirm = 6,
-    InvalidToken = 7,
-    TokenExpired = 8
+    Token_Invalid = 7,
+    Token_Expired = 8
 }
 
 public class DataResponse: DataResponse<string>

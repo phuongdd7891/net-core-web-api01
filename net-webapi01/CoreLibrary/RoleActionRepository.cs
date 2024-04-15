@@ -1,5 +1,6 @@
 using CoreLibrary.DbContext;
 using CoreLibrary.Models;
+using DnsClient.Protocol;
 using MongoDB.Driver;
 
 public class RoleActionRepository
@@ -32,12 +33,21 @@ public class RoleActionRepository
         else
         {
             var builder = Builders<RoleAction>.Update;
-            var reqActions = new List<string>(roleActions.Count);
-            foreach (var item in roleActions)
+            var allActs = await GetAll();
+            var excludeActs = allActs.Where(x => x.Roles.Any(y => roles.Contains(y))).ToList();
+            var tasks = new List<Task>();
+            excludeActs.ForEach(x => {
+                roleList.ForEach(a => x.Roles.Remove(a));
+                tasks.Add(_collection.ReplaceOneAsync(a => a.Id == x.Id, x));
+            });
+            await Task.WhenAll(tasks);
+            var list = await _collection.Find(filter).ToListAsync();
+            var reqActions = new List<string>(list.Count);
+            foreach (var item in list)
             {
                 reqActions.Add(item.RequestAction);
-                var update = builder.Set("Roles", roleList);
-                await _collection.UpdateManyAsync(filter, update);
+                var update = builder.Set("Roles", item.Roles.Concat(roleList).Distinct());
+                await _collection.UpdateManyAsync(a => a.Id == item.Id, update);
             }
             var newActions = actions.Where(x => !reqActions.Contains(x)).ToList();
             newActions.ForEach(async x => await _collection.InsertOneAsync(new RoleAction

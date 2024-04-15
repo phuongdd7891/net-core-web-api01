@@ -152,12 +152,12 @@ public class JwtService
         {
             if (Type.Equals(result.Exception.GetType(), typeof(SecurityTokenExpiredException)))
             {
-                tokenResult.Code = DataResponseCode.TokenExpired.ToString();
+                tokenResult.Code = DataResponseCode.Token_Expired.ToString();
                 tokenResult.Message = "Token expired";
             }
             else
             {
-                tokenResult.Code = DataResponseCode.InvalidToken.ToString();
+                tokenResult.Code = DataResponseCode.Token_Invalid.ToString();
                 tokenResult.Message = result.Exception.Message;
             }
         }

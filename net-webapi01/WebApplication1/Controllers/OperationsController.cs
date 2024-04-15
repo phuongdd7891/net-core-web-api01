@@ -10,6 +10,7 @@ using System.Security.Claims;
 using Newtonsoft.Json;
 using WebApi.Models.Admin;
 using CoreLibrary.Utils;
+using CoreLibrary.Models;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -139,12 +140,13 @@ public class OperationsController : ControllerBase
         var roles = new List<GetRolesReply>();
         _roleManager.Roles.ToList().ForEach(a =>
         {
+            var key = a.Id.ToString();
             roles.Add(new GetRolesReply
             {
                 Id = a.Id,
                 Name = a.Name,
                 DisplayName = a.NormalizedName,
-                Actions = dict[a.Id.ToString()]
+                Actions = dict.ContainsKey(key) ? dict[key] : new List<string>()
             });
         });
         return new DataResponse<List<GetRolesReply>>
@@ -183,6 +185,17 @@ public class OperationsController : ControllerBase
         return Ok(new DataResponse<bool>
         {
             Data = result.DeletedCount > 0
+        });
+    }
+
+    [HttpGet("request-actions")]
+    [CustomAuthorize(null, true)]
+    public async Task<IActionResult> GetRoleActions()
+    {
+        var actions = await _roleActionRepository.GetAll();
+        return Ok(new DataResponse<List<string>>
+        {
+            Data = actions.Select(a => a.RequestAction).ToList()
         });
     }
     #endregion
