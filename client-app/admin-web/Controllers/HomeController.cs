@@ -2,7 +2,7 @@
 
     public HomeController(ILogger<HomeController> logger, INotyfService notyfService, ToastMessageService toastMsgService)     {         _logger = logger;         _notyfService = notyfService;         _toastMsgService = toastMsgService;     }      public IActionResult Index()     {
 
-        return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     [HttpPost]     [HttpGet]     public IActionResult Error([FromForm] string message)     {         if (Request.QueryString.HasValue)
+        return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     [HttpPost]     [HttpGet]     public IActionResult Error([FromForm] string message, [FromForm] string code)     {         if (Request.QueryString.HasValue)
         {
             var values = new StringValues();
             if (Request.Query.TryGetValue("code", out values))
@@ -22,5 +22,5 @@
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
             Message = message,
-            BackUrl = Request.Headers["Referer"].ToString()
+            BackUrl = code.StartsWith("Token_") ? "/" : Request.Headers["Referer"].ToString()
     });     } } 

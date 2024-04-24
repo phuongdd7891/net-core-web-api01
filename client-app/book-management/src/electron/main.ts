@@ -108,7 +108,7 @@ class Main {
             } else {
                 users.push({
                     ...data,
-                    order: users.length
+                    order: Math.max(...users.map(a => a.order)) + 1
                 });
             }
             this.store.set(storeKeys.rememberUsers, users);

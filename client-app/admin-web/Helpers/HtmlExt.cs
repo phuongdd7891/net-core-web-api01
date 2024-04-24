@@ -19,14 +19,29 @@ namespace AdminWeb.Helpers
             return false;
         }
 
-        public static string IsSelected(this IHtmlHelper helper, string? controller = null, string? action = null, string? cssClass = null)
+        public static string IsSelected(this IHtmlHelper helper, string? controller = null, string[]? actions = null, string? cssClass = null)
         {
             if (string.IsNullOrEmpty(cssClass)) cssClass = "active";
             var currentAction = Convert.ToString(helper.ViewContext.RouteData.Values["action"]);
             var currentController = Convert.ToString(helper.ViewContext.RouteData.Values["controller"]);
             if (string.IsNullOrEmpty(controller)) controller = currentController;
+            if (actions == null)
+            {
+                actions = new string[] { currentAction!.ToLower() };
+            }
+            else
+            {
+                actions = actions.Select(x => x.ToLower()).ToArray();
+            }
+            return controller?.ToLower() == currentController?.ToLower() && actions.Contains(currentAction?.ToLower()) ? cssClass : string.Empty;
+        }
+
+        public static bool IsActiveRoute(this IHtmlHelper helper, string controller, string? action = null)
+        {
+            var currentAction = Convert.ToString(helper.ViewContext.RouteData.Values["action"]);
+            var currentController = Convert.ToString(helper.ViewContext.RouteData.Values["controller"]);
             if (string.IsNullOrEmpty(action)) action = currentAction;
-            return controller?.ToLower() == currentController?.ToLower() && action?.ToLower() == currentAction?.ToLower() ? cssClass : string.Empty;
+            return controller?.ToLower() == currentController?.ToLower() && action?.ToLower() == currentAction?.ToLower();
         }
     }
 }

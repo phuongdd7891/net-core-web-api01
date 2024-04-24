@@ -87,6 +87,19 @@ namespace AdminWeb.Services
             return PostAsync<Object, ApiResponse<string>>("api/operations/create-user", req);
         }
 
+        public Task<ApiResponse<List<string>>> GetRequestActions()
+        {
+            return GetAsync<ApiResponse<List<string>>>($"api/operations/request-actions");
+        }
+
+        public Task AddRoleActions(string role, string[] actions)
+        {
+            return PostAsync<Object, string?>("api/operations/add-roles-actions", new {
+                Roles = new[] { role },
+                Actions = actions
+            });
+        }
+
         #region Customer
         public Task<ApiResponse<List<AdminProfile>>> GetCustomers()
         {

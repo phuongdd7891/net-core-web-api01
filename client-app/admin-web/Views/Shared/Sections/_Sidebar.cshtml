@@ -12,46 +12,43 @@
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
 
-    <li class="nav-item @Html.IsSelected("users", "index")">
+    <li class="nav-item @Html.IsSelected("users", new [] {"index"})">
         <a class="nav-link" href="@Url.Action("", "users")">
-            <i class="bi bi-person-fill fs-2"></i>
+            <i class="bi bi-person-fill fs-4"></i>
             <span>Users</span>
         </a>
     </li>
 
-    @if (Html.IsSystemUsr())
-    {
-        <li class="nav-item @Html.IsSelected("customers")">
-            <a class="nav-link" asp-action="index" asp-controller="customers">
-                <i class="bi bi-person-check-fill fs-3"></i>
-                <span>Customer Users</span>
-            </a>
-        </li>
-    }
-
     <!-- Divider -->
     <hr class="sidebar-divider">
 
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Interface
-    </div>
-
-    <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
-           aria-expanded="true" aria-controls="collapseTwo">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Components</span>
-        </a>
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Custom Components:</h6>
-                <a class="collapse-item" href="buttons.html">Buttons</a>
-                <a class="collapse-item" href="cards.html">Cards</a>
-            </div>
+    @if (Html.IsSystemUsr())
+    {
+        <!-- Heading -->
+        <div class="sidebar-heading">
+            System
         </div>
-    </li>   
+        <li class="nav-item @Html.IsSelected("customers")">
+            <a class="nav-link" asp-action="index" asp-controller="customers">
+                <i class="bi bi-person-check-fill fs-4"></i>
+                <span>Customers</span>
+            </a>
+        </li>
+        <!-- Nav Item - Pages Collapse Menu -->
+        <li class="nav-item">
+            <a class="nav-link @Html.IsSelected("Authentication", null, "")" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAuth"
+               aria-expanded="@Html.IsActiveRoute("Authentication")" aria-controls="collapseAuth">
+                <i class="fas fa-fw fa-cog"></i>
+                <span>Authentication</span>
+            </a>
+            <div id="collapseAuth" class="collapse @Html.IsSelected("Authentication", new [] {"role"}, "show")" aria-labelledby="headingTwo" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    @* <h6 class="collapse-header">Custom Components:</h6> *@
+                    <a class="collapse-item" asp-action="role" asp-controller="authentication">Roles</a>
+                </div>
+            </div>
+        </li>
+    }
 
     <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">

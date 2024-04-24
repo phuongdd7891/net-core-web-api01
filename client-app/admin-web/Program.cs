@@ -3,6 +3,7 @@ using AdminWeb.Handler;
 using AdminWeb.Handlers;
 using AdminWeb.Middlewares;
 using AdminWeb.Services;
+using AspNetCore.Unobtrusive.Ajax;
 using AspNetCoreHero.ToastNotification;
 using AspNetCoreHero.ToastNotification.Extensions;
 using Microsoft.AspNetCore.Authentication;
@@ -43,6 +44,7 @@ builder.Services.AddNotyf(config =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ToastMessageService>();
+builder.Services.AddUnobtrusiveAjax();
 
 var app = builder.Build();
 
@@ -66,6 +68,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseNotyf();
+app.UseUnobtrusiveAjax();
 
 app.MapControllerRoute(
     name: "default",

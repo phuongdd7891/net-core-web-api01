@@ -1,0 +1,102 @@
+﻿@model AdminWeb.Models.Response.UserRolesResponse[]
+@{
+    ViewData["Title"] = "Roles";
+    var actions = ViewBag.actions as List<string>;
+}
+
+<div id="roleList">
+    @await Html.PartialAsync("_RoleList", Model)
+</div>
+
+<div id="mdRole" class="modal">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        @using (Html.AjaxBeginForm(new AjaxOptions
+         {
+             HttpMethod = "post",
+             InsertionMode = InsertionMode.Replace,
+             UpdateTargetId = "roleList",
+             Url = Url.Action("edit", "authentication"),
+             OnBegin = "onSaveBegin",
+             OnSuccess = "onSaveSuccess",
+             OnFailure = "onSaveError",
+         }, new { id="frmEdit" }))
+        {
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span>Edit role - <i id="edRoleName"></i></span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="txtName" name="Name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Display Name</label>
+                        <input class="form-control" id="txtDisplayName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Actions</label>
+                        <div class="d-flex">
+                            @for (int i = 0; i < actions?.Count; i++)
+                            {
+                                var act = actions[i];
+                                <div class="pe-3">
+                                    <label for="ckbAct_@i">
+                                        <input type="checkbox" name="RoleActs" id="ckbAct_@i" value="@act" />
+                                        @act
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Save
+                        <span id="submitting" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section PageScripts
+{
+    <script>
+        var mdRole;
+        $(function () {
+            mdRole = new bootstrap.Modal(document.getElementById('mdRole'));
+        });
+
+        function editRole(role) {
+            $('#frmEdit')[0].reset();
+            $('#edRoleName').text(role.Name);
+            $('#txtName').val(role.Name);
+            $('#txtDisplayName').val(role.DisplayName);
+            $('input[name=RoleActs]').each((idx, el) => {
+                let val = $(el).val();
+                if (role.Actions.includes(val)) {
+                    $(el).attr('checked', 'checked');
+                } else {
+                    $(el).removeAttr('checked');
+                }
+            });
+            mdRole.show();
+        }
+
+        function onSaveError(err) {
+            alert(err.responseJSON.error);
+            $('#submitting').toggleClass('d-none');
+        }
+
+        function onSaveSuccess() {
+            $('#submitting').toggleClass('d-none');
+            mdRole.hide();
+        }
+
+        function onSaveBegin() {
+            $('#submitting').toggleClass('d-none');
+        }
+    </script>
+}

@@ -46,7 +46,6 @@
                         <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles!.Contains(role.Name) ? "checked" : "")/>
                         @role.DisplayName
                     </label>
-                    <input type="hidden" asp-for="ckbRole_@i" id="hdckbRole_@i" />
                 </div>
             }
         </div>

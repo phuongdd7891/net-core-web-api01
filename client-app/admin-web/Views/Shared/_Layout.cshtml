@@ -60,6 +60,7 @@
     <!-- End of Page Wrapper -->
 
     @await Html.PartialAsync("Sections/_Scripts")
+    @Html.RenderUnobtrusiveAjaxScript()
     @await Component.InvokeAsync("Notyf")
     @await RenderSectionAsync("PageScripts", required: false)
 </body>

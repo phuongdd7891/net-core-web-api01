@@ -46,6 +46,7 @@ namespace AdminWeb.Middlewares
             sb.AppendFormat("<body onload='document.forms[\"form\"].submit()'>");
             sb.AppendFormat("<form name='form' action='{0}' method='post'>", "/home/error");
             sb.AppendFormat("<input type='hidden' name='{0}' value='{1}' />", "Message", msg);
+            sb.AppendFormat("<input type='hidden' name='{0}' value='{1}' />", "Code", ex.Message);
             sb.Append("</form></body></html>");
 
             context.Response.WriteAsync(sb.ToString());

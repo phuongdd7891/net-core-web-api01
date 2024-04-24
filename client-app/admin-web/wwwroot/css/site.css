@@ -33,3 +33,7 @@ body {
     right: 0;
     left: auto;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
