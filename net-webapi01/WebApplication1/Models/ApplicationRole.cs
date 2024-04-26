@@ -17,4 +17,12 @@ namespace WebApi.Models
         public string? DisplayName { get; set; }
         public List<string>? Actions { get; set; }
     }
+
+    public class UserActionResponse
+    {
+        public string? Method { get; set; }
+        public string? Action { get; set; }
+        public string? ControllerMethod { get; set; }
+        public string? DisplayName { get; set; }
+    }
 }

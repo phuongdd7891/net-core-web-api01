@@ -10,6 +10,8 @@ using WebApi.Models.Requests;
 using WebApi.Services;
 using WebApplication1.Authentication;
 
+namespace WebApi.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
 public class AdminController : ControllerBase
@@ -49,7 +51,7 @@ public class AdminController : ControllerBase
         ErrorStatuses.ThrowBadRequest("Password should have at least an upper character", !password.Any(c => !Char.IsNumber(c) && Char.IsUpper(c)));
     }
 
-    [HttpPost("create-user"), CustomAuthorize(null, true)]
+    [HttpPost("create-user"), AdminAuthorize(true)]
     public async Task<IActionResult> CreateUser(AdminUserRequest request)
     {
         if (!ModelState.IsValid)
@@ -76,7 +78,7 @@ public class AdminController : ControllerBase
         return Ok(new DataResponse());
     }
 
-    [HttpPost("update-user"), CustomAuthorize(null, true)]
+    [HttpPost("update-user"), AdminAuthorize(true)]
     public async Task<IActionResult> EditUser(AdminUserRequest request)
     {
         var user = await _adminService.GetUser(request.Username);
@@ -190,7 +192,7 @@ public class AdminController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("user-profile"), CustomAuthorize(null, true, true)]
+    [HttpGet("user-profile"), AdminAuthorize(true, true)]
     public async Task<IActionResult> GetUserProfile()
     {
         var username = User.Identity!.Name;
@@ -208,7 +210,7 @@ public class AdminController : ControllerBase
         });
     }
 
-    [HttpGet("customer-users"), CustomAuthorize(null, true, true)]
+    [HttpGet("customer-users"), AdminAuthorize(true, true)]
     public async Task<IActionResult> GetCustomerUsers()
     {
         var users = new List<AdminUser>();
@@ -244,7 +246,7 @@ public class AdminController : ControllerBase
         });
     }
 
-    [HttpGet("get-user"), CustomAuthorize(null, true)]
+    [HttpGet("get-user"), AdminAuthorize(true)]
     public async Task<IActionResult> GetUser(string username)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));

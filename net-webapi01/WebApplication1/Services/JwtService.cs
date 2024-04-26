@@ -8,7 +8,6 @@ using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using System.Security.Cryptography;
 using CoreLibrary.Helpers;
-using NLog.LayoutRenderers;
 
 namespace WebApi.Services;
 
@@ -24,7 +23,7 @@ public class ValidateTokenResult
 
 public class JwtService
 {
-    private const int EXPIRATION_MINUTES = 24 * 60;
+    private readonly TimeSpan expiryMinutes = TimeSpan.FromMinutes(24 * 60);
 
     private readonly IConfiguration _configuration;
     private readonly RedisRepository _redisRepository;
@@ -40,18 +39,18 @@ public class JwtService
 
     public async Task<AuthenticationResponse> CreateToken(ApplicationUser user)
     {
-        var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
+        var expiration = DateTime.UtcNow.Add(expiryMinutes);
         var tokenHandler = new JsonWebTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(await CreateClaims(user)),
+            Subject = new ClaimsIdentity(CreateClaims(user)),
             Audience = _configuration["Jwt:Audience"],
             Issuer = _configuration["Jwt:Issuer"],
             Expires = expiration,
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(user.UserName!, user, EXPIRATION_MINUTES);
+        await _redisRepository.SetEntity(user.UserName!, user, expiryMinutes);
         return new AuthenticationResponse
         {
             Token = token,
@@ -60,7 +59,7 @@ public class JwtService
         };
     }
 
-    private async Task<Claim[]> CreateClaims(ApplicationUser user)
+    private Claim[] CreateClaims(ApplicationUser user)
     {
         var claims = new[] {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -69,22 +68,23 @@ public class JwtService
         };
         if (user.Roles != null)
         {
-            var roleActions = await _redisRepository.GetHashEntity<string[]>(Const.ROLE_ACTION_KEY);
-            var actions = new List<string>();
-            foreach (var role in user.Roles)
-            {
-                foreach (var item in roleActions)
-                {
-                    if (item.Value.Contains(role.ToString()) && !actions.Contains(item.Key))
-                    {
-                        actions.Add(item.Key);
-                    }
-                }
-            }
-            foreach (var action in actions)
-            {
-                claims = claims.Append(new Claim(ClaimTypes.Role, action)).ToArray();
-            }
+            // var roleActions = await _redisRepository.GetHashEntity<string[]>(Const.ROLE_ACTION_KEY);
+            // var actions = new List<string>();
+            // foreach (var role in user.Roles)
+            // {
+            //     foreach (var item in roleActions)
+            //     {
+            //         if (item.Value.Contains(role.ToString()) && !actions.Contains(item.Key))
+            //         {
+            //             actions.Add(item.Key);
+            //         }
+            //     }
+            // }
+            // foreach (var action in actions)
+            // {
+            //     claims = claims.Append(new Claim(ClaimTypes.Role, action)).ToArray();
+            // }
+            claims = claims.Append(new Claim(ClaimTypes.Role, string.Join(",", user.Roles))).ToArray();
         }
         return claims;
     }
@@ -101,7 +101,7 @@ public class JwtService
 
     public async Task<AuthenticationResponse> CreateAdminToken(AdminUser user, Claim[]? claims = null)
     {
-        var expiration = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
+        var expiration = DateTime.UtcNow.Add(expiryMinutes);
         var tokenHandler = new JsonWebTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -116,7 +116,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(user.Username, user, EXPIRATION_MINUTES);
+        await _redisRepository.SetEntity(user.Username, user, expiryMinutes);
         return new AuthenticationResponse
         {
             Token = token,

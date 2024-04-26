@@ -14,10 +14,10 @@ public class RedisRepository
         _redisClient = redisClient;
     }
 
-    public async Task Set(string key, string value, int expiryMins)
+    public async Task Set(string key, string value, TimeSpan expiry)
     {
         ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
-        await _redisClient.Db0.AddAsync(key, value, TimeSpan.FromMinutes(expiryMins));
+        await _redisClient.Db0.AddAsync(key, value, expiry);
     }
 
     public async Task<string> Get(string key)
@@ -38,15 +38,15 @@ public class RedisRepository
         return await _redisClient.Db0.ExistsAsync(key);
     }
 
-    public async Task UpdateExpireKey(string key, int expiryMins)
+    public async Task UpdateExpireKey(string key, TimeSpan expiry)
     {
-        await _redisClient.Db0.UpdateExpiryAsync(key, TimeSpan.FromMinutes(expiryMins));
+        await _redisClient.Db0.UpdateExpiryAsync(key, expiry);
     }
 
-    public async Task SetEntity<T>(string key, T entity, int expiryMins)
+    public async Task SetEntity<T>(string key, T entity, TimeSpan expiry)
     {
         ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
-        await _redisClient.Db0.AddAsync(key, entity, TimeSpan.FromMinutes(expiryMins));
+        await _redisClient.Db0.AddAsync(key, entity, expiry);
     }
 
     public async Task<T?> GetEntity<T>(string key)

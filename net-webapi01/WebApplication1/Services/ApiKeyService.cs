@@ -10,7 +10,7 @@ public class ApiKeyService
 {
     private readonly IMongoCollection<UserApiKey> _apiKeyCollection;
     private readonly RedisRepository _redisRepository;
-    private const int defaultExpiryMins = 24 * 60;
+    private readonly TimeSpan defaultExpiryMins = TimeSpan.FromMinutes(24 * 60);
 
     public ApiKeyService(
         AppDBContext _context,

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
+using WebApplication1.Authentication;
+using System.ComponentModel;
 
 namespace WebApi.Controllers;
 
@@ -16,9 +18,10 @@ public class BooksController: BaseController
     public BooksController(BooksService booksService) =>
         _booksService = booksService;
 
-    [Authorize(Roles = Const.ACTION_GET_BOOKS)]
+    [UserAuthorize]
     [HttpGet]
-    public async Task<DataResponse<GetBooksReply>> Get(int skip, int limit)
+    [DisplayName("get list of books")]
+    public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit)
     {
         var data = await _booksService.GetAsync(skip, limit);
         var categories = await _booksService.GetCategoriesAsync();
@@ -39,7 +42,7 @@ public class BooksController: BaseController
     }
 
     [HttpGet("{id:length(24)}")]
-    [Authorize(Roles = Const.ACTION_GET_BOOK)]
+    [UserAuthorize]
     public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -52,7 +55,7 @@ public class BooksController: BaseController
     }
 
     [HttpPost]
-    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> Post([FromForm] CreateBookRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
@@ -65,7 +68,7 @@ public class BooksController: BaseController
     }
 
     [HttpPost("copy")]
-    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> Copy([FromQuery] string id, [FromQuery] int qty)
     {
         var book = await _booksService.GetAsync(id);
@@ -75,7 +78,7 @@ public class BooksController: BaseController
     }
 
     [HttpPut("{id:length(24)}")]
-    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> Update(string id, [FromForm] CreateBookRequest request)
     {
         var book = await _booksService.GetAsync(id);
@@ -90,7 +93,7 @@ public class BooksController: BaseController
     }
 
     [HttpDelete("{id:length(24)}")]
-    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> Delete(string id)
     {
         var book = await _booksService.GetAsync(id);
@@ -115,7 +118,7 @@ public class BooksController: BaseController
     }
 
     [HttpDelete("delete-many")]
-    [Authorize(Roles = Const.ACTION_CREATE_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> DeleteMany([FromQuery] string[] ids)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", ids == null || ids.Length == 0);
@@ -132,7 +135,7 @@ public class BooksController: BaseController
     }
 
     [HttpGet("download-cover")]
-    [Authorize(Roles = Const.ACTION_GET_BOOK)]
+    [UserAuthorize]
     public async Task<IActionResult> DownloadCover(string id)
     {
         ErrorStatuses.ThrowBadRequest("Id cannot empty", string.IsNullOrEmpty(id));

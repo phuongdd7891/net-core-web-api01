@@ -47,4 +47,11 @@ namespace WebApi.Models.Requests
         public string? Username { get; set; }
         public bool IsLock { get; set; }
     }
+
+    public class ApplicationRoleRequest
+    {
+        public string? Id { get; set; }
+        public required string Name { get; set; }
+        public string? DisplayName { get; set; }
+    }
 }

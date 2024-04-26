@@ -10,7 +10,11 @@ using System.Security.Claims;
 using Newtonsoft.Json;
 using WebApi.Models.Admin;
 using CoreLibrary.Utils;
-using CoreLibrary.Models;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using System.Reflection;
+using System.ComponentModel;
+
+namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -23,6 +27,7 @@ public class OperationsController : ControllerBase
     private readonly CacheService _cacheService;
     private readonly RoleActionRepository _roleActionRepository;
     private readonly IEmailSender _emailSender;
+    private readonly IEnumerable<EndpointDataSource> _endpointSources;
 
     private readonly AdminService _adminService;
 
@@ -34,7 +39,8 @@ public class OperationsController : ControllerBase
         CacheService cacheSrevice,
         RoleActionRepository roleActionRepository,
         IEmailSender emailSender,
-        AdminService adminService
+        AdminService adminService,
+        IEnumerable<EndpointDataSource> endpointSources
     )
     {
         _userManager = userManager;
@@ -45,6 +51,7 @@ public class OperationsController : ControllerBase
         _roleActionRepository = roleActionRepository;
         _emailSender = emailSender;
         _adminService = adminService;
+        _endpointSources = endpointSources;
     }
 
     [HttpPost("Login")]
@@ -92,16 +99,28 @@ public class OperationsController : ControllerBase
 
     #region Roles
     [HttpPost("create-role")]
-    public async Task<IActionResult> CreateRole([FromBody] string name)
+    public async Task<IActionResult> CreateRole([FromBody] ApplicationRoleRequest request)
     {
-        IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = name });
+        IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = request.Name, NormalizedName = request.DisplayName });
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
         await _cacheService.LoadUserRoles();
         return Ok();
     }
 
+    [HttpPost("edit-role")]
+    public async Task<IActionResult> EditRole([FromBody] ApplicationRoleRequest request)
+    {
+        ErrorStatuses.ThrowInternalErr("Invalid request", request == null || string.IsNullOrEmpty(request.Id));
+        var role = await _roleManager.FindByIdAsync(request!.Id!);
+        ErrorStatuses.ThrowInternalErr("Invalid role", role == null);
+        role!.Name = request.Name;
+        role.NormalizedName = request.DisplayName;
+        await _roleManager.UpdateAsync(role);
+        return Ok();
+    }
+
     [HttpPost("add-user-roles")]
-    [CustomAuthorize(null, true, true)]
+    [AdminAuthorize(true, true)]
     public async Task<IActionResult> AddUserRoles(UserRolesRequest req)
     {
         var user = await _userManager.FindByNameAsync(req.Username);
@@ -121,7 +140,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpGet("user-roles")]
-    [CustomAuthorize(null, true, true)]
+    [AdminAuthorize(true, true)]
     public async Task<DataResponse<List<GetRolesReply>>> GetUserRoles()
     {
         var dict = new Dictionary<string, List<string>>();
@@ -168,7 +187,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("add-roles-actions")]
-    [CustomAuthorize(null, true)]
+    [AdminAuthorize(true)]
     public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
     {
         var appRoles = GetRolesByNames(request.Roles);
@@ -178,7 +197,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("delete-action")]
-    [CustomAuthorize(null, true)]
+    [AdminAuthorize(true)]
     public async Task<IActionResult> DeleteRoleAction(string action)
     {
         var result = await _roleActionRepository.Delete(action);
@@ -189,7 +208,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpGet("request-actions")]
-    [CustomAuthorize(null, true)]
+    [AdminAuthorize(true)]
     public async Task<IActionResult> GetRoleActions()
     {
         var actions = await _roleActionRepository.GetAll();
@@ -197,6 +216,35 @@ public class OperationsController : ControllerBase
         {
             Data = actions.Select(a => a.RequestAction).ToList()
         });
+    }
+
+    [HttpGet("user-actions")]
+    [AdminAuthorize(true)]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult GetUserActions()
+    {
+        var endpoints = _endpointSources.SelectMany(es => es.Endpoints);
+        var result = endpoints.Where(e => !string.IsNullOrEmpty(string.Format("{0}", e.Metadata.GetMetadata<UserAuthorizeAttribute>()))).Select(
+            e =>
+            {
+                var controller = e.Metadata
+                    .OfType<ControllerActionDescriptor>()
+                    .FirstOrDefault();
+                var action = controller != null
+                    ? $"{controller.ControllerName}.{controller.ActionName}"
+                    : null;
+                var controllerMethod = controller != null
+                    ? $"{controller.ControllerTypeInfo.FullName}:{controller.MethodInfo.Name}"
+                    : null;
+                return new UserActionResponse
+                {
+                    Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods?[0],
+                    Action = action,
+                    ControllerMethod = controllerMethod,
+                    DisplayName = controller?.MethodInfo.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? e.DisplayName
+                };
+            }).ToList();
+        return Ok(result);
     }
     #endregion
 
@@ -299,7 +347,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("lock-user")]
-    [CustomAuthorize(null, true)]
+    [AdminAuthorize(true)]
     public async Task<IActionResult> LockUser([FromBody] LockUserRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
@@ -319,7 +367,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpGet("users")]
-    [CustomAuthorize(null, true, true)]
+    [AdminAuthorize(true, true)]
     public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100, string? customerId = null)
     {
         var claimData = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData)!.Value;
@@ -387,7 +435,7 @@ public class OperationsController : ControllerBase
         return Ok(new DataResponse());
     }
 
-    [HttpGet("user"), CustomAuthorize(null, true, true)]
+    [HttpGet("user"), AdminAuthorize(true, true)]
     public async Task<IActionResult> GetUser(string username)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(username));
