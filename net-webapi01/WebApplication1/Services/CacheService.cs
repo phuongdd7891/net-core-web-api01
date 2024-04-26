@@ -65,10 +65,9 @@ public class CacheService
     public async Task LoadRoleActions()
     {
         var actions = await _roleActionRepository.GetAll();
-        await _redisRepository.SetHashEntity(Const.ROLE_ACTION_KEY, actions.DistinctBy(a => a.RequestAction).ToDictionary(a => a.RequestAction, a => a.Roles));
         if (actions.Any(x => !string.IsNullOrEmpty(x.RoleId)))
         {
-            await _redisRepository.SetHashEntity(Const.ROLE_ACTION_KEY_2, actions.Where(x => !string.IsNullOrEmpty(x.RoleId)).ToDictionary(a => a.RoleId!, a => a.Actions));
+            await _redisRepository.SetHashEntity(Const.ROLE_ACTION_KEY, actions.Where(x => !string.IsNullOrEmpty(x.RoleId)).ToDictionary(a => a.RoleId!, a => a.Actions));
         }
     }
 }

@@ -143,34 +143,17 @@ public class OperationsController : ControllerBase
     [AdminAuthorize(true, true)]
     public async Task<DataResponse<List<GetRolesReply>>> GetUserRoles()
     {
-        var dict = new Dictionary<string, List<string>>();
         var roleActions = await _roleActionRepository.GetAll();
-        roleActions.ForEach(a =>
-        {
-            a.Roles.ForEach(x =>
-            {
-                if (!dict.ContainsKey(x))
-                {
-                    dict[x] = new List<string>();
-                }
-                dict[x].Add(a.RequestAction);
-            });
-        });
-        var roles = new List<GetRolesReply>();
-        _roleManager.Roles.ToList().ForEach(a =>
-        {
-            var key = a.Id.ToString();
-            roles.Add(new GetRolesReply
-            {
-                Id = a.Id,
-                Name = a.Name,
-                DisplayName = a.NormalizedName,
-                Actions = dict.ContainsKey(key) ? dict[key] : new List<string>()
-            });
-        });
+        var result = _roleManager.Roles.ToList().GroupJoin(roleActions, a => Convert.ToString(a.Id), x => x.RoleId, (a, x) => new { Role = a, Action = x })
+            .SelectMany(a => a.Action.DefaultIfEmpty(), (a, x) => new GetRolesReply {
+                Id = a.Role.Id,
+                Name = a.Role.Name,
+                DisplayName = a.Role.NormalizedName,
+                Actions = x?.Actions
+            }).ToList();
         return new DataResponse<List<GetRolesReply>>
         {
-            Data = roles
+            Data = result
         };
     }
 
@@ -186,36 +169,13 @@ public class OperationsController : ControllerBase
         }
     }
 
-    [HttpPost("add-roles-actions")]
+    [HttpPost("add-role-actions")]
     [AdminAuthorize(true)]
     public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
     {
-        var appRoles = GetRolesByNames(request.Roles);
-        await _roleActionRepository.Add(request.Actions, appRoles.Select(a => Convert.ToString(a.Id)).ToArray()!);
+        await _roleActionRepository.AddActionsToRole(request.RoleId, request.Actions);
         await _cacheService.LoadRoleActions();
         return Ok();
-    }
-
-    [HttpPost("delete-action")]
-    [AdminAuthorize(true)]
-    public async Task<IActionResult> DeleteRoleAction(string action)
-    {
-        var result = await _roleActionRepository.Delete(action);
-        return Ok(new DataResponse<bool>
-        {
-            Data = result.DeletedCount > 0
-        });
-    }
-
-    [HttpGet("request-actions")]
-    [AdminAuthorize(true)]
-    public async Task<IActionResult> GetRoleActions()
-    {
-        var actions = await _roleActionRepository.GetAll();
-        return Ok(new DataResponse<List<string>>
-        {
-            Data = actions.Select(a => a.RequestAction).ToList()
-        });
     }
 
     [HttpGet("user-actions")]

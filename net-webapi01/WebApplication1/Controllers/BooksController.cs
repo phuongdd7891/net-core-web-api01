@@ -43,6 +43,7 @@ public class BooksController: BaseController
 
     [HttpGet("{id:length(24)}")]
     [UserAuthorize]
+    [DisplayName("get a book by id")]
     public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);

@@ -39,7 +39,7 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
             : null;
         if (!string.IsNullOrEmpty(action))
         {
-            var actions = await _redisRepository.GetHashEntity<List<string>>(Const.ROLE_ACTION_KEY_2);
+            var actions = await _redisRepository.GetHashEntity<List<string>>(Const.ROLE_ACTION_KEY);
             var roles = claimRole.Split(',');
             var valid = roles.Any(role => actions.ContainsKey(role) && actions[role].Contains(action));
             if (!valid)
