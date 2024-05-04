@@ -30,11 +30,11 @@
     </div>
     <div class="col-12">
         <label class="form-label">Roles</label>
-        <div class="d-flex">
+        <div class="d-flex flex-wrap">
             @for (int i = 0; i < roles?.Length; i++)
             {
                 var role = roles[i];
-                <div class="pe-3">
+                <div class="pe-3 w-50">
                     <label for="ckbRole_@i">
                         <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles != null && Model.Roles.Contains(role.Name) ? "checked" : "") />
                         @role.DisplayName

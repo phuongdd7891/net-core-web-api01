@@ -75,14 +75,14 @@
                     { "data": "customerName", "autoWidth": true },
                     { "data": "roles", "autoWidth": true },
                     {
-                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info" href="/Users/Edit/' + row.username + '@(ViewBag.cid != null ? "/" + ViewBag.cid : "")"><i class="bi bi-pen"></i></a>'; }
+                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info btn-sm" href="/Users/Edit/' + row.username + '@(ViewBag.cid != null ? "/" + ViewBag.cid : "")"><i class="bi bi-pen"></i></a>'; }
                     },
                     {
                         "data": "isLocked",
                         "render": function (data, type, row) {
-                            return data ? 
-                                "<a href='#' tilte='Unlock' class='btn btn-circle btn-secondary' onclick=onUnlockUser('" + row.username + "'); ><i class='bi bi-unlock'></i></a>"
-                                : "<a href='#' title='Lock' class='btn btn-circle btn-danger' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
+                            return data ?
+                                "<a href='#' tilte='Unlock' class='btn btn-circle btn-secondary btn-sm' onclick=onUnlockUser('" + row.username + "'); ><i class='bi bi-unlock'></i></a>"
+                                : "<a href='#' title='Lock' class='btn btn-circle btn-danger btn-sm' onclick=onLockUser('" + row.username + "'); ><i class='bi bi-lock'></i></a>";
                         }
                     },
                 ]

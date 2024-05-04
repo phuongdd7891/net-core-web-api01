@@ -87,17 +87,41 @@ namespace AdminWeb.Services
             return PostAsync<Object, ApiResponse<string>>("api/operations/create-user", req);
         }
 
-        public Task<ApiResponse<List<string>>> GetRequestActions()
+        public Task<ApiResponse<List<UserActionResponse>>> GetUserActions()
         {
-            return GetAsync<ApiResponse<List<string>>>($"api/operations/request-actions");
+            return GetAsync<ApiResponse<List<UserActionResponse>>>($"api/operations/user-actions");
         }
 
-        public Task AddRoleActions(string role, string[] actions)
+        public Task AddRoleActions(string roleId, string[] actions)
         {
-            return PostAsync<Object, string?>("api/operations/add-roles-actions", new {
-                Roles = new[] { role },
+            return PostAsync<Object, string?>("api/operations/add-role-actions", new {
+                RoleId = roleId ,
                 Actions = actions
             });
+        }
+
+        public Task<ApiResponse<string>> CreateRole(string name, string? displayName)
+        {
+            return PostAsync<object, ApiResponse<string>>("api/operations/create-role", new
+            {
+                Name = name,
+                DisplayName = displayName
+            });
+        }
+
+        public Task EditRole(string id, string name, string? displayName)
+        {
+            return PostAsync<object, string?>("api/operations/edit-role", new
+            {
+                Id = id,
+                Name = name,
+                DisplayName = displayName
+            });
+        }
+
+        public Task DeleteRole(string roleId)
+        {
+            return PostAsync<Object, string?>("api/operations/delete-role", roleId);
         }
 
         #region Customer

@@ -26,9 +26,25 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Role()
         {
             var roles = await _opService.GetUserRoles();
-            var actions = await _opService.GetRequestActions();
+            var actions = await _opService.GetUserActions();
             ViewBag.actions = actions.Data;
             return View("role", roles.Data);
+        }
+
+        [HttpPost]
+        [Route("create")]
+        public async Task<IActionResult> Create(IFormCollection formCol)
+        {
+            var actions = formCol["RoleActs"];
+            var roleName = formCol["Name"];
+            var displayName = formCol["DisplayName"];
+            var result = await _opService.CreateRole(roleName!, displayName);
+            if (actions.Count > 0)
+            {
+                await _opService.AddRoleActions(result.Data!, actions!);
+            }
+            _notyfService.Success(Messages.SaveSuccessfully);
+            return RoleListPartial();
         }
 
         [HttpPost]
@@ -36,11 +52,30 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Edit(IFormCollection formCol)
         {
             var actions = formCol["RoleActs"];
-            var role = formCol["Name"];
-            await _opService.AddRoleActions(role!, actions!);
+            var roleId = formCol["Id"];
+            var roleName = formCol["Name"];
+            var displayName = formCol["DisplayName"];
+            await _opService.EditRole(roleId!, roleName!, displayName);
+            await _opService.AddRoleActions(roleId!, actions!);
             _notyfService.Success(Messages.SaveSuccessfully);
-            var roles = await _opService.GetUserRoles();
-            return PartialView("_RoleList", roles.Data);
+            return RoleListPartial();
+        }
+
+        [HttpPost]
+        [Route("delete")]
+        public async Task<IActionResult> Delete(IFormCollection formCol)
+        {
+            var roleId = formCol["Id"];
+            await _opService.DeleteRole(roleId!);
+            _notyfService.Success(Messages.SaveSuccessfully);
+            return RoleListPartial();
+        }
+
+        private IActionResult RoleListPartial()
+        {
+            var roles = _opService.GetUserRoles();
+            roles.ConfigureAwait(false);
+            return PartialView("_RoleList", roles.Result.Data);
         }
     }
 }

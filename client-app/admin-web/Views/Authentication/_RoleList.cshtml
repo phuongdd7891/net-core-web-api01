@@ -3,6 +3,7 @@
 <table class="table table-striped">
     <thead>
         <tr>
+            <th></th>
             <th>#</th>
             <th>Name</th>
             <th>Display</th>
@@ -14,6 +15,11 @@
         {
             var role = Model[i];
             <tr>
+                <td valign="middle">
+                    <a class="btn btn-circle btn-danger btn-sm" onclick="deleteRole('@role.Id', '@role.Name')">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
                 <td>@(i + 1)</td>
                 <td>
                     <b class="text-decoration-underline link-primary cursor-pointer" onclick="editRole(@Newtonsoft.Json.JsonConvert.SerializeObject(role))">
@@ -21,7 +27,7 @@
                     </b>
                 </td>
                 <td>@role.DisplayName</td>
-                <td>@string.Join(", ", role.Actions)</td>
+                <td>@(role.Actions != null ? string.Join(", ", role.Actions) : "")</td>
             </tr>
         }
     </tbody>

@@ -1,9 +1,14 @@
-﻿@model AdminWeb.Models.Response.UserRolesResponse[]
+﻿@using AdminWeb.Models.Response
+@model UserRolesResponse[]
 @{
     ViewData["Title"] = "Roles";
-    var actions = ViewBag.actions as List<string>;
+    var actions = ViewBag.actions as List<UserActionResponse>;
 }
-
+<div class="mb-3">
+    <button class="btn btn-success" onclick="createRole();">
+        <i class="bi bi-plus-circle"></i> Create
+    </button>
+</div>
 <div id="roleList">
     @await Html.PartialAsync("_RoleList", Model)
 </div>
@@ -23,27 +28,28 @@
         {
             <div class="modal-content">
                 <div class="modal-header">
-                    <span>Edit role - <i id="edRoleName"></i></span>
+                    <span class="h5">Edit role: <i id="edRoleName"></i></span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">Name</label>
                         <input class="form-control" id="txtName" name="Name" />
+                        <input type="hidden" id="hdId" name="Id"/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Display Name</label>
-                        <input class="form-control" id="txtDisplayName" />
+                        <input class="form-control" id="txtDisplayName" name="DisplayName"/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Actions</label>
-                        <div class="d-flex">
+                        <div class="d-flex flex-wrap">
                             @for (int i = 0; i < actions?.Count; i++)
                             {
                                 var act = actions[i];
-                                <div class="pe-3">
+                                <div class="pe-3 w-50">
                                     <label for="ckbAct_@i">
-                                        <input type="checkbox" name="RoleActs" id="ckbAct_@i" value="@act" />
-                                        @act
+                                        <input type="checkbox" name="RoleActs" id="ckbAct_@i" value="@act.Action" />
+                                        @act.Action @(string.IsNullOrEmpty(act.Description) ? "" : Html.Raw(string.Format("<i>({0})</i>", act.Description)))
                                     </label>
                                 </div>
                             }
@@ -51,9 +57,105 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-success">
                         Save
                         <span id="submitting" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="mdRole.hide();">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="mdNewRole" class="modal">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        @using (Html.AjaxBeginForm(new AjaxOptions
+         {
+             HttpMethod = "post",
+             InsertionMode = InsertionMode.Replace,
+             UpdateTargetId = "roleList",
+             Url = Url.Action("create", "authentication"),
+             OnBegin = "onSaveBegin",
+             OnSuccess = "onSaveSuccess",
+             OnFailure = "onSaveError",
+         }, new { id = "frmCreate" }))
+        {
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="h5">Create role</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="txtNewName" name="Name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Display Name</label>
+                        <input class="form-control" id="txNewtDisplayName" name="DisplayName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Actions</label>
+                        <div class="d-flex flex-wrap">
+                            @for (int i = 0; i < actions?.Count; i++)
+                            {
+                                var act = actions[i];
+                                <div class="pe-3 w-50">
+                                    <label for="ckbNewAct_@i">
+                                        <input type="checkbox" name="RoleActs" id="ckbNewAct_@i" value="@act.Action" />
+                                        @act.Action @(string.IsNullOrEmpty(act.Description) ? "" : Html.Raw(string.Format("<i>({0})</i>", act.Description)))
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        Save
+                        <span id="submitting" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="mdNewRole.hide();">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="mdDeleteRole" class="modal">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        @using (Html.AjaxBeginForm(new AjaxOptions
+         {
+             HttpMethod = "post",
+             InsertionMode = InsertionMode.Replace,
+             UpdateTargetId = "roleList",
+             Url = Url.Action("delete", "authentication"),
+             OnBegin = "onSaveBegin",
+             OnSuccess = "onSaveSuccess",
+             OnFailure = "onSaveError",
+         }, new { id = "frmDelete" }))
+        {
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="h5">Delete role</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Do you want to delete role <b id="deleteRoleName"></b>?</label>
+                        <input type="hidden" id="hdDeleteId" name="Id" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        Save
+                        <span id="submitting" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="mdDeleteRole.hide();">
+                        Cancel
                     </button>
                 </div>
             </div>
@@ -64,9 +166,11 @@
 @section PageScripts
 {
     <script>
-        var mdRole;
+        var mdRole, mdNewRole, mdDeleteRole;
         $(function () {
             mdRole = new bootstrap.Modal(document.getElementById('mdRole'));
+            mdNewRole = new bootstrap.Modal(document.getElementById('mdNewRole'));
+            mdDeleteRole = new bootstrap.Modal(document.getElementById('mdDeleteRole'));
         });
 
         function editRole(role) {
@@ -74,15 +178,28 @@
             $('#edRoleName').text(role.Name);
             $('#txtName').val(role.Name);
             $('#txtDisplayName').val(role.DisplayName);
+            $('#hdId').val(role.Id);
             $('input[name=RoleActs]').each((idx, el) => {
                 let val = $(el).val();
-                if (role.Actions.includes(val)) {
+                if (role.Actions?.includes(val)) {
                     $(el).attr('checked', 'checked');
                 } else {
                     $(el).removeAttr('checked');
                 }
             });
             mdRole.show();
+        }
+
+        function createRole() {
+            $('#frmCreate')[0].reset();
+            mdNewRole.show();
+        }
+
+        function deleteRole(id, name) {
+            $('#frmDelete')[0].reset();
+            $('#deleteRoleName').text(name);
+            $('#hdDeleteId').val(id);
+            mdDeleteRole.show();
         }
 
         function onSaveError(err) {
@@ -93,6 +210,8 @@
         function onSaveSuccess() {
             $('#submitting').toggleClass('d-none');
             mdRole.hide();
+            mdNewRole.hide();
+            mdDeleteRole.hide();
         }
 
         function onSaveBegin() {
