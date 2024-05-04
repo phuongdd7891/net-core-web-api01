@@ -104,7 +104,11 @@ public class OperationsController : ControllerBase
         IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = request.Name, NormalizedName = request.DisplayName });
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
         await _cacheService.LoadUserRoles();
-        return Ok();
+        var createdRole = await _roleManager.FindByNameAsync(request.Name);
+        return Ok(new DataResponse
+        {
+            Data = createdRole!.Id.ToString()
+        });
     }
 
     [HttpPost("edit-role")]
@@ -116,6 +120,7 @@ public class OperationsController : ControllerBase
         role!.Name = request.Name;
         role.NormalizedName = request.DisplayName;
         await _roleManager.UpdateAsync(role);
+        await _cacheService.LoadUserRoles(true);
         return Ok();
     }
 
@@ -173,7 +178,7 @@ public class OperationsController : ControllerBase
     [AdminAuthorize(true)]
     public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
     {
-        await _roleActionRepository.AddActionsToRole(request.RoleId, request.Actions);
+        await _roleActionRepository.AddActionsToRole(request.RoleId, request.Actions, User.Identity!.Name!);
         await _cacheService.LoadRoleActions();
         return Ok();
     }
@@ -201,10 +206,51 @@ public class OperationsController : ControllerBase
                     Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods?[0],
                     Action = action,
                     ControllerMethod = controllerMethod,
-                    DisplayName = controller?.MethodInfo.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? e.DisplayName
+                    Description = controller?.MethodInfo.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
                 };
             }).ToList();
-        return Ok(result);
+        return Ok(new DataResponse<List<UserActionResponse>>
+        {
+            Data = result
+        });
+    }
+
+    [HttpPost("delete-role")]
+    [AdminAuthorize(true)]
+    public async Task<IActionResult> DeleteRole([FromBody] string id)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(id));
+        var role = await _roleManager.FindByIdAsync(id);
+        ErrorStatuses.ThrowNotFound("Role not found", role == null);
+        var result = await _roleManager.DeleteAsync(role!);
+        if (result.Succeeded)
+        {
+            var roleName = role!.Name!;
+            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            if (users?.Count > 0)
+            {
+                var tasks = new List<Task<IdentityResult>>();
+                foreach (var user in users)
+                {
+                    tasks.Add(_userManager.RemoveFromRoleAsync(user, roleName));
+                }
+                var results = await Task.WhenAll(tasks);
+                if (results.Any(a => !a.Succeeded))
+                {
+                    var error = results.FirstOrDefault(a => !a.Succeeded);
+                    var index = results.ToList().IndexOf(error!);
+                    ErrorStatuses.ThrowInternalErr(error!.Errors.FirstOrDefault()?.Description ?? string.Format("Remove user {0} from role {1} unsuccessfully", users[index].UserName, roleName), error != null);
+                }
+            }
+            await _roleActionRepository.DeleteByRoleId(id);
+        }
+        else
+        {
+            ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "Delete role fail", !result.Succeeded);
+        }
+        await _cacheService.LoadUserRoles(true);
+        await _cacheService.LoadRoleActions(true);
+        return Ok();
     }
     #endregion
 

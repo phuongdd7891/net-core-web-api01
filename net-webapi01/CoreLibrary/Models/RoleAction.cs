@@ -9,4 +9,6 @@ public class RoleAction {
     public string? Id { get; set; }
     public string? RoleId { get; set; }
     public List<string>? Actions { get; set; }
+    public DateTime? ModifiedDate { get; set; }
+    public string? ModifiedBy { get; set; }
 }

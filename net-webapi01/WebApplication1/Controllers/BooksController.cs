@@ -20,7 +20,7 @@ public class BooksController: BaseController
 
     [UserAuthorize]
     [HttpGet]
-    [DisplayName("get list of books")]
+    [Description("get list of books")]
     public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit)
     {
         var data = await _booksService.GetAsync(skip, limit);
@@ -43,7 +43,7 @@ public class BooksController: BaseController
 
     [HttpGet("{id:length(24)}")]
     [UserAuthorize]
-    [DisplayName("get a book by id")]
+    [Description("get a book by id")]
     public async Task<DataResponse<Book>> Get(string id)
     {
         var book = await _booksService.GetAsync(id);

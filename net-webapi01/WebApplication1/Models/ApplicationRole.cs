@@ -23,6 +23,6 @@ namespace WebApi.Models
         public string? Method { get; set; }
         public string? Action { get; set; }
         public string? ControllerMethod { get; set; }
-        public string? DisplayName { get; set; }
+        public string? Description { get; set; }
     }
 }
