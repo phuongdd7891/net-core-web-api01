@@ -27,7 +27,7 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
         var claimRole = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
         if (string.IsNullOrEmpty(claimRole))
         {
-            context.Result = Helpers.GetJsonResult(accessDeniedResponse);
+            context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);
             return;
         }
         var endpoint = context.HttpContext.GetEndpoint();
@@ -44,7 +44,7 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
             var valid = roles.Any(role => actions.ContainsKey(role) && actions[role].Contains(action));
             if (!valid)
             {
-                context.Result = Helpers.GetJsonResult(accessDeniedResponse);
+                context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);
                 return;
             }
         }

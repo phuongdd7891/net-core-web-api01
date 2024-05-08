@@ -40,7 +40,7 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
 
         if (!context.HttpContext.Request.Query.ContainsKey("u"))
         {
-            context.Result = Helpers.GetJsonResult(new DataResponse<string>
+            context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
             {
                 Data = "Username not found",
                 Code = DataResponseCode.Unauthorized.ToString()
@@ -52,7 +52,7 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
         // validate token
         if (!context.HttpContext.Request.Headers.ContainsKey("Authorization"))
         {
-            context.Result = Helpers.GetJsonResult(new DataResponse<string>
+            context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
             {
                 Data = "Header key Not Found",
                 Code = DataResponseCode.Unauthorized.ToString()
@@ -64,7 +64,7 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
         var validateResult = await _jwtService.ValidateToken(token, username);
         if (!validateResult.IsOk)
         {
-            context.Result = Helpers.GetJsonResult(new DataResponse<string>
+            context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
             {
                 Data = validateResult.Message,
                 Code = validateResult.Code
@@ -78,7 +78,7 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
             var adminUser = await _redisRepository.GetEntity<AdminUser>(username);
             if (adminUser == null || (adminUser.IsSystem != _isSystem && adminUser.IsCustomer != _isCustomer))
             {
-                context.Result = Helpers.GetJsonResult(new DataResponse<string>
+                context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
                 {
                     Data = $"Access denied to \"{context.HttpContext.Request.Path}\"",
                     Code = DataResponseCode.Unauthorized.ToString()

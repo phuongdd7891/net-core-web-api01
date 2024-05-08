@@ -18,7 +18,7 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class OperationsController : ControllerBase
+public class OperationsController : BaseController
 {
     private UserManager<ApplicationUser> _userManager;
     private RoleManager<ApplicationRole> _roleManager;
@@ -101,8 +101,13 @@ public class OperationsController : ControllerBase
     [HttpPost("create-role")]
     public async Task<IActionResult> CreateRole([FromBody] ApplicationRoleRequest request)
     {
-        IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole() { Name = request.Name, NormalizedName = request.DisplayName });
-        ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
+        var roleName = string.Format("{0}{1}", string.IsNullOrEmpty(request.CustomerId) ? "" : $"{request.CustomerId}__", request.Name);
+        IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole()
+        {
+            Name = roleName,
+            CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId,
+        });
+        ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Code.ToErrDescription(request.Name) ?? "", !result.Succeeded);
         await _cacheService.LoadUserRoles();
         var createdRole = await _roleManager.FindByNameAsync(request.Name);
         return Ok(new DataResponse
@@ -117,9 +122,21 @@ public class OperationsController : ControllerBase
         ErrorStatuses.ThrowInternalErr("Invalid request", request == null || string.IsNullOrEmpty(request.Id));
         var role = await _roleManager.FindByIdAsync(request!.Id!);
         ErrorStatuses.ThrowInternalErr("Invalid role", role == null);
-        role!.Name = request.Name;
-        role.NormalizedName = request.DisplayName;
-        await _roleManager.UpdateAsync(role);
+        var name = string.Format("{0}{1}", string.IsNullOrEmpty(request.CustomerId) ? "" : $"{request.CustomerId}__", request.Name);
+        var roleByName = await _roleManager.FindByNameAsync(name);
+        ErrorStatuses.ThrowInternalErr("Existed role name " + request.Name, roleByName != null);
+        role!.CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId;
+        var tasks = new List<Task<IdentityResult>>
+        {
+            _roleManager.UpdateAsync(role),
+            _roleManager.SetRoleNameAsync(role, name)
+        };
+        var results = await Task.WhenAll(tasks);
+        if (results.Any(a => !a.Succeeded))
+        {
+            var result = results.FirstOrDefault(a => !a.Succeeded);
+            ErrorStatuses.ThrowInternalErr(result!.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
+        }
         await _cacheService.LoadUserRoles(true);
         return Ok();
     }
@@ -146,32 +163,28 @@ public class OperationsController : ControllerBase
 
     [HttpGet("user-roles")]
     [AdminAuthorize(true, true)]
-    public async Task<DataResponse<List<GetRolesReply>>> GetUserRoles()
+    public async Task<DataResponse<List<GetRolesReply>>> GetUserRoles([FromQuery] string? customerId)
     {
         var roleActions = await _roleActionRepository.GetAll();
-        var result = _roleManager.Roles.ToList().GroupJoin(roleActions, a => Convert.ToString(a.Id), x => x.RoleId, (a, x) => new { Role = a, Action = x })
-            .SelectMany(a => a.Action.DefaultIfEmpty(), (a, x) => new GetRolesReply {
-                Id = a.Role.Id,
-                Name = a.Role.Name,
-                DisplayName = a.Role.NormalizedName,
-                Actions = x?.Actions
+        var customerUsers = await _adminService.ListUsers(Profile!.IsCustomer);
+        var result = _roleManager.Roles.Where(a => string.IsNullOrEmpty(a.CustomerId) || a.CustomerId == customerId || Profile.IsSystem).ToList()
+            .GroupJoin(roleActions, a => Convert.ToString(a.Id), x => x.RoleId, (a, x) => new { Role = a, Action = x })
+            .GroupJoin(customerUsers, a => a.Role.CustomerId, x => x.Id, (a, x) => new { a.Role, RoleAct = a.Action, Customers = x })
+            .SelectMany(a => a.Customers.DefaultIfEmpty(), (a, x) =>
+            {
+                return new GetRolesReply
+                {
+                    Id = a.Role.Id,
+                    Name = a.Role.Name,
+                    Actions = a.RoleAct.SelectMany(x => x.Actions ?? new List<string>()).ToList(),
+                    CustomerId = a.Role.CustomerId,
+                    CustomerName = x?.FullName
+                };
             }).ToList();
         return new DataResponse<List<GetRolesReply>>
         {
             Data = result
         };
-    }
-
-    private IEnumerable<ApplicationRole> GetRolesByNames(string[] names)
-    {
-        foreach (var role in names)
-        {
-            var appRole = _roleManager.Roles.FirstOrDefault(a => a.Name == role);
-            if (appRole != null)
-            {
-                yield return appRole;
-            }
-        }
     }
 
     [HttpPost("add-role-actions")]
@@ -353,7 +366,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPost("lock-user")]
-    [AdminAuthorize(true)]
+    [AdminAuthorize(true, true)]
     public async Task<IActionResult> LockUser([FromBody] LockUserRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
@@ -376,14 +389,13 @@ public class OperationsController : ControllerBase
     [AdminAuthorize(true, true)]
     public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100, string? customerId = null)
     {
-        var claimData = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.UserData)!.Value;
-        var userData = JsonConvert.DeserializeObject<AdminUser>(claimData);
-        var adminUsers = await _adminService.ListUsers(userData!.IsCustomer);
+        var userData = Profile;
+        var customerUsers = await _adminService.ListUsers(userData!.IsCustomer);
         var qUsers = _userManager.Users.Where(u => string.IsNullOrEmpty(customerId) ? ((u.CustomerId == userData.Id && userData.IsCustomer) || userData.IsSystem) : (u.CustomerId == customerId));
         var appUsers = qUsers.Skip(skip).Take(limit).ToList();
         var total = qUsers.Count();
         var users = appUsers
-            .GroupJoin(adminUsers, u => u.CustomerId, a => a.Id, (u, a) => new { Admins = a, User = u })
+            .GroupJoin(customerUsers, u => u.CustomerId, a => a.Id, (u, a) => new { Admins = a, User = u })
             .SelectMany(a => a.Admins.DefaultIfEmpty(), (u, a) => new UserViewModel(u.User)
             {
                 CustomerName = a?.FullName ?? string.Empty
@@ -393,7 +405,7 @@ public class OperationsController : ControllerBase
         {
             tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x =>
             {
-                u.Roles = x.Result;
+                u.Roles = x.Result.Select(a => FormatRoleNameByCustomer(a, u.CustomerId)).ToArray();
             }));
         });
         await Task.WhenAll(tasks);
@@ -405,13 +417,6 @@ public class OperationsController : ControllerBase
                 Total = total
             }
         };
-    }
-
-    private async Task<string[]> GetRolesByUser(string username)
-    {
-        var appUser = await _userManager.FindByNameAsync(username);
-        var roles = await _userManager.GetRolesAsync(appUser!);
-        return roles.ToArray();
     }
 
     [HttpPost("update-user")]
@@ -461,6 +466,33 @@ public class OperationsController : ControllerBase
                 CustomerName = customer?.FullName ?? string.Empty
             }
         });
+    }
+    #endregion
+
+    #region utilities
+    private IEnumerable<ApplicationRole> GetRolesByNames(string[] names)
+    {
+        foreach (var role in names)
+        {
+            var appRole = _roleManager.Roles.FirstOrDefault(a => a.Name == role);
+            if (appRole != null)
+            {
+                yield return appRole;
+            }
+        }
+    }
+
+    private async Task<string[]> GetRolesByUser(string username)
+    {
+        var appUser = await _userManager.FindByNameAsync(username);
+        var roles = await _userManager.GetRolesAsync(appUser!);
+        return roles.ToArray();
+    }
+
+    private string FormatRoleNameByCustomer(string originalName, string? customerId)
+    {
+        var roleNameArr = originalName.Split("__", StringSplitOptions.RemoveEmptyEntries);
+        return string.IsNullOrEmpty(customerId) ? originalName : string.Join("", roleNameArr, roleNameArr.Length > 1 ? 1 : 0, roleNameArr.Length > 1 ? roleNameArr.Length - 1 : roleNameArr.Length);
     }
     #endregion
 }

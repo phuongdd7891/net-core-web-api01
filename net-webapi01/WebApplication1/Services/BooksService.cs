@@ -39,15 +39,14 @@ public class BooksService
         await _booksCollection.InsertOneAsync(newBook);
     }
 
-    public async Task CreateCopyAsync(Book newBook, int numOfCopy = 1)
+    public async Task CreateCopyAsync(Book bookToCopy, int numOfCopy = 1)
     {
         var list = new List<Book>(numOfCopy);
-        var bookJs = JsonConvert.SerializeObject(newBook);
         for (int i = 0; i < numOfCopy; i++)
         {
             var now = DateTime.Now;
-            var book = JsonConvert.DeserializeObject<Book>(bookJs)!;
-            book.Id = ObjectId.GenerateNewId(now).ToString();
+            var book = bookToCopy.DeepCopy();
+            book!.Id = ObjectId.GenerateNewId(now).ToString();
             book.BookName += $"- copy {i + 1}";
             book.CreatedDate = now;
             list.Add(book);

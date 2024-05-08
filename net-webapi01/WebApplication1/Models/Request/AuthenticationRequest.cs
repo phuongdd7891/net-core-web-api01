@@ -52,6 +52,6 @@ namespace WebApi.Models.Requests
     {
         public string? Id { get; set; }
         public required string Name { get; set; }
-        public string? DisplayName { get; set; }
+        public string? CustomerId { get; set; }
     }
 }
