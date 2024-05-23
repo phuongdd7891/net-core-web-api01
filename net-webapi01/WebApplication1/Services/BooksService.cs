@@ -19,9 +19,15 @@ public class BooksService
         _categoryCollection = _context.BookCategories;
     }
 
-    public async Task<List<Book>> GetAsync(int skip = 0, int limit = 10) =>
-        await _booksCollection.Find(_ => true).Skip(skip).Limit(limit).SortByDescending(a => a.CreatedDate).ToListAsync();
-
+    public async Task<List<Book>> GetAsync(int skip = 0, int limit = 10, string? keyword = null, bool isExact = false)
+    {
+        return string.IsNullOrEmpty(keyword) ? await _booksCollection.Find(_ => true).SortByDescending(a => a.CreatedDate).Skip(skip).Limit(limit).ToListAsync()
+            : await _booksCollection.Find(Builders<Book>.Filter.Text(isExact ? $"\"{keyword}\"" : $"{keyword}"))
+                // .Project<Book>(Builders<Book>.Projection.MetaTextScore("TextScore"))
+                // .Sort(Builders<Book>.Sort.MetaTextScore("TextScore"))
+                .Skip(skip).Limit(limit).ToListAsync();
+    }
+    
     public async Task<Book?> GetAsync(string id) =>
         await _booksCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 

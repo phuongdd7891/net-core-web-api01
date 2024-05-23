@@ -21,6 +21,10 @@ using WebApi.Hubs;
 using Microsoft.AspNetCore.Identity;
 using CoreLibrary.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using WebApi.Extensions;
+using Serilog;
+using Serilog.Sinks.Elasticsearch;
+using System.Reflection;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -196,8 +200,25 @@ var config = new ConfigurationBuilder()
    .SetBasePath(Directory.GetCurrentDirectory())
    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
    .Build();
-
 NLog.LogManager.Configuration = new NLogLoggingConfiguration(config.GetSection("NLog"));
+#endregion
+
+#region Serilog config
+var environment = builder.Environment.EnvironmentName;
+var logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .WriteTo.Debug()
+        .WriteTo.Console()
+        .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(builder.Configuration["ElasticConfiguration:Uri"]!))
+        {
+            AutoRegisterTemplate = true,
+            IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name!.ToLower().Replace(".", "-")}-{environment.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
+        })
+        .Enrich.WithProperty("Environment", environment)
+        .ReadFrom.Configuration(config)
+        .CreateLogger();
+builder.Host.UseSerilog(logger);
 #endregion
 
 var app = builder.Build();
@@ -209,6 +230,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

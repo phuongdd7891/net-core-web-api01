@@ -24,6 +24,7 @@ public class Book
     public DateTime? ModifiedDate { get; set; }
     public string? CreatedBy { get; set; }
     public string? ModifiedBy { get; set; }
+    public string? Summary { get; set; }
 }
 
 public class BookCategory

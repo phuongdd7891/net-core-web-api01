@@ -6,6 +6,7 @@ using WebApi.Models.Requests;
 using CoreLibrary.Utils;
 using WebApplication1.Authentication;
 using System.ComponentModel;
+using Nest;
 
 namespace WebApi.Controllers;
 
@@ -14,23 +15,31 @@ namespace WebApi.Controllers;
 public class BooksController: BaseController
 {
     private readonly BooksService _booksService;
+    private readonly ILogger<BooksController> _logger;
 
-    public BooksController(BooksService booksService) =>
+    public BooksController(
+        BooksService booksService,
+        ILogger<BooksController> logger) 
+    {
         _booksService = booksService;
+        _logger = logger;
+        _logger.LogInformation("books controller constructor");
+    }
 
     [UserAuthorize]
     [HttpGet]
     [Description("get list of books")]
-    public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit)
+    public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit, string? keyword, bool? exact)
     {
-        var data = await _booksService.GetAsync(skip, limit);
+        var data = await _booksService.GetAsync(skip, limit, keyword, exact ?? false);
         var categories = await _booksService.GetCategoriesAsync();
-        var catDict = categories.ToDictionary(a => a.Id!);
-        var list = data.ToList();
-        list.ForEach(a =>
-        {
-            a.Category = catDict.ContainsKey(a.Category ?? "") ? catDict[a.Category!].CategoryName : string.Empty;
-        });
+        var list = data.GroupJoin(categories, a => a.Category, c => c.Id, (a, c) => new { Book = a, Cats = c })
+            .SelectMany(a => a.Cats.DefaultIfEmpty(), (a, c) => {
+                var book = a.Book;
+                book.Category = c?.CategoryName;
+                return book;
+            }).ToList();
+        
         return new DataResponse<GetBooksReply>
         {
             Data = new GetBooksReply

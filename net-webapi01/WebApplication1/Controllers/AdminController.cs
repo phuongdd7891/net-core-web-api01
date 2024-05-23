@@ -130,10 +130,10 @@ public class AdminController : ControllerBase
         ErrorStatuses.ThrowBadRequest("Password is required", string.IsNullOrEmpty(request.Password));
         var user = await _adminService.GetUser(request.UserName);
         ErrorStatuses.ThrowNotFound("User not found", user == null);
-        var pwdResult = await _adminService.VerifyPassword(request.UserName, request.Password);
-        ErrorStatuses.ThrowBadRequest("Bad credentials", !pwdResult);
         ErrorStatuses.ThrowInternalErr("Invalid user", !user!.IsSystem && !user.IsCustomer);
         ErrorStatuses.ThrowInternalErr("Account is disabled", user.Disabled);
+        var pwdResult = await _adminService.VerifyPassword(request.UserName, request.Password);
+        ErrorStatuses.ThrowBadRequest("Bad credentials", !pwdResult);
 
         var refreshToken = _jwtService.GenerateRefreshToken();
         user.RefreshToken = refreshToken;
@@ -256,5 +256,20 @@ public class AdminController : ControllerBase
         {
             Data = user 
         });
+    }
+
+    [HttpPost("change-password"), AdminAuthorize(true, true)]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword));
+        var username = User.Identity!.Name!;
+        var pwdResult = await _adminService.VerifyPassword(username, request.CurrentPassword);
+        ErrorStatuses.ThrowBadRequest("Invalid current password", !pwdResult);
+        var newPwdResult = await _adminService.VerifyPassword(username, request.NewPassword);
+        ErrorStatuses.ThrowBadRequest("New password have to different with current password", newPwdResult);
+        ValidatePasswordRequest(request.NewPassword);
+        var user = await _adminService.GetUser(username);
+        await _adminService.UpdateUser(user, request.NewPassword);
+        return Ok();
     }
 }
