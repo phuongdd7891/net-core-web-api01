@@ -12,14 +12,14 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController: BaseController
+public class BooksController : BaseController
 {
     private readonly BooksService _booksService;
     private readonly ILogger<BooksController> _logger;
 
     public BooksController(
         BooksService booksService,
-        ILogger<BooksController> logger) 
+        ILogger<BooksController> logger)
     {
         _booksService = booksService;
         _logger = logger;
@@ -34,12 +34,12 @@ public class BooksController: BaseController
         var data = await _booksService.GetAsync(skip, limit, keyword, exact ?? false);
         var categories = await _booksService.GetCategoriesAsync();
         var list = data.GroupJoin(categories, a => a.Category, c => c.Id, (a, c) => new { Book = a, Cats = c })
-            .SelectMany(a => a.Cats.DefaultIfEmpty(), (a, c) => {
+            .SelectMany(a => a.Cats.DefaultIfEmpty(), (a, c) =>
+            {
                 var book = a.Book;
                 book.Category = c?.CategoryName;
                 return book;
             }).ToList();
-        
         return new DataResponse<GetBooksReply>
         {
             Data = new GetBooksReply
@@ -83,8 +83,11 @@ public class BooksController: BaseController
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
-        await _booksService.CreateCopyAsync(book!, qty);
-        return Ok(new DataResponse());
+        var result = await _booksService.CreateCopyAsync(book!, qty, User.Identity!.Name);
+        return Ok(new DataResponse
+        {
+            Data = string.Format("Inserted {0}", result)
+        });
     }
 
     [HttpPut("{id:length(24)}")]
@@ -129,19 +132,15 @@ public class BooksController: BaseController
 
     [HttpDelete("delete-many")]
     [UserAuthorize]
-    public async Task<IActionResult> DeleteMany([FromQuery] string[] ids)
+    public async Task<IActionResult> DeleteMany([FromQuery] string[] ids, string from, string to)
     {
-        ErrorStatuses.ThrowBadRequest("Invalid request", ids == null || ids.Length == 0);
+        ErrorStatuses.ThrowBadRequest("Invalid request", (ids == null || ids.Length == 0) && string.IsNullOrEmpty(from) && string.IsNullOrEmpty(to));
 
-        var result = await _booksService.RemoveManyAsync(ids!);
-        if (string.IsNullOrEmpty(result))
+        var result = await _booksService.RemoveManyAsync(ids!, Convert.ToDateTime(from), Convert.ToDateTime(to));
+        return Ok(new DataResponse
         {
-            return Ok(new DataResponse());
-        }
-        else
-        {
-            return BadRequest(result);
-        }
+            Data = string.Format("Deleted {0}", result)
+        });
     }
 
     [HttpGet("download-cover")]

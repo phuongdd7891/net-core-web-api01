@@ -6,10 +6,14 @@ using Newtonsoft.Json.Serialization;
 public class ErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
-    public ErrorHandlingMiddleware(RequestDelegate next)
+    public ErrorHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ErrorHandlingMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -20,6 +24,7 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Somethings error");
             context.Response.ContentType = "application/json";
             var jsonSettings = new JsonSerializerSettings
             {

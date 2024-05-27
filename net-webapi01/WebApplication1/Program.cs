@@ -21,10 +21,10 @@ using WebApi.Hubs;
 using Microsoft.AspNetCore.Identity;
 using CoreLibrary.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using WebApi.Extensions;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
+using Serilog.Exceptions;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -207,6 +207,7 @@ NLog.LogManager.Configuration = new NLogLoggingConfiguration(config.GetSection("
 var environment = builder.Environment.EnvironmentName;
 var logger = new LoggerConfiguration()
         .Enrich.FromLogContext()
+        .Enrich.WithExceptionDetails()
         .Enrich.WithMachineName()
         .WriteTo.Debug()
         .WriteTo.Console()

@@ -1,8 +1,6 @@
 using WebApi.Models;
 using MongoDB.Driver;
 using WebApi.Models.Requests;
-using Newtonsoft.Json;
-using MongoDB.Bson;
 
 namespace WebApi.Services;
 
@@ -27,7 +25,7 @@ public class BooksService
                 // .Sort(Builders<Book>.Sort.MetaTextScore("TextScore"))
                 .Skip(skip).Limit(limit).ToListAsync();
     }
-    
+
     public async Task<Book?> GetAsync(string id) =>
         await _booksCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
@@ -45,19 +43,49 @@ public class BooksService
         await _booksCollection.InsertOneAsync(newBook);
     }
 
-    public async Task CreateCopyAsync(Book bookToCopy, int numOfCopy = 1)
+    private SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+    private int baseCountCopy = 1000;
+    public async Task<long> CreateCopyAsync(Book sourceBook, int numOfCopy = 1, string? createdBy = null)
     {
-        var list = new List<Book>(numOfCopy);
-        for (int i = 0; i < numOfCopy; i++)
+        try
         {
-            var now = DateTime.Now;
-            var book = bookToCopy.DeepCopy();
-            book!.Id = ObjectId.GenerateNewId(now).ToString();
-            book.BookName += $"- copy {i + 1}";
-            book.CreatedDate = now;
-            list.Add(book);
+            await semaphoreSlim.WaitAsync();
+            int count = 1, skip = 0;
+            var task = new List<Task<BulkWriteResult<Book>>>();
+            var listWrites = new List<WriteModel<Book>>();
+            while (count <= numOfCopy)
+            {
+                var cloneBook = new Book
+                {
+                    BookName = $"{sourceBook.BookName} - copy {count + 1}",
+                    Author = sourceBook.Author,
+                    Category = sourceBook.Category,
+                    CoverPicture = sourceBook.CoverPicture,
+                    Summary = sourceBook.Summary,
+                    Price = sourceBook.Price,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = createdBy
+                };
+                listWrites.Add(new InsertOneModel<Book>(cloneBook));
+                if (count % baseCountCopy == 0)
+                {
+                    task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(skip * baseCountCopy)));
+                    skip++;
+                }
+                count++;
+            };
+            var remainCount = numOfCopy % baseCountCopy;
+            if (remainCount > 0)
+            {
+                task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(listWrites.Count - remainCount)));
+            }
+            var result = await Task.WhenAll(task);
+            return result.Sum(a => a.InsertedCount);
         }
-        await _booksCollection.InsertManyAsync(list);
+        finally
+        {
+            semaphoreSlim.Release();
+        }
     }
 
     public async Task UpdateAsync(Book updatedBook, IFormFile? coverData = null)
@@ -76,7 +104,7 @@ public class BooksService
         try
         {
             var result = await _booksCollection.DeleteOneAsync(x => x.Id == id);
-            return result.DeletedCount > 0;  
+            return result.DeletedCount > 0;
         }
         catch
         {
@@ -84,16 +112,44 @@ public class BooksService
         }
     }
 
-    public async Task<string> RemoveManyAsync(string[] ids)
+    public async Task<long> RemoveManyAsync(string[] ids, DateTime? from, DateTime? to)
     {
         try
         {
-            var result = await _booksCollection.DeleteManyAsync(x => ids.Contains(x.Id));
-            return string.Empty;
+            await semaphoreSlim.WaitAsync();
+            if (from.HasValue && to.HasValue)
+            {
+                int count = 1, skip = 0;
+                var task = new List<Task<BulkWriteResult<Book>>>();
+                var listWrites = new List<WriteModel<Book>>();
+                var books = await _booksCollection.Find(x => x.CreatedDate >= from && x.CreatedDate < to).ToListAsync();
+                foreach (var bookId in books.Select(x => x.Id))
+                {
+                    listWrites.Add(new DeleteOneModel<Book>(Builders<Book>.Filter.Eq("Id", bookId)));
+                    if (count % baseCountCopy == 0)
+                    {
+                        task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(skip * baseCountCopy)));
+                        skip++;
+                    }
+                    count++;
+                }
+                var remainCount = books.Count % baseCountCopy;
+                if (remainCount > 0)
+                {
+                    task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(listWrites.Count - remainCount)));
+                }
+                var result = await Task.WhenAll(task);
+                return result.Sum(a => a.DeletedCount);
+            }
+            else
+            {
+                var result = await _booksCollection.DeleteManyAsync(x => ids.Contains(x.Id));
+                return result.DeletedCount;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            return ex.Message;
+            semaphoreSlim.Release();
         }
     }
 
