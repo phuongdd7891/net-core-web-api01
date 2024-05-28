@@ -14,15 +14,14 @@ public partial class OperationsController
     [HttpPost("create-role")]
     public async Task<IActionResult> CreateRole([FromBody] ApplicationRoleRequest request)
     {
-        var roleName = string.Format("{0}{1}", string.IsNullOrEmpty(request.CustomerId) ? "" : $"{request.CustomerId}__", request.Name);
         IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole()
         {
-            Name = roleName,
+            Name = request.StoreName,
             CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId,
         });
         ErrorStatuses.ThrowInternalErr(result.Errors.FirstOrDefault()?.Code.ToErrDescription(request.Name) ?? "", !result.Succeeded);
         await _cacheService.LoadUserRoles();
-        var createdRole = await _roleManager.FindByNameAsync(request.Name);
+        var createdRole = await _roleManager.FindByNameAsync(request.StoreName);
         return Ok(new DataResponse
         {
             Data = createdRole!.Id.ToString()
@@ -35,14 +34,11 @@ public partial class OperationsController
         ErrorStatuses.ThrowInternalErr("Invalid request", request == null || string.IsNullOrEmpty(request.Id));
         var role = await _roleManager.FindByIdAsync(request!.Id!);
         ErrorStatuses.ThrowInternalErr("Invalid role", role == null);
-        var name = string.Format("{0}{1}", string.IsNullOrEmpty(request.CustomerId) ? "" : $"{request.CustomerId}__", request.Name);
-        var roleByName = await _roleManager.FindByNameAsync(name);
-        ErrorStatuses.ThrowInternalErr("Existed role name " + request.Name, roleByName != null);
-        role!.CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId;
+        role!.CustomerId = request.CustomerId;
         var tasks = new List<Task<IdentityResult>>
         {
             _roleManager.UpdateAsync(role),
-            _roleManager.SetRoleNameAsync(role, name)
+            _roleManager.SetRoleNameAsync(role, request.StoreName)
         };
         var results = await Task.WhenAll(tasks);
         if (results.Any(a => !a.Succeeded))
@@ -71,6 +67,7 @@ public partial class OperationsController
             var addResult = await _userManager.AddToRolesAsync(user!, req.Roles);
             ErrorStatuses.ThrowInternalErr(addResult.Errors.FirstOrDefault()?.Description ?? "Add role fail", !addResult.Succeeded);
         }
+        await _cacheService.UpdateUser(new UserViewModel(user));
         return Ok();
     }
 
@@ -156,9 +153,11 @@ public partial class OperationsController
             if (users?.Count > 0)
             {
                 var tasks = new List<Task<IdentityResult>>();
+                var userTasks = new List<Task>();
                 foreach (var user in users)
                 {
                     tasks.Add(_userManager.RemoveFromRoleAsync(user, roleName));
+                    userTasks.Add(_cacheService.UpdateUser(new UserViewModel(user)));
                 }
                 var results = await Task.WhenAll(tasks);
                 if (results.Any(a => !a.Succeeded))
@@ -167,6 +166,7 @@ public partial class OperationsController
                     var index = results.ToList().IndexOf(error!);
                     ErrorStatuses.ThrowInternalErr(error!.Errors.FirstOrDefault()?.Description ?? string.Format("Remove user {0} from role {1} unsuccessfully", users[index].UserName, roleName), error != null);
                 }
+                await Task.WhenAll(userTasks);
             }
             await _roleActionRepository.DeleteByRoleId(id);
         }

@@ -50,7 +50,7 @@ public class JwtService
             SigningCredentials = CreateSigningCredentials()
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(user.UserName!, user, expiryMinutes);
+        await _redisRepository.SetEntity(user.UserName!, new UserViewModel(user), expiryMinutes);
         return new AuthenticationResponse
         {
             Token = token,
@@ -68,22 +68,6 @@ public class JwtService
         };
         if (user.Roles != null)
         {
-            // var roleActions = await _redisRepository.GetHashEntity<string[]>(Const.ROLE_ACTION_KEY);
-            // var actions = new List<string>();
-            // foreach (var role in user.Roles)
-            // {
-            //     foreach (var item in roleActions)
-            //     {
-            //         if (item.Value.Contains(role.ToString()) && !actions.Contains(item.Key))
-            //         {
-            //             actions.Add(item.Key);
-            //         }
-            //     }
-            // }
-            // foreach (var action in actions)
-            // {
-            //     claims = claims.Append(new Claim(ClaimTypes.Role, action)).ToArray();
-            // }
             claims = claims.Append(new Claim(ClaimTypes.Role, string.Join(",", user.Roles))).ToArray();
         }
         return claims;

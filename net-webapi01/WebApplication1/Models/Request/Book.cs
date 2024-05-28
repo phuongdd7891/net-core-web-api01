@@ -14,6 +14,14 @@ public class CreateBookCateogryRequest
     public string? Parent { get; set; }
 }
 
+public class GetBooksRequest
+{
+    public string? SearchKey { get; set; }
+    public bool SearchExact { get; set; } = false;
+    public DateTime? CreatedFrom { get; set; }
+    public DateTime? CreatedTo { get; set; }
+}
+
 public class GetBooksReply
 {
     public List<Book>? List { get; set; }

@@ -29,9 +29,9 @@ public class BooksController : BaseController
     [UserAuthorize]
     [HttpGet]
     [Description("get list of books")]
-    public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit, string? keyword, bool? exact)
+    public async Task<DataResponse<GetBooksReply>> GetList(int skip, int limit, [FromQuery] GetBooksRequest request)
     {
-        var data = await _booksService.GetAsync(skip, limit, keyword, exact ?? false);
+        var data = await _booksService.GetAsync(request, skip, limit);
         var categories = await _booksService.GetCategoriesAsync();
         var list = data.GroupJoin(categories, a => a.Category, c => c.Id, (a, c) => new { Book = a, Cats = c })
             .SelectMany(a => a.Cats.DefaultIfEmpty(), (a, c) =>

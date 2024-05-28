@@ -55,6 +55,15 @@ public class RedisRepository
         return await _redisClient.Db0.GetAsync<T>(key);
     }
 
+    public async Task ReplaceEntity<T>(string key, T entity, TimeSpan expiry)
+    {
+        ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
+        if (await HasKey(key))
+        {
+            await _redisClient.Db0.ReplaceAsync(key, entity, expiry);
+        }
+    }
+
     public async Task SetHashEntity<T>(string key, Dictionary<string, T> entities)
     {
         ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));

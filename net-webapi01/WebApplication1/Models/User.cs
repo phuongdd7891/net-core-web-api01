@@ -29,6 +29,7 @@ namespace WebApi.Models
         public string? PhoneNumber { get; set; }
         public bool IsLocked { get; set; }
         public string[]? Roles { get; set; }
+        public List<Guid>? RoleIds { get; set; }
         public string? CustomerId { get; set; }
         public string? CustomerName { get; set; }
 
@@ -42,6 +43,7 @@ namespace WebApi.Models
                 PhoneNumber = user.PhoneNumber;
                 CustomerId = user.CustomerId;
                 IsLocked = user.LockoutEnd.HasValue && DateTimeOffset.Compare(user.LockoutEnd.Value, DateTimeOffset.UtcNow) > 0;
+                RoleIds = user.Roles;
             }
         }
     }

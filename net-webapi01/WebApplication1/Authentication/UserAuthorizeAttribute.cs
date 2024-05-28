@@ -3,6 +3,7 @@ using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
+using WebApi.Models;
 
 namespace WebApplication1.Authentication;
 
@@ -25,11 +26,13 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         var claimRole = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
-        if (string.IsNullOrEmpty(claimRole))
+        var username = context.HttpContext.User.Identity!.Name!;
+        if (string.IsNullOrEmpty(claimRole) || await _redisRepository.HasKey(username) == false)
         {
             context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);
             return;
         }
+        var userCache = await _redisRepository.GetEntity<UserViewModel>(username);
         var endpoint = context.HttpContext.GetEndpoint();
         var controller = endpoint?.Metadata
             .OfType<ControllerActionDescriptor>()
@@ -41,7 +44,7 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
         {
             var actions = await _redisRepository.GetHashEntity<List<string>>(Const.ROLE_ACTION_KEY);
             var roles = claimRole.Split(',');
-            var valid = roles.Any(role => actions.ContainsKey(role) && actions[role].Contains(action));
+            var valid = roles.Any(role => userCache!.RoleIds!.Contains(Guid.Parse(role)) && actions.ContainsKey(role) && actions[role].Contains(action));
             if (!valid)
             {
                 context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);

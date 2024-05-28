@@ -17,10 +17,19 @@ public class BooksService
         _categoryCollection = _context.BookCategories;
     }
 
-    public async Task<List<Book>> GetAsync(int skip = 0, int limit = 10, string? keyword = null, bool isExact = false)
+    public async Task<List<Book>> GetAsync(GetBooksRequest req, int skip = 0, int limit = 10)
     {
-        return string.IsNullOrEmpty(keyword) ? await _booksCollection.Find(_ => true).SortByDescending(a => a.CreatedDate).Skip(skip).Limit(limit).ToListAsync()
-            : await _booksCollection.Find(Builders<Book>.Filter.Text(isExact ? $"\"{keyword}\"" : $"{keyword}"))
+        var filterDate = Builders<Book>.Filter.Where(a => a.CreatedDate >= req.CreatedFrom && a.CreatedDate < req.CreatedTo 
+            || !req.CreatedFrom.HasValue && !req.CreatedTo.HasValue
+            || a.CreatedDate >= req.CreatedFrom && !req.CreatedTo.HasValue
+            || a.CreatedDate < req.CreatedTo && !req.CreatedFrom.HasValue);
+        return string.IsNullOrEmpty(req.SearchKey) ? await _booksCollection
+            .Find(filterDate)
+            .SortByDescending(a => a.CreatedDate).Skip(skip).Limit(limit).ToListAsync()
+            : await _booksCollection.Find(Builders<Book>.Filter.And(
+                    Builders<Book>.Filter.Text(req.SearchExact ? $"\"{req.SearchKey}\"" : $"{req.SearchKey}"),
+                    filterDate
+                ))
                 // .Project<Book>(Builders<Book>.Projection.MetaTextScore("TextScore"))
                 // .Sort(Builders<Book>.Sort.MetaTextScore("TextScore"))
                 .Skip(skip).Limit(limit).ToListAsync();

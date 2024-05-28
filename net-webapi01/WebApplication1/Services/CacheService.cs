@@ -41,6 +41,7 @@ public class InitializeCacheService : IHostedService
 
 public class CacheService
 {
+    private readonly TimeSpan expiryMinutes = TimeSpan.FromMinutes(24 * 60);
     private RedisRepository _redisRepository;
     private RoleManager<ApplicationRole> _roleManager;
     private RoleActionRepository _roleActionRepository;
@@ -76,6 +77,14 @@ public class CacheService
         if (actions.Any(x => !string.IsNullOrEmpty(x.RoleId)))
         {
             await _redisRepository.SetHashEntity(Const.ROLE_ACTION_KEY, actions.Where(x => !string.IsNullOrEmpty(x.RoleId)).ToDictionary(a => a.RoleId!, a => a.Actions));
+        }
+    }
+
+    public async Task UpdateUser(UserViewModel userVM)
+    {
+        if (await _redisRepository.HasKey(userVM.UserName!))
+        {
+            await _redisRepository.ReplaceEntity(userVM.UserName!, userVM, expiryMinutes);
         }
     }
 

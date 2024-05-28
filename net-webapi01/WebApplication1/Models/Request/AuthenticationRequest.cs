@@ -53,5 +53,13 @@ namespace WebApi.Models.Requests
         public string? Id { get; set; }
         public required string Name { get; set; }
         public string? CustomerId { get; set; }
+
+        public string StoreName
+        {
+            get
+            {
+                return string.Format("{0}{1}", string.IsNullOrEmpty(CustomerId) || Name.StartsWith($"{CustomerId}__") ? "" : $"{CustomerId}__", Name);
+            }
+        }
     }
 }
