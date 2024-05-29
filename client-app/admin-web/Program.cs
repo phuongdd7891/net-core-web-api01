@@ -19,6 +19,7 @@ builder.Services.AddHttpContextAccessor();
 
 //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddTransient<AuthorizationRequestHandler>();
+builder.Services.AddTransient<ProfileService>();
 builder.Services.AddHttpClient<OperationService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
 

@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
-using System.Net.Http.Headers;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using AdminWeb.Models.Response;
-using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net.Http.Headers;
+using System.Linq;
 
 namespace AdminWeb.Services
 {
@@ -27,13 +27,20 @@ namespace AdminWeb.Services
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        private async Task<TResponse> SendHttpRequest<TRequest, TResponse>(string url, HttpMethod httpMethod, TRequest? requestBody = default)
+        private async Task<TResponse> SendHttpRequest<TRequest, TResponse>(string url, HttpMethod httpMethod, TRequest? requestBody = default, Dictionary<string, string>? headers = null)
         {
             var request = new HttpRequestMessage
             {
                 Method = httpMethod,
-                RequestUri = new Uri($"{baseApiAddress}{url}")
+                RequestUri = new Uri($"{baseApiAddress}{url}"),
             };
+            if (headers != null)
+            {
+                foreach (var item in headers)
+                {
+                    request.Headers.Add(item.Key, item.Value);
+                }
+            }
             if (requestBody != null)
             {
                 var json = JsonConvert.SerializeObject(requestBody);
@@ -62,6 +69,11 @@ namespace AdminWeb.Services
         public Task<TResponse> GetAsync<TResponse>(string endpoint)
         {
             return SendHttpRequest<Object, TResponse>(endpoint, HttpMethod.Get);
+        }
+
+        public Task<TResponse> GetAsync<TResponse>(string endpoint, Dictionary<string, string> headers)
+        {
+            return SendHttpRequest<Object, TResponse>(endpoint, HttpMethod.Get, null, headers);
         }
     }
 }

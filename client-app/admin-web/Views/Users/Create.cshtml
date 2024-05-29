@@ -7,10 +7,9 @@
 }
 
 <form class="row g-3" asp-action="create" asp-controller="users" method="post">
-    @Html.Hidden("cid", ViewBag.cid, null)
     <div class="col-md-6">
         <label asp-for="Username" class="form-label">Username</label>
-        @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder="Username..." })
+        @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder = "Username..." })
     </div>
     <div class="col-md-6">
         <label asp-for="Password" class="form-label">Password</label>
@@ -34,7 +33,7 @@
             @for (int i = 0; i < roles?.Length; i++)
             {
                 var role = roles[i];
-                <div class="pe-3 w-50">
+                <div class="pe-3 w-50 optRole @(string.IsNullOrEmpty(role.CustomerId) ? "all" : role.CustomerId)">
                     <label for="ckbRole_@i">
                         <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles != null && Model.Roles.Contains(role.Name) ? "checked" : "") />
                         @role.DisplayName
@@ -53,3 +52,29 @@
         </a>
     </div>
 </form>
+
+@if (Html.IsSystemUsr())
+{
+    @section PageScripts
+    {
+    <script>
+        function toggleRoles() {
+            $('.optRole').show();
+            var customerId = $('#CustomerId').val();
+            if (customerId) {
+                $('.optRole:not(.' + customerId + ')').hide();
+                $('.optRole.all').show();
+            } else {
+                $('.optRole:not(.all)').hide();
+            }
+        }
+
+        $('#CustomerId').change((e) => {
+            toggleRoles();
+        });
+        $(function () {
+            toggleRoles();
+        });
+    </script>
+    }
+}

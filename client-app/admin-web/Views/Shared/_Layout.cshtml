@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@using AdminWeb.Services
+@inject ProfileService profileService
+@{
+    await profileService.LoadProfile();
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -11,7 +16,6 @@
     @await RenderSectionAsync("PageStyles", required: false)
 </head>
 <body>
-    @await Component.InvokeAsync("Profile")
     <!-- Page Wrapper -->
     <div id="wrapper">
 

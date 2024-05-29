@@ -9,7 +9,6 @@
 <form class="row g-3" asp-action="edit" asp-controller="users" method="post">
     @Html.HiddenFor(a => a.Id)
     @Html.HiddenFor(a => a.Roles)
-    @Html.Hidden("cid", ViewBag.cid, null)
     <div class="col-md-6">
         <label for="inputUsername" class="form-label">Username</label>
         <input type="text" class="form-control" id="inputUsername" name="Username" value="@Model.Username" readonly>
@@ -20,11 +19,13 @@
     </div>
     <div class="col-md-6">
         <label for="inputEmail" class="form-label">Email</label>
-        <input type="text" class="form-control" id="inputEmail" placeholder="email..." name="Email" value="@Model.Email">
+        <input type="text" class="form-control" id="inputEmail" placeholder="email..." name="Email"
+               value="@Model.Email">
     </div>
     <div class="col-md-6">
         <label for="inputPhone" class="form-label">Phone</label>
-        <input type="text" class="form-control" id="inputPhone" placeholder="phone..." name="PhoneNumber" value="@Model.PhoneNumber">
+        <input type="text" class="form-control" id="inputPhone" placeholder="phone..." name="PhoneNumber"
+               value="@Model.PhoneNumber">
     </div>
     <div class="col-md-6">
         <label asp-for="@Model.CustomerId" class="form-label">Customer</label>
@@ -41,9 +42,11 @@
             @for (int i = 0; i < roles?.Length; i++)
             {
                 var role = roles[i];
-                <div class="pe-3 w-50">
-                    <label for="ckbRole_@i">
-                        <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name" @(Model.Roles!.Contains(role.Name) ? "checked" : "")/>
+                <div class="pe-3 w-50 optRole @(string.IsNullOrEmpty(role.CustomerId) ? "all" : role.CustomerId)">
+                    <label for="ckbRole_@i" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="<div class='text-left'>- @string.Join(("<br/> - "), role.Actions)</div>">
+                        <input type="checkbox" name="UsrRoles" id="ckbRole_@i" value="@role.Name"
+                        @(Model.Roles!.Contains(role.Name) ? "checked" : "") />
                         @role.DisplayName
                     </label>
                 </div>
@@ -59,3 +62,34 @@
         </a>
     </div>
 </form>
+
+@if (Html.IsSystemUsr())
+{
+    @section PageScripts
+    {
+    <script>
+        function toggleRoles() {
+            $('.optRole').show();
+            var customerId = $('#CustomerId').val();
+            if (customerId) {
+                $('.optRole:not(.' + customerId + ')').hide();
+                $('.optRole.all').show();
+            } else {
+                $('.optRole:not(.all)').hide();
+            }
+        }
+
+        $('#CustomerId').change((e) => {
+            toggleRoles();
+        });
+        $(function () {
+            toggleRoles();
+
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+    }
+}

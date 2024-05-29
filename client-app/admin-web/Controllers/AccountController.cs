@@ -24,6 +24,10 @@ namespace AdminWeb.Controllers
         [AllowAnonymous]
         public IActionResult Login()
         {
+            if (Convert.ToBoolean(User.Identity?.IsAuthenticated))
+            {
+                return RedirectToAction("index", "users");
+            }
             return View();
         }
 
@@ -45,6 +49,11 @@ namespace AdminWeb.Controllers
             {
                 _notyfService.Error(ex.InnerException?.Message ?? ex.Message);
                 return View("Login", loginModel);
+            }
+            var redirectUrl = Request.Query["redirectUrl"];
+            if (redirectUrl.Any())
+            {
+                return Redirect(redirectUrl.FirstOrDefault()!);
             }
             return RedirectToAction("Index", "Users");
         }

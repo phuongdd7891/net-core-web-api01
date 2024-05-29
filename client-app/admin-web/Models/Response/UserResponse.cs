@@ -12,6 +12,8 @@
         public string? Name { get; set; }
         public string? DisplayName { get; set; }
         public string[] Actions { get; set; } = new string[] {};
+        public string? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
     }
 
     public class AdminProfile

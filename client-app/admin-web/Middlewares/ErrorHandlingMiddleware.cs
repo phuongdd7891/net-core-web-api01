@@ -44,7 +44,7 @@ namespace AdminWeb.Middlewares
             StringBuilder sb = new StringBuilder();
             sb.Append("<html>");
             sb.AppendFormat("<body onload='document.forms[\"form\"].submit()'>");
-            sb.AppendFormat("<form name='form' action='{0}' method='post'>", "/home/error");
+            sb.AppendFormat("<form name='form' action='{0}' method='post'>", "/home/error?redirectUrl=/");
             sb.AppendFormat("<input type='hidden' name='{0}' value='{1}' />", "Message", msg);
             sb.Append("</form></body></html>");
 

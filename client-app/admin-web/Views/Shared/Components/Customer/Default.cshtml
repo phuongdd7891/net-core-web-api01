@@ -4,11 +4,14 @@
     var tempCustomers = TempData.Peek("Customers") as string;
     var customers = JsonConvert.DeserializeObject<AdminWeb.Models.Response.AdminProfile[]>(tempCustomers!);
     var selectCustomers = new List<SelectListItem>();
-    selectCustomers.Add(new SelectListItem
+    if (Html.IsSystemUsr())
     {
-        Text = "-None-",
-        Value = string.Empty
-    });
+        selectCustomers.Add(new SelectListItem
+        {
+            Text = "-None-",
+            Value = string.Empty
+        });
+    }
     if (customers != null)
     {
         selectCustomers.AddRange(customers.Select(a => new SelectListItem

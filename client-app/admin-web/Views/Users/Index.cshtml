@@ -1,9 +1,12 @@
-﻿@{
+﻿@using AdminWeb.Services
+@inject ProfileService profileService
+@{
     ViewData["Title"] = "Users";
     ViewData["useDataTable"] = true;
+    var customerId = Html.IsSystemUsr() ? null : ViewBag.cid ?? profileService.GetProfile()?.Id;
 }
 <div class="mb-3">
-    <a class="btn btn-success" asp-action="create" asp-controller="users" asp-route-customerId="@ViewBag.cid">
+    <a class="btn btn-success" asp-action="create" asp-controller="users" asp-route-customerId="@customerId">
         <i class="bi bi-plus-circle"></i>
         Create
     </a>
@@ -39,7 +42,7 @@
                 "lengthMenu": [15, 30, 50],
                 "ajax": function (data, callback, settings) {
                     $.ajax({
-                        url: "@Url.Action("getUsers")@(ViewBag.cid != null ? "?customerId=" + ViewBag.cid : "")",
+                        url: "@Url.Action("getUsers")@(customerId != null ? "?customerId=" + customerId : "")",
                         data: {
                             skip: data.start,
                             limit: data.length
@@ -75,7 +78,7 @@
                     { "data": "customerName", "autoWidth": true },
                     { "data": "roles", "autoWidth": true },
                     {
-                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info btn-sm" href="/Users/Edit/' + row.username + '@(ViewBag.cid != null ? "/" + ViewBag.cid : "")"><i class="bi bi-pen"></i></a>'; }
+                        "render": function (data, type, row, meta) { return '<a class="btn btn-circle btn-info btn-sm" href="/Users/Edit/' + row.username + '@(customerId != null ? "/" + customerId : "")"><i class="bi bi-pen"></i></a>'; }
                     },
                     {
                         "data": "isLocked",

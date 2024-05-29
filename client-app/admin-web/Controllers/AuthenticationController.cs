@@ -37,8 +37,8 @@ namespace AdminWeb.Controllers
         {
             var actions = formCol["RoleActs"];
             var roleName = formCol["Name"];
-            var displayName = formCol["DisplayName"];
-            var result = await _opService.CreateRole(roleName!, displayName);
+            var customerId = formCol["CustomerId"];
+            var result = await _opService.CreateRole(roleName!, customerId);
             if (actions.Count > 0)
             {
                 await _opService.AddRoleActions(result.Data!, actions!);
@@ -54,8 +54,8 @@ namespace AdminWeb.Controllers
             var actions = formCol["RoleActs"];
             var roleId = formCol["Id"];
             var roleName = formCol["Name"];
-            var displayName = formCol["DisplayName"];
-            await _opService.EditRole(roleId!, roleName!, displayName);
+            var customerId = formCol["CustomerId"];
+            await _opService.EditRole(roleId!, roleName!, customerId);
             await _opService.AddRoleActions(roleId!, actions!);
             _notyfService.Success(Messages.SaveSuccessfully);
             return RoleListPartial();

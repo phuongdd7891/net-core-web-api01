@@ -62,9 +62,9 @@ namespace AdminWeb.Services
             });
         }
 
-        public Task<ApiResponse<UserRolesResponse[]>> GetUserRoles()
+        public Task<ApiResponse<UserRolesResponse[]>> GetUserRoles(string? customerId = null)
         {
-            return GetAsync<ApiResponse<UserRolesResponse[]>>("api/operations/user-roles");
+            return GetAsync<ApiResponse<UserRolesResponse[]>>($"api/operations/user-roles?customerId={customerId}");
         }
 
         public Task<ApiResponse<AdminProfile>> GetProfile()
@@ -100,22 +100,22 @@ namespace AdminWeb.Services
             });
         }
 
-        public Task<ApiResponse<string>> CreateRole(string name, string? displayName)
+        public Task<ApiResponse<string>> CreateRole(string name, string? customerId)
         {
             return PostAsync<object, ApiResponse<string>>("api/operations/create-role", new
             {
                 Name = name,
-                DisplayName = displayName
+                CustomerId = customerId
             });
         }
 
-        public Task EditRole(string id, string name, string? displayName)
+        public Task EditRole(string id, string name, string? customerId)
         {
             return PostAsync<object, string?>("api/operations/edit-role", new
             {
                 Id = id,
                 Name = name,
-                DisplayName = displayName
+                CustomerId = customerId
             });
         }
 

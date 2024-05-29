@@ -6,7 +6,7 @@
             <th></th>
             <th>#</th>
             <th>Name</th>
-            <th>Display</th>
+            <th>Customer</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -23,10 +23,10 @@
                 <td>@(i + 1)</td>
                 <td>
                     <b class="text-decoration-underline link-primary cursor-pointer" onclick="editRole(@Newtonsoft.Json.JsonConvert.SerializeObject(role))">
-                        @role.Name
+                        @role.DisplayName
                     </b>
                 </td>
-                <td>@role.DisplayName</td>
+                <td>@role.CustomerName</td>
                 <td>@(role.Actions != null ? string.Join(", ", role.Actions) : "")</td>
             </tr>
         }

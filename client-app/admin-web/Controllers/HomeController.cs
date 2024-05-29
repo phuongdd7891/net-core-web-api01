@@ -2,25 +2,25 @@
 
     public HomeController(ILogger<HomeController> logger, INotyfService notyfService, ToastMessageService toastMsgService)     {         _logger = logger;         _notyfService = notyfService;         _toastMsgService = toastMsgService;     }      public IActionResult Index()     {
 
-        return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     [HttpPost]     [HttpGet]     public IActionResult Error([FromForm] string message)     {         if (Request.QueryString.HasValue)
+        return View();     }      public IActionResult Privacy()     {         return View();     }      [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]     [HttpPost]     [HttpGet]     public IActionResult Error([FromForm] string message)     {         string? redirectUrl = null;         var errCode = string.Empty;         if (Request.QueryString.HasValue)
         {
             var values = new StringValues();
             if (Request.Query.TryGetValue("code", out values))
             {
-                var errCode = values.FirstOrDefault() ?? string.Empty;
-                if (Request.Query.TryGetValue("redirectUrl", out values))
+                errCode = values.FirstOrDefault() ?? string.Empty;
+            }
+            if (Request.Query.TryGetValue("redirectUrl", out values))
+            {
+                if (!string.IsNullOrEmpty(errCode))
                 {
                     _toastMsgService.AddError("", errCode);
-                    return Redirect(values.FirstOrDefault()!);
                 }
-                else
-                {
-                    message = errCode;
-                }
+                redirectUrl = values.FirstOrDefault();
+                return Redirect(redirectUrl!);
             }
         }         return View(new ErrorViewModel
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
             Message = message,
-            BackUrl = message.StartsWith("Token_") ? "/" : Request.Headers["Referer"].ToString()
-    });     } } 
+            BackUrl = redirectUrl ?? string.Format("/?redirectUrl={0}", Request.Headers["Referer"].ToString())
+        });     } } 

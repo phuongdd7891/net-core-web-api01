@@ -3,8 +3,8 @@
     public static class Const
     {
         public static string AuthenticationKey = "__auth__";
-        public static string ErrCode_InvalidToken = "Token_Invalid";
-        public static string ErrCode_TokenExpired = "Token_Expired";
+        public static string ErrCode_InvalidToken = "TokenInvalid";
+        public static string ErrCode_TokenExpired = "TokenExpired";
     }
 
     public static class Messages

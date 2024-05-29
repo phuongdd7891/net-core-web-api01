@@ -37,8 +37,8 @@
                         <input type="hidden" id="hdId" name="Id"/>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Display Name</label>
-                        <input class="form-control" id="txtDisplayName" name="DisplayName"/>
+                        <label class="form-label" for="CustomerId">Customer</label>
+                        @await Component.InvokeAsync("Customer", new { model = "CustomerId" })
                     </div>
                     <div class="form-group">
                         <label class="form-label">Actions</label>
@@ -89,12 +89,12 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="form-label">Name</label>
+                        <label class="form-label" for="txtNewName">Name</label>
                         <input class="form-control" id="txtNewName" name="Name" />
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Display Name</label>
-                        <input class="form-control" id="txNewtDisplayName" name="DisplayName" />
+                        <label class="form-label" for="CustomerId">Customer</label>
+                        @await Component.InvokeAsync("Customer", new { model = "CustomerId" })
                     </div>
                     <div class="form-group">
                         <label class="form-label">Actions</label>
@@ -151,7 +151,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">
-                        Save
+                        Ok
                         <span id="submitting" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="mdDeleteRole.hide();">
@@ -175,10 +175,10 @@
 
         function editRole(role) {
             $('#frmEdit')[0].reset();
-            $('#edRoleName').text(role.Name);
-            $('#txtName').val(role.Name);
-            $('#txtDisplayName').val(role.DisplayName);
+            $('#edRoleName').text(role.DisplayName);
+            $('#txtName').val(role.DisplayName);
             $('#hdId').val(role.Id);
+            $('#CustomerId').val(role.CustomerId);
             $('input[name=RoleActs]').each((idx, el) => {
                 let val = $(el).val();
                 if (role.Actions?.includes(val)) {
@@ -192,6 +192,9 @@
 
         function createRole() {
             $('#frmCreate')[0].reset();
+            $('input[name=RoleActs]').each((idx, el) => {
+                $(el).removeAttr('checked');
+            });
             mdNewRole.show();
         }
 
