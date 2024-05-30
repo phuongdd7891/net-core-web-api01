@@ -1,7 +1,7 @@
 using CoreLibrary.Models;
 using MongoDB.Driver;
 
-namespace CoreLibrary.DbContext;
+namespace CoreLibrary.DbAccess;
 
 public class MongoDbContext
 {
@@ -19,4 +19,6 @@ public class MongoDbContext
     }
 
     public IMongoCollection<RoleAction> RoleActions => GetCollection<RoleAction>("RoleAction");
+
+    public IMongoClient mongoClient => _client;
 }

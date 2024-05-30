@@ -1,6 +1,7 @@
 using WebApi.Models;
 using MongoDB.Driver;
 using WebApi.Models.Requests;
+using CoreLibrary.DbAccess;
 
 namespace WebApi.Services;
 
@@ -8,18 +9,21 @@ public class BooksService
 {
     private readonly IMongoCollection<Book> _booksCollection;
     private readonly IMongoCollection<BookCategory> _categoryCollection;
+    private readonly IConnectionThrottlingPipeline _connectionThrottlingPipeline;
 
     public BooksService(
-        AppDBContext _context
+        AppDBContext _context,
+        IConnectionThrottlingPipeline connectionThrottlingPipeline
     )
     {
         _booksCollection = _context.Books;
         _categoryCollection = _context.BookCategories;
+        _connectionThrottlingPipeline = connectionThrottlingPipeline;
     }
 
     public async Task<List<Book>> GetAsync(GetBooksRequest req, int skip = 0, int limit = 10)
     {
-        var filterDate = Builders<Book>.Filter.Where(a => a.CreatedDate >= req.CreatedFrom && a.CreatedDate < req.CreatedTo 
+        var filterDate = Builders<Book>.Filter.Where(a => a.CreatedDate >= req.CreatedFrom && a.CreatedDate < req.CreatedTo
             || !req.CreatedFrom.HasValue && !req.CreatedTo.HasValue
             || a.CreatedDate >= req.CreatedFrom && !req.CreatedTo.HasValue
             || a.CreatedDate < req.CreatedTo && !req.CreatedFrom.HasValue);
@@ -52,49 +56,28 @@ public class BooksService
         await _booksCollection.InsertOneAsync(newBook);
     }
 
-    private SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-    private int baseCountCopy = 1000;
     public async Task<long> CreateCopyAsync(Book sourceBook, int numOfCopy = 1, string? createdBy = null)
     {
-        try
+        int count = 0;
+        var listWrites = new List<WriteModel<Book>>();
+        while (count < numOfCopy)
         {
-            await semaphoreSlim.WaitAsync();
-            int count = 1, skip = 0;
-            var task = new List<Task<BulkWriteResult<Book>>>();
-            var listWrites = new List<WriteModel<Book>>();
-            while (count <= numOfCopy)
+            var cloneBook = new Book
             {
-                var cloneBook = new Book
-                {
-                    BookName = $"{sourceBook.BookName} - copy {count + 1}",
-                    Author = sourceBook.Author,
-                    Category = sourceBook.Category,
-                    CoverPicture = sourceBook.CoverPicture,
-                    Summary = sourceBook.Summary,
-                    Price = sourceBook.Price,
-                    CreatedDate = DateTime.Now,
-                    CreatedBy = createdBy
-                };
-                listWrites.Add(new InsertOneModel<Book>(cloneBook));
-                if (count % baseCountCopy == 0)
-                {
-                    task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(skip * baseCountCopy)));
-                    skip++;
-                }
-                count++;
+                BookName = $"{sourceBook.BookName} - copy {count + 1}",
+                Author = sourceBook.Author,
+                Category = sourceBook.Category,
+                CoverPicture = sourceBook.CoverPicture,
+                Summary = sourceBook.Summary,
+                Price = sourceBook.Price,
+                CreatedDate = DateTime.Now,
+                CreatedBy = createdBy
             };
-            var remainCount = numOfCopy % baseCountCopy;
-            if (remainCount > 0)
-            {
-                task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(listWrites.Count - remainCount)));
-            }
-            var result = await Task.WhenAll(task);
-            return result.Sum(a => a.InsertedCount);
-        }
-        finally
-        {
-            semaphoreSlim.Release();
-        }
+            listWrites.Add(new InsertOneModel<Book>(cloneBook));
+            count++;
+        };
+        var result = await _connectionThrottlingPipeline.AddRequest(() => _booksCollection.BulkWriteAsync(listWrites));
+        return result.InsertedCount;
     }
 
     public async Task UpdateAsync(Book updatedBook, IFormFile? coverData = null)
@@ -123,42 +106,21 @@ public class BooksService
 
     public async Task<long> RemoveManyAsync(string[] ids, DateTime? from, DateTime? to)
     {
-        try
+        if (from.HasValue && to.HasValue)
         {
-            await semaphoreSlim.WaitAsync();
-            if (from.HasValue && to.HasValue)
+            var listWrites = new List<WriteModel<Book>>();
+            var books = await _booksCollection.Find(x => x.CreatedDate >= from && x.CreatedDate < to).ToListAsync();
+            foreach (var bookId in books.Select(x => x.Id))
             {
-                int count = 1, skip = 0;
-                var task = new List<Task<BulkWriteResult<Book>>>();
-                var listWrites = new List<WriteModel<Book>>();
-                var books = await _booksCollection.Find(x => x.CreatedDate >= from && x.CreatedDate < to).ToListAsync();
-                foreach (var bookId in books.Select(x => x.Id))
-                {
-                    listWrites.Add(new DeleteOneModel<Book>(Builders<Book>.Filter.Eq("Id", bookId)));
-                    if (count % baseCountCopy == 0)
-                    {
-                        task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(skip * baseCountCopy)));
-                        skip++;
-                    }
-                    count++;
-                }
-                var remainCount = books.Count % baseCountCopy;
-                if (remainCount > 0)
-                {
-                    task.Add(_booksCollection.BulkWriteAsync(listWrites.Skip(listWrites.Count - remainCount)));
-                }
-                var result = await Task.WhenAll(task);
-                return result.Sum(a => a.DeletedCount);
+                listWrites.Add(new DeleteOneModel<Book>(Builders<Book>.Filter.Eq("Id", bookId)));
             }
-            else
-            {
-                var result = await _booksCollection.DeleteManyAsync(x => ids.Contains(x.Id));
-                return result.DeletedCount;
-            }
+            var result = await _connectionThrottlingPipeline.AddRequest(() => _booksCollection.BulkWriteAsync(listWrites));
+            return result.DeletedCount;
         }
-        finally
+        else
         {
-            semaphoreSlim.Release();
+            var result = await _booksCollection.DeleteManyAsync(x => ids.Contains(x.Id));
+            return result.DeletedCount;
         }
     }
 

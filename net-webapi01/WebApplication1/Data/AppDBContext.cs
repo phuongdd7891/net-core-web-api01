@@ -1,7 +1,6 @@
 using WebApi.Models;
-using WebApi.Models;
 using MongoDB.Driver;
-using CoreLibrary.DbContext;
+using CoreLibrary.DbAccess;
 
 public class AppDBContext
 {

@@ -12,7 +12,7 @@ using Microsoft.OpenApi.Models;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.Newtonsoft;
 using WebApplication1.Authentication;
-using CoreLibrary.DbContext;
+using CoreLibrary.DbAccess;
 using NLog.Extensions.Logging;
 using NLog;
 using Newtonsoft.Json.Serialization;
@@ -117,28 +117,33 @@ var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConf
 services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
 
 // services
-services.AddSingleton(serviceProvider =>
+services.AddScoped(serviceProvider =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new AppDBContext(settings.ConnectionString, settings.DatabaseName);
 });
-services.AddSingleton(serviceProvider =>
+services.AddScoped(serviceProvider =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new MongoDbContext(settings.ConnectionString, settings.DatabaseName);
 });
-services.AddSingleton(serviceProvider =>
+services.AddScoped(serviceProvider =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new AppAdminDBContext(settings.AdminConnectionString, settings.AdminDatabaseName);
 });
-services.AddSingleton<AdminService>();
-services.AddSingleton<BooksService>();
-services.AddSingleton<JwtService>();
-services.AddSingleton<ApiKeyService>();
-services.AddSingleton<RedisRepository>();
-services.AddSingleton<CacheService>();
-services.AddSingleton<RoleActionRepository>();
+services.AddScoped<IConnectionThrottlingPipeline>(serviceProvider =>
+{
+    var dbCtx = serviceProvider.GetRequiredService<MongoDbContext>();
+    return new ConnectionThrottlingPipeline(dbCtx.mongoClient);
+});
+services.AddTransient<AdminService>();
+services.AddTransient<BooksService>();
+services.AddTransient<JwtService>();
+services.AddTransient<ApiKeyService>();
+services.AddTransient<RedisRepository>();
+services.AddTransient<CacheService>();
+services.AddTransient<RoleActionRepository>();
 services.AddHostedService<InitializeCacheService>();
 
 services.Configure<ApiBehaviorOptions>(opt =>

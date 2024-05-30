@@ -1,4 +1,4 @@
-using CoreLibrary.DbContext;
+using CoreLibrary.DbAccess;
 using CoreLibrary.Models;
 using DnsClient.Protocol;
 using MongoDB.Driver;
