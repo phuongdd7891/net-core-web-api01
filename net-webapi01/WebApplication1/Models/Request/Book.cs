@@ -20,6 +20,8 @@ public class GetBooksRequest
     public bool SearchExact { get; set; } = false;
     public DateTime? CreatedFrom { get; set; }
     public DateTime? CreatedTo { get; set; }
+    public int Skip { get; set; }
+    public int Limit { get; set; }
 }
 
 public class GetBooksReply

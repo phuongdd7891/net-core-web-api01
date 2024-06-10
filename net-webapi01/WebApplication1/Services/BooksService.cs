@@ -21,22 +21,30 @@ public class BooksService
         _connectionThrottlingPipeline = connectionThrottlingPipeline;
     }
 
-    public async Task<List<Book>> GetAsync(GetBooksRequest req, int skip = 0, int limit = 10)
+    public async Task<List<Book>> GetAsync(GetBooksRequest req, string createdBy)
     {
         var filterDate = Builders<Book>.Filter.Where(a => a.CreatedDate >= req.CreatedFrom && a.CreatedDate < req.CreatedTo
             || !req.CreatedFrom.HasValue && !req.CreatedTo.HasValue
             || a.CreatedDate >= req.CreatedFrom && !req.CreatedTo.HasValue
             || a.CreatedDate < req.CreatedTo && !req.CreatedFrom.HasValue);
-        return string.IsNullOrEmpty(req.SearchKey) ? await _booksCollection
-            .Find(filterDate)
-            .SortByDescending(a => a.CreatedDate).Skip(skip).Limit(limit).ToListAsync()
+        var filterCreateBy = Builders<Book>.Filter.Eq("CreatedBy", createdBy);
+        var data = string.IsNullOrEmpty(req.SearchKey) ? await _booksCollection
+            .Find(Builders<Book>.Filter.And(
+                filterDate,
+                filterCreateBy
+            ))
+            .SortByDescending(a => a.CreatedDate)
+            .Skip(req.Skip).Limit(req.Limit).ToListAsync()
             : await _booksCollection.Find(Builders<Book>.Filter.And(
                     Builders<Book>.Filter.Text(req.SearchExact ? $"\"{req.SearchKey}\"" : $"{req.SearchKey}"),
-                    filterDate
+                    filterDate,
+                    filterCreateBy
                 ))
+                .Skip(req.Skip).Limit(req.Limit).ToListAsync()
                 // .Project<Book>(Builders<Book>.Projection.MetaTextScore("TextScore"))
                 // .Sort(Builders<Book>.Sort.MetaTextScore("TextScore"))
-                .Skip(skip).Limit(limit).ToListAsync();
+                ;
+        return data;
     }
 
     public async Task<Book?> GetAsync(string id) =>

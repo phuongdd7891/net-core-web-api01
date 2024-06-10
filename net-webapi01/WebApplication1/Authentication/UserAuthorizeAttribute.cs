@@ -25,8 +25,17 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
+        if (!context.HttpContext.Request.Query.ContainsKey("u"))
+        {
+            context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
+            {
+                Data = "Username not found",
+                Code = DataResponseCode.Unauthorized.ToString()
+            });
+            return;
+        }
+        string username = context.HttpContext.Request.Query["u"]!;
         var claimRole = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
-        var username = context.HttpContext.User.Identity!.Name!;
         if (string.IsNullOrEmpty(claimRole) || await _redisRepository.HasKey(username) == false)
         {
             context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);
