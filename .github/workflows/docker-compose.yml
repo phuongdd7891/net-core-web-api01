@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build --tag netcore-webapi01:$(date +%s) .
+      run: docker build --tag netcore-webapi01:$(date +%s) ./net-webapi01
