@@ -83,6 +83,12 @@ public class RedisRepository
         return value;
     }
 
+    public async Task DeleteHashByField(string key, string field)
+    {
+        ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
+        await _redisClient.Db0.HashDeleteAsync(key, field);
+    }
+
     public async Task<List<T?>> GetHashValues<T>(string key)
     {
         ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));

@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using WebApi.Models.Requests;
 using CoreLibrary.Helpers;
-using WebApplication1.Authentication;
-using WebApi.Models.Admin;
-using CoreLibrary.Utils;
+using WebApplication1.SSE;
 
 namespace WebApi.Controllers;
 
@@ -25,6 +23,7 @@ public partial class OperationsController : BaseController
     private readonly IEnumerable<EndpointDataSource> _endpointSources;
 
     private readonly AdminService _adminService;
+    private readonly ISseHolder _sseHolder;
 
     public OperationsController(
         UserManager<ApplicationUser> userManager,
@@ -35,6 +34,7 @@ public partial class OperationsController : BaseController
         RoleActionRepository roleActionRepository,
         IEmailSender emailSender,
         AdminService adminService,
+        ISseHolder sseHolder,
         IEnumerable<EndpointDataSource> endpointSources
     )
     {
@@ -46,6 +46,7 @@ public partial class OperationsController : BaseController
         _roleActionRepository = roleActionRepository;
         _emailSender = emailSender;
         _adminService = adminService;
+        _sseHolder = sseHolder;
         _endpointSources = endpointSources;
     }
 
@@ -154,4 +155,19 @@ public partial class OperationsController : BaseController
         }
     }
     #endregion
+
+    [HttpPost("/sse/message")]
+    [Authorize]
+    public async Task<string> SendMessage([FromBody] SseMessage? message)
+    {
+        if(string.IsNullOrEmpty(message?.Id) ||
+            string.IsNullOrEmpty(message?.Message))
+        {
+            var msg = message?.Message ?? "";
+            await _sseHolder.SendMessageAsync(HttpContext.User.Identity!.Name!, msg);
+            return msg;
+        }
+        await _sseHolder.SendMessageAsync(message);
+        return "";
+    }
 }

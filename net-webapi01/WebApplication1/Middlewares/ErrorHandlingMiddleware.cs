@@ -3,6 +3,8 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
+namespace WebApplication1.Middlewares;
+
 public class ErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;

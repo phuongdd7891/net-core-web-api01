@@ -4,7 +4,6 @@ using WebApi.Services;
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +16,6 @@ using NLog.Extensions.Logging;
 using NLog;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Hubs;
 using Microsoft.AspNetCore.Identity;
 using CoreLibrary.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +23,8 @@ using Serilog;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
 using Serilog.Exceptions;
+using WebApplication1.Middlewares;
+using WebApplication1.SSE;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -145,6 +145,7 @@ services.AddTransient<RedisRepository>();
 services.AddTransient<CacheService>();
 services.AddTransient<RoleActionRepository>();
 services.AddHostedService<InitializeCacheService>();
+services.AddSingleton<ISseHolder, SseHolder>();
 
 services.Configure<ApiBehaviorOptions>(opt =>
 {
@@ -187,16 +188,6 @@ services.AddAuthorization(options =>
         .Build();
 });
 
-services.AddSignalR((options) =>
-        {
-            options.EnableDetailedErrors = true;
-            options.KeepAliveInterval = TimeSpan.FromSeconds(5);
-        }).AddHubOptions<UserNotifications>((options) =>
-        {
-            options.KeepAliveInterval = TimeSpan.FromSeconds(5);
-            options.EnableDetailedErrors = true;
-        });
-
 services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 services.AddSingleton<IEmailSender, EmailService>();
 
@@ -238,13 +229,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();
-app.UseCors(MyAllowSpecificOrigins);
-app.MapHub<UserNotifications>("/notifications");
+app.MapSseHolder("/sse/connect");
 app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
 AppSettingsHelper.ConfigureSetting(app.Services.GetRequiredService<IConfiguration>());
 
