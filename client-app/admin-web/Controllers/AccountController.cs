@@ -4,7 +4,6 @@ using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Security.Claims;
 
 namespace AdminWeb.Controllers
 {
@@ -12,13 +11,13 @@ namespace AdminWeb.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly INotyfService _notyfService;
-        private readonly OperationService _opService;
+        private readonly AuthService _authService;
         
-        public AccountController(ILogger<HomeController> logger, OperationService opService, INotyfService notyfService)
+        public AccountController(ILogger<HomeController> logger, AuthService authService, INotyfService notyfService)
         {
             _logger = logger;
             _notyfService = notyfService;
-            _opService = opService;
+            _authService = authService;
         }
 
         [AllowAnonymous]
@@ -36,7 +35,7 @@ namespace AdminWeb.Controllers
         {
             try
             {
-                var result = await _opService.Login(loginModel.UserName, loginModel.Password);
+                var result = await _authService.Login(loginModel.UserName, loginModel.Password);
                 var authCookie = new AuthCookie
                 {
                     Token = result.Data!.Token,
@@ -61,7 +60,7 @@ namespace AdminWeb.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            await _opService.Logout();
+            await _authService.Logout();
             return RedirectToAction("Login", "account");
         }
     }

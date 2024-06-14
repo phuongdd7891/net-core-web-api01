@@ -10,23 +10,23 @@ namespace AdminWeb.Controllers
     [Authorize]
     public class AuthenticationController : Controller
     {
-        private readonly OperationService _opService;
+        private readonly AuthService _authService;
         private readonly INotyfService _notyfService;
 
         public AuthenticationController(
             INotyfService notyfService,
-            OperationService opService
+            AuthService authService
         )
         {
             _notyfService = notyfService;
-            _opService = opService;
+            _authService = authService;
         }
 
         [Route("roles")]
         public async Task<IActionResult> Role()
         {
-            var roles = await _opService.GetUserRoles();
-            var actions = await _opService.GetUserActions();
+            var roles = await _authService.GetUserRoles();
+            var actions = await _authService.GetUserActions();
             ViewBag.actions = actions.Data;
             return View("role", roles.Data);
         }
@@ -38,10 +38,10 @@ namespace AdminWeb.Controllers
             var actions = formCol["RoleActs"];
             var roleName = formCol["Name"];
             var customerId = formCol["CustomerId"];
-            var result = await _opService.CreateRole(roleName!, customerId);
+            var result = await _authService.CreateRole(roleName!, customerId);
             if (actions.Count > 0)
             {
-                await _opService.AddRoleActions(result.Data!, actions!);
+                await _authService.AddRoleActions(result.Data!, actions!);
             }
             _notyfService.Success(Messages.SaveSuccessfully);
             return RoleListPartial();
@@ -55,8 +55,8 @@ namespace AdminWeb.Controllers
             var roleId = formCol["Id"];
             var roleName = formCol["Name"];
             var customerId = formCol["CustomerId"];
-            await _opService.EditRole(roleId!, roleName!, customerId);
-            await _opService.AddRoleActions(roleId!, actions!);
+            await _authService.EditRole(roleId!, roleName!, customerId);
+            await _authService.AddRoleActions(roleId!, actions!);
             _notyfService.Success(Messages.SaveSuccessfully);
             return RoleListPartial();
         }
@@ -66,14 +66,14 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Delete(IFormCollection formCol)
         {
             var roleId = formCol["Id"];
-            await _opService.DeleteRole(roleId!);
+            await _authService.DeleteRole(roleId!);
             _notyfService.Success(Messages.SaveSuccessfully);
             return RoleListPartial();
         }
 
         private IActionResult RoleListPartial()
         {
-            var roles = _opService.GetUserRoles();
+            var roles = _authService.GetUserRoles();
             roles.ConfigureAwait(false);
             return PartialView("_RoleList", roles.Result.Data);
         }

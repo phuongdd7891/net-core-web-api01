@@ -20,7 +20,11 @@ builder.Services.AddHttpContextAccessor();
 //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddTransient<AuthorizationRequestHandler>();
 builder.Services.AddTransient<ProfileService>();
-builder.Services.AddHttpClient<OperationService>()
+builder.Services.AddHttpClient<AuthService>()
+    .AddHttpMessageHandler<AuthorizationRequestHandler>();
+builder.Services.AddHttpClient<UserService>()
+    .AddHttpMessageHandler<AuthorizationRequestHandler>();
+builder.Services.AddHttpClient<CustomerService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
 
 builder.Services.AddAuthentication("SessionTokens")

@@ -11,15 +11,15 @@ namespace AdminWeb.Controllers
     [Route("[controller]")]
     public class CustomersController : Controller
     {
-        private readonly OperationService _opService;
+        private readonly CustomerService _customerService;
         private readonly INotyfService _notyfService;
         public CustomersController(
             INotyfService notyfService,
-            OperationService opService
+            CustomerService customerService
         )
         {
             _notyfService = notyfService;
-            _opService = opService;
+            _customerService = customerService;
         }
 
         [Authorize]
@@ -31,7 +31,7 @@ namespace AdminWeb.Controllers
         [Route("getCustomers")]
         public async Task<IActionResult> GetCustomers()
         {
-            var users = await _opService.GetCustomers();
+            var users = await _customerService.GetCustomers();
             return Json(new
             {
                 Total = users.Data!.Count,
@@ -53,7 +53,7 @@ namespace AdminWeb.Controllers
         {
             try
             {
-                await _opService.CreateCustomer(model);
+                await _customerService.CreateCustomer(model);
                 _notyfService.Success(Messages.CreateSuccessfully);
             }
             catch (Exception ex)
@@ -68,7 +68,7 @@ namespace AdminWeb.Controllers
         [Route("edit/{username}")]
         public async Task<IActionResult> Edit(string username)
         {
-            var user = await _opService.GetCustomer(username);
+            var user = await _customerService.GetCustomer(username);
             return View(user.Data);
         }
 
@@ -79,7 +79,7 @@ namespace AdminWeb.Controllers
         {
             try
             {
-                await _opService.UpdateCustomer(model);
+                await _customerService.UpdateCustomer(model);
                 _notyfService.Success(Messages.SaveSuccessfully);
             }
             catch (Exception ex)
