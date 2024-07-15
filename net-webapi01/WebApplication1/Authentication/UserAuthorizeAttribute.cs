@@ -35,8 +35,8 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
             return;
         }
         string username = context.HttpContext.Request.Query["u"]!;
-        var claimRole = context.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
-        if (string.IsNullOrEmpty(claimRole) || await _redisRepository.HasKey(username) == false)
+        var claimRoles = context.HttpContext.User()?.UserRoles;
+        if (claimRoles?.Length == 0 || await _redisRepository.HasKey(username) == false)
         {
             context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);
             return;
@@ -52,8 +52,7 @@ public class UserAuthorizeFilter : IAsyncAuthorizationFilter
         if (!string.IsNullOrEmpty(action))
         {
             var actions = await _redisRepository.GetHashEntity<List<string>>(Const.ROLE_ACTION_KEY);
-            var roles = claimRole.Split(',');
-            var valid = roles.Any(role => userCache!.RoleIds!.Contains(Guid.Parse(role)) && actions.ContainsKey(role) && actions[role].Contains(action));
+            var valid = claimRoles!.Any(role => Guid.TryParse(role, out Guid result) && userCache!.RoleIds!.Contains(result) && actions.ContainsKey(role) && actions[role].Contains(action));
             if (!valid)
             {
                 context.Result = Helpers.GetUnauthorizedResult(accessDeniedResponse);

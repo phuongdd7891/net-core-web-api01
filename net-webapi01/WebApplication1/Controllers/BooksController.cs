@@ -1,6 +1,5 @@
 using WebApi.Models;
 using WebApi.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
@@ -12,7 +11,7 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BooksController : BaseController
+public class BooksController : ControllerBase
 {
     private readonly BooksService _booksService;
     private readonly ILogger<BooksController> _logger;
@@ -31,7 +30,7 @@ public class BooksController : BaseController
     [Description("get list of books")]
     public async Task<DataResponse<GetBooksReply>> GetList([FromQuery] GetBooksRequest request)
     {
-        var data = await _booksService.GetAsync(request, User.Identity!.Name!);
+        var data = await _booksService.GetAsync(request, HttpContext.User().Username!);
         var categories = await _booksService.GetCategoriesAsync();
         var list = data.GroupJoin(categories, a => a.Category, c => c.Id, (a, c) => new { Book = a, Cats = c })
             .SelectMany(a => a.Cats.DefaultIfEmpty(), (a, c) =>
@@ -70,7 +69,7 @@ public class BooksController : BaseController
     {
         ErrorStatuses.ThrowBadRequest("Invalid name", string.IsNullOrEmpty(request.Data.BookName));
         ErrorStatuses.ThrowBadRequest("Invalid author", string.IsNullOrEmpty(request.Data.Author));
-        request.Data.CreatedBy = HttpContext.User.Identity!.Name;
+        request.Data.CreatedBy = HttpContext.User().Username;
         await _booksService.CreateAsync(request.Data, request.FileData);
 
         //return CreatedAtAction(nameof(Get), new { id = request.Data.Id });
@@ -83,7 +82,7 @@ public class BooksController : BaseController
     {
         var book = await _booksService.GetAsync(id);
         ErrorStatuses.ThrowNotFound("Book not found", book == null);
-        var result = await _booksService.CreateCopyAsync(book!, qty, User.Identity!.Name);
+        var result = await _booksService.CreateCopyAsync(book!, qty, HttpContext.User().Username);
         return Ok(new DataResponse
         {
             Data = string.Format("Inserted {0}", result)
@@ -99,7 +98,7 @@ public class BooksController : BaseController
         book!.BookName = request.Data.BookName;
         book.Author = request.Data.Author;
         book.Category = request.Data.Category;
-        book.ModifiedBy = HttpContext.User.Identity!.Name;
+        book.ModifiedBy = HttpContext.User().Username;
         await _booksService.UpdateAsync(book, request.FileData);
 
         return Ok(new DataResponse());

@@ -232,6 +232,7 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseUserFilterMiddleware();
 app.MapControllers();
 app.UseRedisInformation();
 app.UseErrorHandling();

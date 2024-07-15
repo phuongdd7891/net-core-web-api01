@@ -9,7 +9,7 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/book-category")]
-public class BookCategoryController : BaseController
+public class BookCategoryController : ControllerBase
 {
     private readonly BooksService _booksService;
 

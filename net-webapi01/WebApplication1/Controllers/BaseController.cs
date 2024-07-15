@@ -17,7 +17,7 @@ public class BaseController : ControllerBase
     {
         get
         {
-            var userData = User.FindFirstValue(ClaimTypes.UserData);
+            var userData = HttpContext.User.FindFirstValue(ClaimTypes.UserData);
             if (!string.IsNullOrEmpty(userData))
             {
                 var profile = JsonConvert.DeserializeObject<AdminProfile>(userData);
