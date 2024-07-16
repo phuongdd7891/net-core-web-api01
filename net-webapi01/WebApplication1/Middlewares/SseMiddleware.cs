@@ -1,6 +1,6 @@
-using WebApplication1.SSE;
+using WebApi.SSE;
 
-namespace WebApplication1.Middlewares;
+namespace WebApi.Middlewares;
 
 public static class SseHolderMapper
 {

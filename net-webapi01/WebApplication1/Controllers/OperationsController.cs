@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using WebApi.Models.Requests;
 using CoreLibrary.Helpers;
-using WebApplication1.SSE;
+using WebApi.SSE;
 
 namespace WebApi.Controllers;
 

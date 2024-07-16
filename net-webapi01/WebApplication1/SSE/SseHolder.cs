@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using CoreLibrary.Repository;
 
-namespace WebApplication1.SSE;
+namespace WebApi.SSE;
 
 public record SseClient(HttpResponse Response, CancellationTokenSource Cancel);
 

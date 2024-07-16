@@ -3,7 +3,7 @@ using WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Models.Requests;
 using CoreLibrary.Utils;
-using WebApplication1.Authentication;
+using WebApi.Authentication;
 using System.ComponentModel;
 using Nest;
 

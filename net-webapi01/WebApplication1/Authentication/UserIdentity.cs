@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Security.Principal;
 
-namespace WebApplication1.Authentication;
+namespace WebApi.Authentication;
 
 public class UserIdentity : GenericIdentity
 {

@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace WebApplication1.Authentication;
+namespace WebApi.Authentication;
 
 public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

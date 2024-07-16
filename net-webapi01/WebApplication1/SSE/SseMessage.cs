@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace WebApplication1.SSE;
+namespace WebApi.SSE;
 
 public record SseMessage
 {

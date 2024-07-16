@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.Newtonsoft;
-using WebApplication1.Authentication;
+using WebApi.Authentication;
 using CoreLibrary.DbAccess;
 using NLog.Extensions.Logging;
 using NLog;
@@ -23,8 +23,8 @@ using Serilog;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
 using Serilog.Exceptions;
-using WebApplication1.Middlewares;
-using WebApplication1.SSE;
+using WebApi.Middlewares;
+using WebApi.SSE;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 

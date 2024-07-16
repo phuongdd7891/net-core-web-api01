@@ -1,6 +1,6 @@
-using WebApplication1.Authentication;
+using WebApi.Authentication;
 
-namespace WebApplication1.Middlewares;
+namespace WebApi.Middlewares;
 
 public class UserFilterMiddleware
 {

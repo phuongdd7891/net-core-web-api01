@@ -8,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 using WebApi.Models.Admin;
 using WebApi.Services;
 
-namespace WebApplication1.Authentication;
+namespace WebApi.Authentication;
 
 public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
 {

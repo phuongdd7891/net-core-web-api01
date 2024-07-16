@@ -1,4 +1,4 @@
-namespace WebApplication1.SSE;
+namespace WebApi.SSE;
 
 public interface ISseHolder {
     Task AddAsync(HttpContext context);

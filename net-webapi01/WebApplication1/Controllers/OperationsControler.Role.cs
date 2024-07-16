@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using WebApi.Models;
 using WebApi.Models.Requests;
-using WebApplication1.Authentication;
+using WebApi.Authentication;
 
 namespace WebApi.Controllers;
 

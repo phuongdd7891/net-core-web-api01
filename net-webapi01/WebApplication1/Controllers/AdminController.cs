@@ -8,7 +8,7 @@ using WebApi.Models;
 using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using WebApi.Services;
-using WebApplication1.Authentication;
+using WebApi.Authentication;
 
 namespace WebApi.Controllers;
 

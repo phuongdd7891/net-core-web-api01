@@ -14,4 +14,5 @@ public class AppDBContext
     public IMongoCollection<Book> Books => _dbContext.GetCollection<Book>("Books");
     public IMongoCollection<BookCategory> BookCategories => _dbContext.GetCollection<BookCategory>("BookCategories");
     public IMongoCollection<UserApiKey> ApiKeys => _dbContext.GetCollection<UserApiKey>("UserApiKeys");
+    public IMongoCollection<Cart> Carts => _dbContext.GetCollection<Cart>("Carts");
 }

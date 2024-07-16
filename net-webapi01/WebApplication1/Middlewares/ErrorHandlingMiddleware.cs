@@ -3,7 +3,7 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace WebApplication1.Middlewares;
+namespace WebApi.Middlewares;
 
 public class ErrorHandlingMiddleware
 {

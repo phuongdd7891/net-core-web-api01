@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using WebApi.Models;
 
-namespace WebApplication1.Authentication;
+namespace WebApi.Authentication;
 
 public class UserAuthorizeFilter : IAsyncAuthorizationFilter
 {
