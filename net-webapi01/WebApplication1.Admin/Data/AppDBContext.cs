@@ -1,13 +1,15 @@
 using MongoDB.Driver;
 using CoreLibrary.DbAccess;
-using WebApi.Models.Admin;
+using WebApi.Models;
 using CoreLibrary.Helpers;
 
-public class AppAdminDBContext
+namespace WebApi.Data;
+
+public class AppDBContext
 {
     private readonly MongoDbContext _dbContext;
 
-    public AppAdminDBContext(string connectionString, string databaseName)
+    public AppDBContext(string connectionString, string databaseName)
     {
         _dbContext = new MongoDbContext(AESHelpers.Decrypt(connectionString), databaseName);
     }

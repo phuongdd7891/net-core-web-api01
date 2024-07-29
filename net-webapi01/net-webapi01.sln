@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1", "WebAppli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLibrary", "CoreLibrary\CoreLibrary.csproj", "{96487C69-9DB0-48B0-B3F6-C37048C19E17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1.Admin", "WebApplication1.Admin\WebApplication1.Admin.csproj", "{BF340913-B2C9-473F-902C-FEF0F295B8BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1.Gateway", "WebApplication1.Gateway\WebApplication1.Gateway.csproj", "{F9F0A0CB-F128-4E4F-AA48-4AC8EA9E59D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{96487C69-9DB0-48B0-B3F6-C37048C19E17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96487C69-9DB0-48B0-B3F6-C37048C19E17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96487C69-9DB0-48B0-B3F6-C37048C19E17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF340913-B2C9-473F-902C-FEF0F295B8BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF340913-B2C9-473F-902C-FEF0F295B8BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF340913-B2C9-473F-902C-FEF0F295B8BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF340913-B2C9-473F-902C-FEF0F295B8BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9F0A0CB-F128-4E4F-AA48-4AC8EA9E59D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9F0A0CB-F128-4E4F-AA48-4AC8EA9E59D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9F0A0CB-F128-4E4F-AA48-4AC8EA9E59D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9F0A0CB-F128-4E4F-AA48-4AC8EA9E59D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

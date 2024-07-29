@@ -4,7 +4,6 @@ using CoreLibrary.Repository;
 using WebApi.Models;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using WebApi.Models.Admin;
 using WebApi.Models.Requests;
 using System.Security.Cryptography;
 using CoreLibrary.Helpers;
@@ -83,98 +82,8 @@ public class JwtService
             SecurityAlgorithms.HmacSha256Signature
         );
 
-    public async Task<AuthenticationResponse> CreateAdminToken(AdminUser user, Claim[]? claims = null)
+    public async Task RemoveUserData(string username)
     {
-        var expiration = DateTime.UtcNow.Add(expiryMinutes);
-        var tokenHandler = new JsonWebTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims ?? new[] {
-                new Claim(ClaimTypes.NameIdentifier, user.Id!),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.UserData, user.ToClaimData())
-            }),
-            Audience = _configuration["Jwt:Audience"],
-            Issuer = _configuration["Jwt:Issuer"],
-            Expires = expiration,
-            SigningCredentials = CreateSigningCredentials()
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        await _redisRepository.SetEntity(user.Username, user, expiryMinutes);
-        return new AuthenticationResponse
-        {
-            Token = token,
-            Expiration = expiration,
-            Username = user.Username
-        };
-    }
-
-    public async Task<ValidateTokenResult> ValidateToken(string token, string username)
-    {
-        var tokenResult = new ValidateTokenResult();
-        var tokenHandler = new JsonWebTokenHandler();
-        var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            IssuerSigningKey = new SymmetricSecurityKey(GetSecretKey()),
-            ValidIssuer = _configuration["Jwt:Issuer"],
-            ValidAudience = _configuration["Jwt:Audience"],
-            ClockSkew = TimeSpan.Zero,
-            ValidateLifetime = true
-        });
-        if (result.IsValid)
-        {
-            bool validUsername = result.ClaimsIdentity.FindFirst(c => c.Type == ClaimTypes.Name)?.Value == username;
-            if (!validUsername)
-            {
-                tokenResult.Message = "Username not match";
-            }
-        }
-        else
-        {
-            if (Type.Equals(result.Exception.GetType(), typeof(SecurityTokenExpiredException)))
-            {
-                tokenResult.Code = DataResponseCode.TokenExpired.ToString();
-                tokenResult.Message = "Token expired";
-            }
-            else
-            {
-                tokenResult.Code = DataResponseCode.TokenInvalid.ToString();
-                tokenResult.Message = result.Exception.Message;
-            }
-        }
-        return tokenResult;
-    }
-
-    public string GenerateRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
-    }
-
-    public async Task<ClaimsIdentity> GetClaimsFromToken(string token)
-    {
-        var tokenHandler = new JsonWebTokenHandler();
-        var result = await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            IssuerSigningKey = new SymmetricSecurityKey(GetSecretKey()),
-            ValidIssuer = _configuration["Jwt:Issuer"],
-            ValidAudience = _configuration["Jwt:Audience"],
-            ValidateLifetime = false
-        });
-        if (result.IsValid)
-        {
-            return result.ClaimsIdentity;
-        }
-        throw result.Exception;
+        await _redisRepository.Remove(username);
     }
 }

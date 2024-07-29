@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using QRCoder;
 
 namespace CoreLibrary.Utils;
 
@@ -40,5 +41,18 @@ public class Utils
     {
         var phoneValidation = new PhoneAttribute();
         return phoneValidation.IsValid(phoneNumber);
+    }
+
+    public static string GenerateQRFromText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+        QRCodeGenerator qrGenerator = new QRCodeGenerator();
+        QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+        Base64QRCode qrCode = new Base64QRCode(qrCodeData);
+        var qrCodeBase64 = qrCode.GetGraphic(20);
+        return qrCodeBase64;
     }
 }

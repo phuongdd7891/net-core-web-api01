@@ -1,19 +1,19 @@
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
-using WebApi.Models.Admin;
+using WebApi.Models;
 using MongoDB.Driver.Linq;
 
-namespace WebApi.Services;
+namespace WebApi.Data;
 
-public class AdminService
+public class AdminRepository
 {
     private readonly IMongoCollection<AdminUser> _users;
     private PasswordHasher<AdminUser> passwordHasher;
     private readonly RedisRepository _redisRepository;
 
-    public AdminService(
-        AppAdminDBContext _context,
+    public AdminRepository(
+        AppDBContext _context,
         RedisRepository redisRepository
     )
     {

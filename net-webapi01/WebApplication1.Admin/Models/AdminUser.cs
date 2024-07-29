@@ -2,8 +2,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
-namespace WebApi.Models.Admin
-{
+namespace WebApi.Models
+{   
     public class AdminUser
     {
         [BsonId]
@@ -44,5 +44,11 @@ namespace WebApi.Models.Admin
         public bool Disabled { get; set; }
         public DateTime CreatedDate { get; set; }
         public int UserCount { get; set; }
+    }
+
+    public class GetUsersReply
+    {
+        public List<UserViewModel>? List { get; set; }
+        public int Total { get; set; }
     }
 }

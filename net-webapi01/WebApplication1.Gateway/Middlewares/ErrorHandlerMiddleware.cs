@@ -3,16 +3,16 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace WebApi.Middlewares;
+namespace Gateway.Middlewares;
 
-public class ErrorHandlingMiddleware
+public class ErrorHandlerMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<ErrorHandlingMiddleware> _logger;
+    private readonly ILogger<ErrorHandlerMiddleware> _logger;
 
-    public ErrorHandlingMiddleware(
+    public ErrorHandlerMiddleware(
         RequestDelegate next,
-        ILogger<ErrorHandlingMiddleware> logger)
+        ILogger<ErrorHandlerMiddleware> logger)
     {
         _next = next;
         _logger = logger;
@@ -20,6 +20,14 @@ public class ErrorHandlingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        context.Response.ContentType = "application/json";
+        var jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            }
+        };
         try
         {
             await _next(context);
@@ -27,14 +35,6 @@ public class ErrorHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Somethings error");
-            context.Response.ContentType = "application/json";
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new CamelCaseNamingStrategy()
-                }
-            };
             try
             {
                 var errResp = JsonConvert.DeserializeObject<ErrorStatusResponse>(ex.Message);
@@ -45,7 +45,8 @@ public class ErrorHandlingMiddleware
             catch
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                var json = JsonConvert.SerializeObject(new DataResponse<string> {
+                var json = JsonConvert.SerializeObject(new DataResponse<string>
+                {
                     Code = DataResponseCode.IternalError.ToString(),
                     Data = ex.Message
                 }, jsonSettings);
@@ -60,6 +61,6 @@ public static class ErrorHandlingMiddlewareExtensions
     public static IApplicationBuilder UseErrorHandling(
         this IApplicationBuilder builder)
     {
-        return builder.UseMiddleware<ErrorHandlingMiddleware>();
+        return builder.UseMiddleware<ErrorHandlerMiddleware>();
     }
 }

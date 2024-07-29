@@ -1,31 +1,26 @@
-using CoreLibrary.Repository;
 using WebApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using WebApi.Models.Admin;
 using WebApi.Services;
+using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace WebApi.Authentication;
 
 public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
 {
-    public const string API_KEY_HEADER = "ApiKey";
-    private readonly RedisRepository _redisRepository;
+    public const string API_KEY_HEADER = "ApiKey"; 
     private readonly JwtService _jwtService;
     private readonly bool _isSystem;
     private readonly bool _isCustomer;
 
     public AdminAuthorizeFilter(
-        RedisRepository redisRepository,
         JwtService jwtService,
         bool isSystem,
         bool isCustomer
     )
     {
-        _redisRepository = redisRepository;
         _jwtService = jwtService;
         _isSystem = isSystem;
         _isCustomer = isCustomer;
@@ -75,7 +70,8 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
         // check system user
         if (_isSystem || _isCustomer)
         {
-            var adminUser = await _redisRepository.GetEntity<AdminUser>(username);
+            var userData = validateResult.Claims?.Where(a => a.Type == ClaimTypes.UserData).FirstOrDefault()?.Value ?? string.Empty;
+            var adminUser = !string.IsNullOrEmpty(userData) ? JsonConvert.DeserializeObject<AdminProfile>(userData) : null;
             if (adminUser == null || (adminUser.IsSystem != _isSystem && adminUser.IsCustomer != _isCustomer))
             {
                 context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>

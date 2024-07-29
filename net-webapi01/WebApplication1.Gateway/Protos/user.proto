@@ -1,0 +1,38 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+option csharp_namespace = "Gateway.Protos";
+
+service UserServiceProto {
+	rpc CountUsers (CountUserByCustomerRequest) returns (UserCountReply);
+	rpc GetUsers (google.protobuf.Empty) returns (UsersReply);
+}
+
+message CountUserByCustomerRequest {
+	string customerId = 1 ;
+}
+
+message UserCountReply {
+    repeated UserCount list = 1;
+}
+
+message UserCount {
+	string customerId = 1;
+	int32 count = 2;
+}
+
+message UsersReply {
+	repeated User list = 1;
+}
+
+message User {
+	string id = 1;
+    string userName = 2;
+    string email = 3;
+    string phoneNumber = 4;
+    bool isLocked = 5;
+    repeated string roles = 6;
+    repeated string roleIds = 7;
+    string customerId = 8;
+    string customerName = 9;
+}

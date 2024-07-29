@@ -127,17 +127,12 @@ services.AddScoped(serviceProvider =>
     var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
     return new MongoDbContext(settings.ConnectionString, settings.DatabaseName);
 });
-services.AddScoped(serviceProvider =>
-{
-    var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
-    return new AppAdminDBContext(settings.AdminConnectionString, settings.AdminDatabaseName);
-});
+
 services.AddScoped<IConnectionThrottlingPipeline>(serviceProvider =>
 {
     var dbCtx = serviceProvider.GetRequiredService<MongoDbContext>();
     return new ConnectionThrottlingPipeline(dbCtx.mongoClient);
 });
-services.AddTransient<AdminService>();
 services.AddTransient<BooksService>();
 services.AddTransient<JwtService>();
 services.AddTransient<ApiKeyService>();
@@ -146,6 +141,7 @@ services.AddTransient<CacheService>();
 services.AddTransient<RoleActionRepository>();
 services.AddHostedService<InitializeCacheService>();
 services.AddSingleton<ISseHolder, SseHolder>();
+services.AddGrpc();
 
 services.Configure<ApiBehaviorOptions>(opt =>
 {
@@ -235,8 +231,8 @@ app.UseAuthorization();
 app.UseUserFilterMiddleware();
 app.MapControllers();
 app.UseRedisInformation();
-app.UseErrorHandling();
 app.MapSseHolder("/sse/connect");
+app.MapGrpcService<UserService>();
 app.Lifetime.ApplicationStopped.Register(LogManager.Shutdown);
 AppSettingsHelper.ConfigureSetting(app.Services.GetRequiredService<IConfiguration>());
 

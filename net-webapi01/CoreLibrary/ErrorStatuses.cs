@@ -9,7 +9,7 @@ public class ErrorStatusResponse
 
 public class ErrorStatuses
 {
-    private static ErrorStatusResponse GetErrorResponse(int statusCode, string errCode, string message) => new ErrorStatusResponse
+    public static ErrorStatusResponse GetErrorResponse(int statusCode, string errCode, string message) => new ErrorStatusResponse
     {
         StatusCode = statusCode,
         Data = new DataResponse<string>

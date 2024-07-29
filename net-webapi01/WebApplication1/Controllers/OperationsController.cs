@@ -6,12 +6,13 @@ using Microsoft.AspNetCore.Authorization;
 using WebApi.Models.Requests;
 using CoreLibrary.Helpers;
 using WebApi.SSE;
+using WebApi.Authentication;
 
 namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public partial class OperationsController : BaseController
+public class OperationsController : ControllerBase
 {
     private UserManager<ApplicationUser> _userManager;
     private RoleManager<ApplicationRole> _roleManager;
@@ -21,8 +22,6 @@ public partial class OperationsController : BaseController
     private readonly RoleActionRepository _roleActionRepository;
     private readonly IEmailSender _emailSender;
     private readonly IEnumerable<EndpointDataSource> _endpointSources;
-
-    private readonly AdminService _adminService;
     private readonly ISseHolder _sseHolder;
 
     public OperationsController(
@@ -33,7 +32,6 @@ public partial class OperationsController : BaseController
         CacheService cacheSrevice,
         RoleActionRepository roleActionRepository,
         IEmailSender emailSender,
-        AdminService adminService,
         ISseHolder sseHolder,
         IEnumerable<EndpointDataSource> endpointSources
     )
@@ -45,7 +43,6 @@ public partial class OperationsController : BaseController
         _cacheService = cacheSrevice;
         _roleActionRepository = roleActionRepository;
         _emailSender = emailSender;
-        _adminService = adminService;
         _sseHolder = sseHolder;
         _endpointSources = endpointSources;
     }
@@ -85,11 +82,14 @@ public partial class OperationsController : BaseController
     }
 
     [HttpPost("Logout")]
-    [Authorize]
     public async Task<DataResponse> Logout()
     {
-        var username = HttpContext.User.Identity!.Name;
-        await _apiKeyService.RemoveRedisToken(username!);
+        var username = HttpContext.User()?.Username;
+        if (!string.IsNullOrEmpty(username))
+        {
+            await _apiKeyService.RemoveRedisToken(username!);
+            await _jwtService.RemoveUserData(username);
+        }
         return new DataResponse();
     }
 
