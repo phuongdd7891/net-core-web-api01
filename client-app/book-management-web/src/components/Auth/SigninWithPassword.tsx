@@ -16,7 +16,7 @@ export default function SigninWithPassword() {
         const formData = new FormData(formRef.current!);
         excuteAction(Object.fromEntries(formData.entries()) as any).then(res => {
             if (res?.success) {
-                router.replace('/');
+                router.replace('/books');
             }
         });
     };
@@ -104,12 +104,13 @@ export default function SigninWithPassword() {
             <div className="mb-4.5">
                 <button
                     type="button" onClick={() => onSignin()}
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 relative"
                 >
                     Sign In
-                </button>
+                    {isLoading && <span className="h-6 w-6 animate-spin rounded-full border-4 border-solid border-white border-t-transparent absolute top-4 right-5"></span>}
+                </button>                
             </div>
-            {isLoading && <Loader />}
+            
         </form>
     );
 }

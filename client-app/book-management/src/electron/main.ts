@@ -8,6 +8,8 @@ import * as path from 'node:path';
 import { channels, storeKeys } from '../utils';
 import Store from 'electron-store';
 import { SignalRService } from '../app/services/signalr.service';
+import { SseService } from '../app/services/sse/sse.service';
+import { checkIsSseMessage } from '../app/services/sse/sse.type';
 
 const appData = {
     deviceId: new Date().getTime(),
@@ -16,12 +18,15 @@ const appData = {
 
 export default appData;
 
+global.EventSource = require('eventsource');
+
 class Main {
     private mainWindow: BrowserWindow;
     private mainView: BrowserView;
     private loadingView: BrowserView;
     private loadingWindow: BrowserWindow;
     private signalRService = new SignalRService();
+    private sseService = new SseService();
     private store: Store;
 
     public init(ipcChannels: IpcChannelInterface[]) {
@@ -42,12 +47,12 @@ class Main {
                 callback({
                     requestHeaders: details.requestHeaders
                 });
-            })
+            });
 
             this.mainView.webContents.on('did-finish-load', () => {
                 this.mainWindow.setTitle(this.mainView.webContents.getTitle());
                 this.mainView.webContents.insertCSS("html, body { padding: 0; }");
-            })
+            });
         })
 
         app.on('window-all-closed', this.onWindowAllClosed);
@@ -191,22 +196,18 @@ class Main {
                 })
             } else if (channelName == channels.message) {
                 if (request.params?.['type'] == 'logout') {
+                    this.closeSse();
                     if (request.params?.['data']) {
                         app.quit();
                     } else {
                         Menu.setApplicationMenu(null);
                         this.mainView.webContents.loadFile('../../index.html');
-                    }
+                    }                    
                 }
             } else {
                 if (channelName == channels.menu) {
                     if (request.params?.['type'] == 'user') {
-                        this.signalRService.connect(`${apiHost}/notifications`, sessionData.token).then(a => {
-                            this.signalRService.listenToMethod("Notify", (result) => {
-                                this.mainView.webContents.send(channels.notify, result);
-                            })
-                        });
-
+                        this.initSse(sessionData.username);
                         const userMenu = new Menu();
                         userMenu.append(new MenuItem({
                             label: `Login: ${sessionData.username}`,
@@ -273,6 +274,28 @@ class Main {
         } else {
             this.loadingWindow.hide();
             this.mainView.webContents.executeJavaScript("window.$ = require(\"jquery\");$(\".modal-backdrop\").remove();0");
+        }
+    }
+
+    private initSse(username: string) {
+        this.sseService.connect(username).onmessage = ev => this.handleSseMessage(ev.data);
+    }
+
+    private closeSse() {
+        this.sseService.close();
+    }
+
+    private handleSseMessage(message: any) {
+        if (typeof message !== "string") {
+            return;
+        }
+        try {
+            const jsonValue = JSON.parse(message);
+            if (checkIsSseMessage(jsonValue)) {
+                this.mainView.webContents.send(channels.notify, jsonValue.message);
+            }
+        } catch (err) {
+            console.error(err);
         }
     }
 }

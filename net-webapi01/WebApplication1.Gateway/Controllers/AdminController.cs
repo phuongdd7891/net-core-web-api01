@@ -1,7 +1,10 @@
 using CoreLibrary.Const;
 using Gateway.Models.Requests;
-using Gateway.Protos;
 using Microsoft.AspNetCore.Mvc;
+using Adminuserservice;
+using Adminauthservice;
+using Userservice;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Gateway.Controllers;
 
@@ -73,8 +76,8 @@ public class AdminController : BaseController
         {
             Username = username,
         }, DefaultHeader);
-        ErrorStatuses.ThrowNotFound("User not found", user.Data == null);
-        var userData = user.Data;
+        ErrorStatuses.ThrowNotFound("User not found", user == null || user?.Data == null);
+        var userData = user!.Data;
         return Ok(new DataResponse<dynamic>
         {
             Data = new
@@ -93,6 +96,7 @@ public class AdminController : BaseController
     }
 
     [HttpPost("Login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(AuthenticationRequest request)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.UserName));
@@ -115,6 +119,20 @@ public class AdminController : BaseController
                 ExpiryTime = result.Expiration.ToDateTime(),
                 result.RefreshToken
             }
+        });
+    }
+
+    [HttpGet("user-profile")]
+    [Authorize]
+    public async Task<IActionResult> GetUserProfile([FromQuery(Name = "u")] string username)
+    {
+        var result = await _adminUserClient.GetUserProfileAsync(new GetUserProfileRequest
+        {
+            Username = username
+        });
+        return Ok(new DataResponse<AdminProfile>
+        {
+            Data = result.Data
         });
     }
 }

@@ -21,7 +21,7 @@ namespace AdminWeb.Services
             _httpClient = httpClient;
             _configuration = configuration;
 
-            baseApiAddress = _configuration.GetValue<string>("BaseApiUrl")!;
+            baseApiAddress = _configuration.GetValue<string>("BaseApiUrl") ?? throw new ArgumentNullException("BaseApiUrl", "BaseApiUrl configuration is missing.");
             _httpClient.BaseAddress = new Uri(baseApiAddress);
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -50,12 +50,19 @@ namespace AdminWeb.Services
             var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
-                if (!string.IsNullOrEmpty(responseErrData?.Data))
+                try
                 {
-                    responseErrData.Data = responseErrData.Data.Replace("'", "\"");
+                    var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
+                    if (!string.IsNullOrEmpty(responseErrData?.Data))
+                    {
+                        responseErrData.Data = responseErrData.Data.Replace("'", "\"");
+                    }
+                    throw new HttpRequestException($"{responseErrData.Code}", new Exception(responseErrData.Data), response.StatusCode);
                 }
-                throw new HttpRequestException($"{responseErrData!.Code}", new Exception(responseErrData.Data), response.StatusCode);
+                catch (System.Exception ex)
+                {
+                    throw ex;
+                }
             }
             var responseData = JsonConvert.DeserializeObject<TResponse>(responseJson);
             return responseData!;

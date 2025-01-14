@@ -1,12 +1,11 @@
-using AdminMicroservice.Protos;
+using Adminuserservice;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using Microsoft.AspNetCore.Authorization;
 using WebApi.Data;
-using AdminUser = AdminMicroservice.Protos.AdminUser;
+using AdminUser = Adminuserservice.AdminUser;
 
 namespace WebApi.Services.Grpc;
-public class AdminUserGrpcService: AdminUserServiceProto.AdminUserServiceProtoBase
+public class AdminUserGrpcService : AdminUserServiceProto.AdminUserServiceProtoBase
 {
     private readonly AdminRepository _adminRepository;
 
@@ -25,17 +24,31 @@ public class AdminUserGrpcService: AdminUserServiceProto.AdminUserServiceProtoBa
         return result;
     }
 
-    //[Authorize]
     public override async Task<GetUserReply> GetUser(GetUserRequest request, ServerCallContext context)
     {
-        // var result = new GetUserReply();
-        // var user = await _adminRepository.GetUser(request.Username);
-        // if (user != null)
-        // {
-        //     result.Data = ConvertTo(user);
-        // }
-        // return result;
-        throw new RpcException(new Status(StatusCode.Unauthenticated, "token expired"));
+        var result = new GetUserReply();
+        var user = await _adminRepository.GetUser(request.Username);
+        if (user != null)
+        {
+            result.Data = ConvertTo(user);
+        }
+        return result;
+    }
+
+    public override async Task<GetUserProfileReply> GetUserProfile(GetUserProfileRequest request, ServerCallContext context)
+    {
+        var user = await _adminRepository.GetUser(request.Username);
+        return new GetUserProfileReply
+        {
+            Data = new AdminProfile
+            {
+                Id = user.Id,
+                Username = user.Username,
+                IsSystem = user.IsSystem,
+                IsCustomer = user.IsCustomer,
+                FullName = user.FullName
+            }
+        };
     }
 
     private AdminUser ConvertTo(Models.AdminUser model)

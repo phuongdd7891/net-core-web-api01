@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Api.Gax.Grpc" Version="4.8.0" />
     <PackageReference Include="grpc.aspnetcore" Version="2.64.0" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.65.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.8.7" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.14" />
@@ -23,8 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoreLibrary\CoreLibrary.csproj" />
-    <Protobuf Include="Protos\admin-user.proto" GrpcServices="server" />
-    <Protobuf Include="Protos\auth.proto" GrpcServices="server" />
+    <Protobuf Include="..\CoreLibrary\Protos\*.proto" GrpcServices="server" />
   </ItemGroup>
 
 </Project>

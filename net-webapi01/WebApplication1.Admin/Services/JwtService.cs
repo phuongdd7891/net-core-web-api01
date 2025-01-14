@@ -14,7 +14,7 @@ public class ValidateTokenResult
 {
     public string Code { get; set; } = DataResponseCode.Ok.ToString();
     public string Message { get; set; } = string.Empty;
-    public bool IsOk
+    public bool Success
     {
         get => Code == DataResponseCode.Ok.ToString();
     }
@@ -137,7 +137,7 @@ public class JwtService
         throw result.Exception;
     }
 
-    private byte[] GetSecretKey() => Encoding.UTF8.GetBytes(AESHelpers.Decrypt(_configuration["Jwt:Secret"]!));
+    private byte[] GetSecretKey() => Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!);
 
     private SigningCredentials CreateSigningCredentials() =>
         new SigningCredentials(

@@ -18,7 +18,7 @@ window.addEventListener("DOMContentLoaded", () => {
         } else {
             ipcService.sendDialogError(response.data)
         }
-    })
+    });
 
     const replaceText = (selector: string, text: string) => {
         const element = document.getElementById(selector);

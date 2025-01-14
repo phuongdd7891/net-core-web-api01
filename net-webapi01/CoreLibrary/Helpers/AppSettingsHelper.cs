@@ -4,7 +4,7 @@ namespace CoreLibrary.Helpers;
 
 public static class AppSettingsHelper
 {
-    private static IConfiguration _config;
+    private static IConfiguration? _config;
     public static void ConfigureSetting(IConfiguration config)
     {
         _config = config;
@@ -12,6 +12,10 @@ public static class AppSettingsHelper
 
     private static string Setting(string Key)
     {
+        if (_config == null)
+        {
+            throw new InvalidOperationException("Configuration has not been set.");
+        }
         return AESHelpers.Decrypt(_config.GetSection(Key).Value!);
     }
 

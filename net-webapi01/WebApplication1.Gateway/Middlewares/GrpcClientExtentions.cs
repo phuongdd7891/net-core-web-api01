@@ -1,6 +1,7 @@
 using Gateway.Interceptors;
-using Gateway.Protos;
-using Grpc.Core;
+using Userservice;
+using Adminauthservice;
+using Adminuserservice;
 
 namespace Gateway.Middlewares;
 

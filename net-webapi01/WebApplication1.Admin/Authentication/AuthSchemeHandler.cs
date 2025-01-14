@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using System.Text.Encodings.Web;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authentication;
@@ -41,7 +42,7 @@ public class SessionTokenAuthSchemeHandler : AuthenticationHandler<JwtBearerOpti
         var token = authHeader?.Split(' ')[1] ?? string.Empty;
         var username = Convert.ToString(Request.Headers["Username"]) ?? string.Empty;
         var validateResult = await _jwtService.ValidateToken(token, username);
-        if (!validateResult.IsOk)
+        if (!validateResult.Success)
         {
             return AuthenticateResult.Fail(errMessage = validateResult.Message);
         }
@@ -61,11 +62,13 @@ public class SessionTokenAuthSchemeHandler : AuthenticationHandler<JwtBearerOpti
 
     protected override Task HandleChallengeAsync(AuthenticationProperties properties)
     {
+        Response.ContentType = "application/grpc";
+        Response.AppendTrailer("grpc-status", StatusCode.Unauthenticated.ToString("D"));
         if (!string.IsNullOrEmpty(errMessage))
         {
-            throw new RpcException(new Status(StatusCode.Unauthenticated, errMessage));
+            //return Task.FromResult(new RpcException(new Status(StatusCode.Unauthenticated, errMessage)));
+            Response.WriteAsync(errMessage);
         }
-
         return Task.CompletedTask;
     }
 }

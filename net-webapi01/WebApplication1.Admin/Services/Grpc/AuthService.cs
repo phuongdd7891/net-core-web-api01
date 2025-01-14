@@ -1,4 +1,4 @@
-using AdminMicroservice.Protos;
+using Adminauthservice;
 using CoreLibrary.Const;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;

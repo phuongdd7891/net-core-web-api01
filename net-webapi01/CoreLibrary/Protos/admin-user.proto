@@ -1,18 +1,14 @@
 syntax = "proto3";
-import "Protos/google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
-option csharp_namespace = "AdminMicroservice.Protos";
+package adminuserservice;
 
 service AdminUserServiceProto {
 	rpc ListUsers (ListUsersRequest) returns (AdminUsersReply);
-    rpc GetUser (GetUserRequest) returns (GetUserReply) {
-        option (google.api.http) = {
-            get: "/admin/get-user"
-        };
-    };
+    rpc GetUser (GetUserRequest) returns (GetUserReply);
+    rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileReply);
 }
 
 message ListUsersRequest {
@@ -44,4 +40,24 @@ message AdminUser {
     google.protobuf.Timestamp modifiedDate = 10;
     google.protobuf.StringValue refreshToken = 11;
     google.protobuf.StringValue refreshTokenExpiryDate = 12;
+}
+
+message GetUserProfileRequest {
+    string username = 1;
+}
+
+message GetUserProfileReply {
+    optional AdminProfile data = 1;
+}
+
+message AdminProfile {
+    string id = 1;
+    string username = 2;
+    string fullName = 3;
+    string email = 4;
+    bool isSystem = 5;
+    bool isCustomer = 6;
+    bool disabled = 7;
+    google.protobuf.Timestamp createdDate = 8;
+    int32 userCount = 9;
 }

@@ -13,7 +13,7 @@ const DropdownUser = () => {
   const onSignout = async () => {
     excuteAction().then(res => {
       if (res?.success) {
-        router.replace('/auth/signin');
+        router.replace('/signin');
       }
     });
   };

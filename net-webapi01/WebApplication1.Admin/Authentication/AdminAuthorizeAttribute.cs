@@ -57,7 +57,7 @@ public class AdminAuthorizeFilter : IAsyncAuthorizationFilter
         string? authHeader = context.HttpContext.Request.Headers["Authorization"];
         string token = authHeader?.Split(' ')[1] ?? string.Empty;
         var validateResult = await _jwtService.ValidateToken(token, username);
-        if (!validateResult.IsOk)
+        if (!validateResult.Success)
         {
             context.Result = Helpers.GetUnauthorizedResult(new DataResponse<string>
             {

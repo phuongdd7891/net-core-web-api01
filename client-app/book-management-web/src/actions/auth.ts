@@ -2,11 +2,12 @@
 
 import { cookies } from "next/headers";
 import { actionPost } from ".";
+import { sessionKey } from "@/const";
 
 export async function login (req: { username: string, password: string }) {
     const res = await actionPost<any>('Operations/login', req);
     if (res.success) {
-        cookies().set('__psession__', JSON.stringify(res.data.data));
+        cookies().set(sessionKey, JSON.stringify(res.data.data));
     }
     return res;
 }
@@ -14,7 +15,7 @@ export async function login (req: { username: string, password: string }) {
 export async function logout () {
     const res = await actionPost<any>('Operations/logout', null);
     if (res.success) {
-        cookies().delete('__psession__');
+        cookies().delete(sessionKey);
     }
     return res;
 }

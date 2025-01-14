@@ -25,12 +25,12 @@
         public bool IsSystem { get; set; }
         public bool IsCustomer { get; set; }
         public bool Disabled { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
         public int UserCount { get; set; }
         public string CreatedDateDisplay
         {
             get {
-                return CreatedDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                return CreatedDate.HasValue ? CreatedDate.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : string.Empty;
             }
         }
     }

@@ -1,7 +1,12 @@
 using Gateway.Interceptors;
 using Gateway.Middlewares;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.Extensions.Primitives;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -19,7 +24,69 @@ services.Configure<ApiBehaviorOptions>(opt =>
     opt.SuppressModelStateInvalidFilter = true;
 });
 
-services.AddSingleton<ErrorHandlerInterceptor>();
+services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, x =>
+{
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
+    x.RequireHttpsMetadata = false;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!)),
+    };
+    x.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authVal = StringValues.Empty;
+            if (context.HttpContext.Request.Headers.TryGetValue("Authorization", out authVal))
+            {
+                context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>()
+                .LogInformation("JWT received in request: {Token}", authVal.ToString());
+            }
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            var claims = context.Principal?.Claims.Select(c => new { c.Type, c.Value });
+            logger.LogInformation("JWT validated. Claims: {Claims}", claims);
+
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>()
+                .LogError(context.Exception, "JWT authentication failed.");
+
+            return Task.CompletedTask;
+        }
+    };
+});
+
+services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+services.AddScoped<ErrorHandlerInterceptor>();
 
 services.AddGrpc();
 services.AddGrpcClients(builder.Configuration);
@@ -32,6 +99,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.UseErrorHandling();
 

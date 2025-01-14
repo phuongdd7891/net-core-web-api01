@@ -1,24 +1,21 @@
-"use client";
-import Loader from "@/components/Common/Loader";
-import { useEffect, useState } from "react";
 import "@/assets/css/satoshi.css";
 import "@/assets/css/style.css";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Book Management Web",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
 
   return (
     <html lang="en">
       <body>
-        {loading ? <Loader /> : children}
+        {children}
       </body>
     </html>
   );

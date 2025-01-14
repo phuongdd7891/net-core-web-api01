@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//builder.Configuration.AddJsonFile("./client-app/admin-web/appsettings.json", optional: false, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -20,8 +22,8 @@ builder.Services.AddHttpContextAccessor();
 //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddTransient<AuthorizationRequestHandler>();
 builder.Services.AddTransient<ProfileService>();
-builder.Services.AddHttpClient<AuthService>()
-    .AddHttpMessageHandler<AuthorizationRequestHandler>();
+builder.Services.AddHttpClient<BaseService>();
+builder.Services.AddHttpClient<AuthService>();
 builder.Services.AddHttpClient<UserService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
 builder.Services.AddHttpClient<CustomerService>()
