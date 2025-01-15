@@ -17,7 +17,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<LoginResponse>> Login(string username, string password)
         {
-            return PostAsync<Object, ApiResponse<LoginResponse>>("api/admin/login", new
+            return PostAsync<Object, ApiResponse<LoginResponse>>("gw-api/admin/login", new
             {
                 Username = username,
                 Password = password

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using WebApi.Models;
 using WebApi.Services;
 using CoreLibrary.Repository;
 using StackExchange.Redis.Extensions.Core.Configuration;
@@ -8,12 +7,10 @@ using StackExchange.Redis.Extensions.Newtonsoft;
 using Newtonsoft.Json.Serialization;
 using WebApi.Services.Grpc;
 using WebApi.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using CoreLibrary.Helpers;
-using Microsoft.AspNetCore.Authorization;
-using WebApi.Authentication;
+using CoreLibrary.DataModels;
+using CoreLibrary.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -73,60 +70,49 @@ services.AddSwaggerGen(options =>
     });
 });
 
-// authentication
-services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, x =>
-{
-    x.RequireHttpsMetadata = false;
-    x.SaveToken = true;
-    x.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        ClockSkew = TimeSpan.Zero,
-        ValidateLifetime = true
-    };
-})
-.AddScheme<JwtBearerOptions, SessionTokenAuthSchemeHandler>(
-    "SessionTokens",
-    opts => { }
-);
-
-services.AddAuthorization(options =>
-{
-    options.DefaultPolicy = new AuthorizationPolicyBuilder()
-        //.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-        .AddAuthenticationSchemes("SessionTokens")
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
 //db configs
-var mongoDbSettings = builder.Configuration.GetSection("BookDatabase").Get<BookDatabaseSettings>();
-services.Configure<BookDatabaseSettings>(builder.Configuration.GetSection("BookDatabase"));
-
+var mongoDbSettings = builder.Configuration.GetSection("BookDatabase").Get<DbSettings>();
+services.Configure<DbSettings>(builder.Configuration.GetSection("AdminDatabase"));
+services.AddIdentity<ApplicationUser, ApplicationRole>()
+        .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
+        (
+            mongoDbSettings?.ConnectionString, mongoDbSettings?.DatabaseName
+        );
 
 var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConfiguration>();
 services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
 
 services.AddScoped(serviceProvider =>
 {
-    var settings = serviceProvider.GetRequiredService<IOptions<BookDatabaseSettings>>().Value;
-    return new AppDBContext(settings.AdminConnectionString, settings.AdminDatabaseName);
+    var settings = serviceProvider.GetRequiredService<IOptions<DbSettings>>().Value;
+    return new AppDBContext(settings.ConnectionString, settings.DatabaseName);
 });
 services.AddTransient<RedisRepository>();
 services.AddTransient<JwtService>();
 services.AddTransient<AdminRepository>();
-services.AddGrpc();
+services.AddGrpc(options =>
+{
+    options.Interceptors.Add<JwtValidationInterceptor>();
+});
+
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var tokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ValidIssuer = jwtSettings["Issuer"],
+    ValidAudience = jwtSettings["Audience"],
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
+};
+services.AddSingleton(tokenValidationParameters);
+
+var excludeMethods = new List<string>
+{
+    "/adminauthservice.AdminAuthServiceProto/Login"
+};
+services.AddTransient(sp => new JwtValidationInterceptor(tokenValidationParameters, excludeMethods));
 
 var app = builder.Build();
 
@@ -137,8 +123,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
 
 app.UseGrpcWeb();

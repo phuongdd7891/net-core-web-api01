@@ -6,17 +6,20 @@ import "google/protobuf/timestamp.proto";
 package adminuserservice;
 
 service AdminUserServiceProto {
-	rpc ListUsers (ListUsersRequest) returns (AdminUsersReply);
+	rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
     rpc GetUser (GetUserRequest) returns (GetUserReply);
     rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileReply);
 }
 
 message ListUsersRequest {
-	bool isCustomer = 1;
+	int32 skip = 1;
+    int32 limit = 2;
+    google.protobuf.StringValue customerId = 3;
 }
 
-message AdminUsersReply {
-    repeated AdminUser list = 1;
+message ListUsersReply {
+    repeated UserViewModel list = 1;
+    int32 total = 2;
 }
 
 message GetUserRequest {
@@ -61,3 +64,15 @@ message AdminProfile {
     google.protobuf.Timestamp createdDate = 8;
     int32 userCount = 9;
 }
+
+message UserViewModel {
+    string id = 1;                     
+    string user_name = 2;              
+    google.protobuf.StringValue email = 3;
+    google.protobuf.StringValue phone_number = 4;
+    bool is_locked = 5;
+    repeated string roles = 6;         
+    repeated string role_ids = 7;
+    google.protobuf.StringValue customer_id = 8;
+    google.protobuf.StringValue customer_name = 9;
+  }

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Gateway.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("gw-api/[controller]")]
 public class AdminController : BaseController
 {
     private readonly UserServiceProto.UserServiceProtoClient _userClient;
@@ -27,48 +27,27 @@ public class AdminController : BaseController
         _adminAuthClient = adminAuthClient;
     }
 
-    [HttpGet("customer-users")]
-    public async Task<IActionResult> GetCustomerUsers()
+    [HttpGet("users")]
+    [Authorize]
+    public async Task<IActionResult> GetUsers(int skip, int limit, string customerId)
     {
-        var users = new List<AdminUser>();
         var listUsers = await _adminUserClient.ListUsersAsync(new ListUsersRequest
         {
-            IsCustomer = true
-        });
-        users.AddRange(listUsers.List);
-        // var claimUser = GetUserClaim();
-        // if (claimUser != null)
-        // {
-        //     if (claimUser.IsSystem)
-        //     {
-        //         var listUsers = await _adminService.ListUsers(true);
-        //         users.AddRange(listUsers);
-        //     }
-        //     if (claimUser.IsCustomer)
-        //     {
-        //         users.Add(await _adminService.GetUser(claimUser.Username));
-        //     }
-        // }
-        var appUsers = await _userClient.GetUsersAsync(new Google.Protobuf.WellKnownTypes.Empty());
-        var list = users.GroupJoin(appUsers.List, u => u.Id, a => a.CustomerId, (u, a) => new { Admin = u, UserCount = a.Count() }).ToList();
+            CustomerId = customerId,
+            Skip = skip,
+            Limit = limit
+        }, DefaultHeader);
         return Ok(new DataResponse<dynamic>
         {
-            Data = list.Select(x => new
-            {
-                x.Admin.Id,
-                x.Admin.Username,
-                x.Admin.FullName,
-                x.Admin.IsCustomer,
-                x.Admin.IsSystem,
-                x.Admin.Email,
-                x.Admin.Disabled,
-                x.Admin.CreatedDate,
-                x.UserCount,
-            }).ToList()
+            Data = new {
+                listUsers.List,
+                listUsers.Total
+            }
         });
     }
 
     [HttpGet("get-user")]
+    [Authorize]
     public async Task<IActionResult> GetUser(string username)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
@@ -129,7 +108,7 @@ public class AdminController : BaseController
         var result = await _adminUserClient.GetUserProfileAsync(new GetUserProfileRequest
         {
             Username = username
-        });
+        }, DefaultHeader);
         return Ok(new DataResponse<AdminProfile>
         {
             Data = result.Data

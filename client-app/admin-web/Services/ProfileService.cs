@@ -29,7 +29,7 @@ namespace AdminWeb.Services
             {
                 { "Authorization", "Bearer " + token }
             };
-            var result = await GetAsync<ApiResponse<AdminProfile>>($"api/admin/user-profile?u={username}", headers);
+            var result = await GetAsync<ApiResponse<AdminProfile>>($"gw-api/admin/user-profile?u={username}", headers);
             var profile = result.Data;
             var tempProfile = JsonConvert.SerializeObject(result.Data);
             if (_tempDataDictionary.ContainsKey("Profile"))

@@ -1,6 +1,8 @@
 
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 
 namespace Gateway.Controllers;
 
@@ -14,8 +16,10 @@ public class BaseController: ControllerBase
             if (HttpContext.Request.Headers.ContainsKey("Authorization"))
             {
                 string? authHeader = HttpContext.Request.Headers["Authorization"];
-                string token = authHeader?.Split(' ')[1] ?? string.Empty;
-                headers.Add("Authorization", $"Bearer {token}");
+                if (authHeader != null)
+                {
+                    headers.Add("Authorization", authHeader);
+                }
             }
             if (HttpContext.Request.Query.ContainsKey("u"))
             {

@@ -22,7 +22,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<UsersResponse>> GetUsers(int skip = 0, int limit = 100, string? customerId = null)
         {
-            return GetAsync<ApiResponse<UsersResponse>>($"api/operations/users?skip={skip}&limit={limit}&customerId={customerId}");
+            return GetAsync<ApiResponse<UsersResponse>>($"gw-api/admin/users?skip={skip}&limit={limit}&customerId={customerId}");
         }
 
         public Task<ApiResponse<string>> SetLockUser(string username, bool isLock)
@@ -36,7 +36,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<UserViewModel>> GetUser(string username)
         {
-            return GetAsync<ApiResponse<UserViewModel>>($"api/operations/user?username={username}");
+            return GetAsync<ApiResponse<UserViewModel>>($"gw-api/admin/user?username={username}");
         }
 
         public Task<ApiResponse<string>> UpdateUser(UserViewModel req)

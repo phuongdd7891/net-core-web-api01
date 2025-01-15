@@ -77,40 +77,6 @@
 //         return Ok();
 //     }
 
-//     [HttpGet("users")]
-//     [AdminAuthorize(true, true)]
-//     public async Task<DataResponse<GetUsersReply>> GetUsers(int skip = 0, int limit = 100, string? customerId = null)
-//     {
-//         var userData = Profile;
-//         var customerUsers = await _adminService.ListUsers(userData!.IsCustomer);
-//         var qUsers = _userManager.Users.Where(u => string.IsNullOrEmpty(customerId) ? ((u.CustomerId == userData.Id && userData.IsCustomer) || userData.IsSystem) : (u.CustomerId == customerId));
-//         var appUsers = qUsers.Skip(skip).Take(limit).ToList();
-//         var total = qUsers.Count();
-//         var users = appUsers
-//             .GroupJoin(customerUsers, u => u.CustomerId, a => a.Id, (u, a) => new { Admins = a, User = u })
-//             .SelectMany(a => a.Admins.DefaultIfEmpty(), (u, a) => new UserViewModel(u.User)
-//             {
-//                 CustomerName = a?.FullName ?? string.Empty
-//             }).ToList();
-//         var tasks = new List<Task>();
-//         users.ForEach(u =>
-//         {
-//             tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x =>
-//             {
-//                 u.Roles = x.Result.Select(a => FormatRoleNameByCustomer(a, u.CustomerId)).ToArray();
-//             }));
-//         });
-//         await Task.WhenAll(tasks);
-//         return new DataResponse<GetUsersReply>
-//         {
-//             Data = new GetUsersReply
-//             {
-//                 List = users,
-//                 Total = total
-//             }
-//         };
-//     }
-
 //     [HttpPost("update-user")]
 //     [Authorize]
 //     public async Task<IActionResult> UpdateUser(User user)
@@ -158,18 +124,5 @@
 //                 CustomerName = customer?.FullName ?? string.Empty
 //             }
 //         });
-//     }
-
-//     private async Task<string[]> GetRolesByUser(string username)
-//     {
-//         var appUser = await _userManager.FindByNameAsync(username);
-//         var roles = await _userManager.GetRolesAsync(appUser!);
-//         return roles.ToArray();
-//     }
-
-//     private string FormatRoleNameByCustomer(string originalName, string? customerId)
-//     {
-//         var roleNameArr = originalName.Split("__", StringSplitOptions.RemoveEmptyEntries);
-//         return string.IsNullOrEmpty(customerId) ? originalName : string.Join("", roleNameArr, roleNameArr.Length > 1 ? 1 : 0, roleNameArr.Length > 1 ? roleNameArr.Length - 1 : roleNameArr.Length);
 //     }
 // }
