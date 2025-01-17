@@ -23,7 +23,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<AuthorizationRequestHandler>();
 builder.Services.AddTransient<ProfileService>();
 builder.Services.AddHttpClient<BaseService>();
-builder.Services.AddHttpClient<AuthService>();
+builder.Services.AddHttpClient<AuthService>()
+    .AddHttpMessageHandler<AuthorizationRequestHandler>();
 builder.Services.AddHttpClient<UserService>()
     .AddHttpMessageHandler<AuthorizationRequestHandler>();
 builder.Services.AddHttpClient<CustomerService>()

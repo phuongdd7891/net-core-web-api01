@@ -12,7 +12,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<List<AdminProfile>>> GetCustomers()
         {
-            return GetAsync<ApiResponse<List<AdminProfile>>>("api/admin/customer-users");
+            return GetAsync<ApiResponse<List<AdminProfile>>>("gw-api/admin/customer-users");
         }
 
         public Task<ApiResponse<CustomerViewModel>> GetCustomer(string username)

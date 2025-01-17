@@ -204,46 +204,6 @@
 //         });
 //     }
 
-//     [HttpGet("customer-users")]//, AdminAuthorize(true, true)]
-//     public async Task<IActionResult> GetCustomerUsers()
-//     {
-//         var users = new List<AdminUser>();
-//         var listUsers = await _adminService.ListUsers(true);
-//         users.AddRange(listUsers);
-//         // var claimUser = GetUserClaim();
-//         // if (claimUser != null)
-//         // {
-//         //     if (claimUser.IsSystem)
-//         //     {
-//         //         var listUsers = await _adminService.ListUsers(true);
-//         //         users.AddRange(listUsers);
-//         //     }
-//         //     if (claimUser.IsCustomer)
-//         //     {
-//         //         users.Add(await _adminService.GetUser(claimUser.Username));
-//         //     }
-//         // }
-//         // var appUsers = _userManager.Users;
-//         // var countUsers = await _userClient.CountUsersAsync(new CountUserByCustomerRequest());
-//         // var list = users.GroupJoin(countUsers.List, u => u.Id, a => a.CustomerId, (u, a) => new { Admin = u, UserCount = a.First().Count }).ToList();
-//         // return Ok(new DataResponse<List<AdminProfile>>
-//         // {
-//         //     Data = list.Select(x => new AdminProfile
-//         //     {
-//         //         Id = x.Admin.Id,
-//         //         Username = x.Admin.Username,
-//         //         FullName = x.Admin.FullName,
-//         //         IsCustomer = x.Admin.IsCustomer,
-//         //         IsSystem = x.Admin.IsSystem,
-//         //         Email = x.Admin.Email,
-//         //         Disabled = x.Admin.Disabled,
-//         //         CreatedDate = x.Admin.CreatedDate,
-//         //         UserCount = x.UserCount,
-//         //     }).ToList()
-//         // });
-//         return Ok(users);
-//     }
-
 //     [HttpGet("get-user"), AdminAuthorize(true)]
 //     public async Task<IActionResult> GetUser(string username)
 //     {

@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CoreLibrary.DataModels;
 using CoreLibrary.Models;
+using CoreLibrary.DbAccess;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -87,9 +88,18 @@ services.AddScoped(serviceProvider =>
     var settings = serviceProvider.GetRequiredService<IOptions<DbSettings>>().Value;
     return new AppDBContext(settings.ConnectionString, settings.DatabaseName);
 });
+services.AddScoped(serviceProvider =>
+{
+    if (mongoDbSettings == null)
+    {
+        throw new Exception("Missing mongoDbSettings");
+    }
+    return new MongoDbContext(mongoDbSettings.ConnectionString, mongoDbSettings.DatabaseName);
+});
 services.AddTransient<RedisRepository>();
 services.AddTransient<JwtService>();
 services.AddTransient<AdminRepository>();
+services.AddTransient<RoleActionRepository>();
 services.AddGrpc(options =>
 {
     options.Interceptors.Add<JwtValidationInterceptor>();
@@ -129,6 +139,8 @@ app.UseGrpcWeb();
 
 app.MapGrpcService<AdminUserGrpcService>();
 app.MapGrpcService<AuthGrpcService>();
+app.MapGrpcService<UserGrpcService>();
+
 app.UseRedisInformation();
 
 app.Run();

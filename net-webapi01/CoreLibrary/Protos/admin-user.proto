@@ -6,28 +6,28 @@ import "google/protobuf/timestamp.proto";
 package adminuserservice;
 
 service AdminUserServiceProto {
-	rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
-    rpc GetUser (GetUserRequest) returns (GetUserReply);
     rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileReply);
+    rpc GetCustomerUsers (google.protobuf.Empty) returns (GetCustomerUsersReply);
 }
 
-message ListUsersRequest {
-	int32 skip = 1;
-    int32 limit = 2;
-    google.protobuf.StringValue customerId = 3;
-}
-
-message ListUsersReply {
-    repeated UserViewModel list = 1;
-    int32 total = 2;
-}
-
-message GetUserRequest {
+message GetUserProfileRequest {
     string username = 1;
 }
 
-message GetUserReply {
-    optional AdminUser data = 1;
+message GetUserProfileReply {
+    optional AdminProfile data = 1;
+}
+
+message AdminProfile {
+    string id = 1;
+    string username = 2;
+    google.protobuf.StringValue fullName = 3;
+    google.protobuf.StringValue email = 4;
+    bool isSystem = 5;
+    bool isCustomer = 6;
+    bool disabled = 7;
+    google.protobuf.Timestamp createdDate = 8;
+    int32 userCount = 9;
 }
 
 message AdminUser {
@@ -45,34 +45,6 @@ message AdminUser {
     google.protobuf.StringValue refreshTokenExpiryDate = 12;
 }
 
-message GetUserProfileRequest {
-    string username = 1;
+message GetCustomerUsersReply {
+    repeated AdminProfile data = 1;
 }
-
-message GetUserProfileReply {
-    optional AdminProfile data = 1;
-}
-
-message AdminProfile {
-    string id = 1;
-    string username = 2;
-    string fullName = 3;
-    string email = 4;
-    bool isSystem = 5;
-    bool isCustomer = 6;
-    bool disabled = 7;
-    google.protobuf.Timestamp createdDate = 8;
-    int32 userCount = 9;
-}
-
-message UserViewModel {
-    string id = 1;                     
-    string user_name = 2;              
-    google.protobuf.StringValue email = 3;
-    google.protobuf.StringValue phone_number = 4;
-    bool is_locked = 5;
-    repeated string roles = 6;         
-    repeated string role_ids = 7;
-    google.protobuf.StringValue customer_id = 8;
-    google.protobuf.StringValue customer_name = 9;
-  }

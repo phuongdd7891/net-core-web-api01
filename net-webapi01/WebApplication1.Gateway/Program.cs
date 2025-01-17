@@ -53,7 +53,7 @@ services.AddAuthentication(options =>
             {
                 context.HttpContext.RequestServices
                 .GetRequiredService<ILogger<Program>>()
-                .LogInformation("JWT received in request: {Token}", authVal.ToString());
+                .LogInformation("JWT received in request {0}: {1}", context.HttpContext.Request.Path, authVal.ToString());
             }
             return Task.CompletedTask;
         },

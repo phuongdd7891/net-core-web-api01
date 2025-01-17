@@ -67,7 +67,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<UserRolesResponse[]>> GetUserRoles(string? customerId = null)
         {
-            return GetAsync<ApiResponse<UserRolesResponse[]>>($"api/operations/user-roles?customerId={customerId}");
+            return GetAsync<ApiResponse<UserRolesResponse[]>>($"gw-api/user/user-roles?customerId={customerId}");
         }
 
         public Task<ApiResponse<List<UserActionResponse>>> GetUserActions()

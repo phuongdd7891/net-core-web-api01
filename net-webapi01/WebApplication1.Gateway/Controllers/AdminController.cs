@@ -5,6 +5,7 @@ using Adminuserservice;
 using Adminauthservice;
 using Userservice;
 using Microsoft.AspNetCore.Authorization;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Gateway.Controllers;
 
@@ -12,67 +13,18 @@ namespace Gateway.Controllers;
 [Route("gw-api/[controller]")]
 public class AdminController : BaseController
 {
-    private readonly UserServiceProto.UserServiceProtoClient _userClient;
     private readonly AdminUserServiceProto.AdminUserServiceProtoClient _adminUserClient;
     private readonly AdminAuthServiceProto.AdminAuthServiceProtoClient _adminAuthClient;
 
     public AdminController(
-        UserServiceProto.UserServiceProtoClient userClient,
         AdminUserServiceProto.AdminUserServiceProtoClient adminUserClient,
         AdminAuthServiceProto.AdminAuthServiceProtoClient adminAuthClient
     )
     {
-        _userClient = userClient;
         _adminUserClient = adminUserClient;
         _adminAuthClient = adminAuthClient;
     }
 
-    [HttpGet("users")]
-    [Authorize]
-    public async Task<IActionResult> GetUsers(int skip, int limit, string customerId)
-    {
-        var listUsers = await _adminUserClient.ListUsersAsync(new ListUsersRequest
-        {
-            CustomerId = customerId,
-            Skip = skip,
-            Limit = limit
-        }, DefaultHeader);
-        return Ok(new DataResponse<dynamic>
-        {
-            Data = new {
-                listUsers.List,
-                listUsers.Total
-            }
-        });
-    }
-
-    [HttpGet("get-user")]
-    [Authorize]
-    public async Task<IActionResult> GetUser(string username)
-    {
-        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
-        var user = await _adminUserClient.GetUserAsync(new GetUserRequest
-        {
-            Username = username,
-        }, DefaultHeader);
-        ErrorStatuses.ThrowNotFound("User not found", user == null || user?.Data == null);
-        var userData = user!.Data;
-        return Ok(new DataResponse<dynamic>
-        {
-            Data = new
-            {
-                userData!.Id,
-                userData.Username,
-                userData.FullName,
-                userData.IsSystem,
-                userData.IsCustomer,
-                userData.Email,
-                CreatedDate = userData.CreatedDate.ToDateTime(),
-                ModifiedDate = userData.ModifiedDate.ToDateTime(),
-                userData.Disabled
-            }
-        });
-    }
 
     [HttpPost("Login")]
     [AllowAnonymous]
@@ -112,6 +64,26 @@ public class AdminController : BaseController
         return Ok(new DataResponse<AdminProfile>
         {
             Data = result.Data
+        });
+    }
+
+    [HttpGet("customer-users")]
+    [Authorize]
+    public async Task<IActionResult> GetCustomerUsers()
+    {
+        var result = await _adminUserClient.GetCustomerUsersAsync(new Empty(), DefaultHeader);
+        return Ok(new DataResponse<dynamic>
+        {
+            Data = result.Data.Select(a => {
+                return new {
+                    a.Id,
+                    a.Username,
+                    a.UserCount,
+                    a.FullName,
+                    a.Email,
+                    CreatedDate = a.CreatedDate.ToDateTime()
+                };
+            })
         });
     }
 }
