@@ -1,4 +1,4 @@
-namespace WebApi.Models;
+namespace AdminMicroService.Models;
 
 public class GetRolesReply
 {
@@ -15,12 +15,4 @@ public class GetRolesReply
     public List<string>? Actions { get; set; }
     public string? CustomerId { get; set; }
     public string? CustomerName { get; set; }
-}
-
-public class UserActionResponse
-{
-    public string? Method { get; set; }
-    public string? Action { get; set; }
-    public string? ControllerMethod { get; set; }
-    public string? Description { get; set; }
 }

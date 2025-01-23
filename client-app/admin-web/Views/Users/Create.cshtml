@@ -6,7 +6,7 @@
     var roles = JsonConvert.DeserializeObject<AdminWeb.Models.Response.UserRolesResponse[]>(tempRoles!);
 }
 
-<form class="row g-3" asp-action="create" asp-controller="users" method="post">
+<form class="row g-3" asp-action="create" asp-controller="users" method="post" autocomplete="off">
     <div class="col-md-6">
         <label asp-for="Username" class="form-label">Username</label>
         @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder = "Username..." })

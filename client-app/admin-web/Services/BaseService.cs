@@ -2,6 +2,7 @@
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using AdminWeb.Models.Response;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Linq;
 
@@ -11,15 +12,18 @@ namespace AdminWeb.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string baseApiAddress;
 
         public BaseService(
             HttpClient httpClient,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IHttpContextAccessor httpContextAccessor
         )
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
 
             baseApiAddress = _configuration.GetValue<string>("BaseApiUrl") ?? throw new ArgumentNullException("BaseApiUrl", "BaseApiUrl configuration is missing.");
             _httpClient.BaseAddress = new Uri(baseApiAddress);
@@ -50,22 +54,23 @@ namespace AdminWeb.Services
             var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                try
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
-                    if (!string.IsNullOrEmpty(responseErrData?.Data))
+                    var context = _httpContextAccessor.HttpContext;
+                    if (context != null)
                     {
-                        responseErrData.Data = responseErrData.Data.Replace("'", "\"");
+                        throw new RedirectException("/home/error?redirectUrl=/account");
                     }
-                    throw new HttpRequestException($"{responseErrData.Code}", new Exception(responseErrData.Data), response.StatusCode);
                 }
-                catch (System.Exception ex)
+                var responseErrData = JsonConvert.DeserializeObject<ApiResponse<string>>(responseJson);
+                if (!string.IsNullOrEmpty(responseErrData?.Data))
                 {
-                    throw ex;
+                    responseErrData.Data = responseErrData.Data.Replace("'", "\"");
                 }
+                throw new HttpRequestException($"{responseErrData.Code}", new Exception(responseErrData.Data), response.StatusCode);
             }
             var responseData = JsonConvert.DeserializeObject<TResponse>(responseJson);
-            return responseData!;
+            return responseData;
         }
 
         public Task<TResponse> PostAsync<TRequest, TResponse>(string endpoint, TRequest? requestBody)
@@ -83,4 +88,17 @@ namespace AdminWeb.Services
             return SendHttpRequest<Object, TResponse>(endpoint, HttpMethod.Get, null, headers);
         }
     }
+
+    public class RedirectException : Exception
+    {
+        public string RedirectUrl { get; }
+        public bool IsPermanent { get; }
+
+        public RedirectException(string redirectUrl, bool isPermanent = false)
+        {
+            RedirectUrl = redirectUrl;
+            IsPermanent = isPermanent;
+        }
+    }
+
 }

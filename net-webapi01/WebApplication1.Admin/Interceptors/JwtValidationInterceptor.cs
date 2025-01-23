@@ -12,7 +12,7 @@ public class JwtValidationInterceptor : Interceptor
     public JwtValidationInterceptor(TokenValidationParameters tokenValidationParameters, IEnumerable<string> methodsToIgnore)
     {
         _tokenValidationParameters = tokenValidationParameters;
-        _excludeMethods = new HashSet<string>(methodsToIgnore);
+        _excludeMethods = [.. methodsToIgnore];
     }
 
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
@@ -36,9 +36,13 @@ public class JwtValidationInterceptor : Interceptor
             // Store claimsPrincipal in CallContext for service classes to access
             context.UserState["ClaimsPrincipal"] = claimsPrincipal;
         }
-        catch (Exception ex)
+        catch (SecurityTokenException ex)
         {
             throw new RpcException(new Status(StatusCode.Unauthenticated, $"[{context.Method}] {ex.Message}"));
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.Internal, $"[{context.Method}] {ex.Message}"));
         }
 
         // Proceed to the next handler in the pipeline
@@ -51,7 +55,7 @@ public class JwtValidationInterceptor : Interceptor
 
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
         {
-            throw new Exception("Missing or invalid Authorization header");
+            throw new SecurityTokenException("Missing or invalid Authorization header");
         }
 
         return authHeader.Substring("Bearer ".Length);
@@ -73,7 +77,7 @@ public class JwtValidationInterceptor : Interceptor
 
             return principal;
         }
-        catch (Exception)
+        catch
         {
             throw new Exception("Token validation failed");
         }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
+using AdminWeb.Services;
 
 namespace AdminWeb.Middlewares
 {
@@ -16,17 +17,24 @@ namespace AdminWeb.Middlewares
             {
                 await _next(context);
             }
+            catch (RedirectException ex)
+            {
+                context.Response.Redirect(ex.RedirectUrl, ex.IsPermanent);
+            }
             catch (HttpRequestException ex)
             {
                 await HandleExceptionAsync(context, ex);
+            }
+            catch (Exception ex)
+            {
+                context.Response.WriteAsync(ex.Message);
             }
         }
         private static Task HandleExceptionAsync(HttpContext context, HttpRequestException ex)
         {
             if (!string.IsNullOrEmpty(context.Request.Headers["x-requested-with"]))
             {
-                if (context.Request.Headers["x-requested-with"][0]!
-                    .ToLower() == "xmlhttprequest")
+                if (context.Request.Headers["x-requested-with"][0]!.ToLower() == "xmlhttprequest")
                 {
                     var result = JsonConvert.SerializeObject(new { error = ex.InnerException?.Message ?? ex.Message });
                     context.Response.ContentType = "application/json";

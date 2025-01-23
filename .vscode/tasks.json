@@ -1,0 +1,34 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+	  {
+		"label": "build-admin-web",
+		"type": "process",
+		"command": "dotnet",
+		"args": ["build", "${workspaceFolder}/client-app/admin-web/admin-web.csproj"],
+		"problemMatcher": "$msCompile",
+		"detail": "Builds the .NET Core application"
+	  },
+	  {
+		"label": "build-gw",
+		"command": "dotnet",
+		"type": "process",
+		"args": [
+		  "build",
+		  "${workspaceFolder}/net-webapi01/WebApplication1.Gateway/WebApplication1.Gateway.csproj"
+		],
+		"problemMatcher": "$msCompile"
+	  },
+	  {
+		"label": "build-micro-admin",
+		"command": "dotnet",
+		"type": "process",
+		"args": [
+		  "build",
+		  "${workspaceFolder}/net-webapi01/WebApplication1.Admin/WebApplication1.Admin.csproj"
+		],
+		"problemMatcher": "$msCompile"
+	  }
+	]
+  }
+  

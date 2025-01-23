@@ -7,11 +7,15 @@ package adminauthservice;
 
 service AdminAuthServiceProto {
 	rpc Login (AdminLoginRequest) returns (AdminLoginReply);
+    rpc CreateUserRole (CreateUserRoleRequest) returns (CreateUserRoleReply);
+    rpc UpdateUserRole (UpdateUserRoleRequest) returns (UpdateUserRoleReply);
+    rpc AddActionsToRole (AddActionsToRoleRequest) returns (google.protobuf.Empty);
 }
 
 message AdminLoginRequest {
     string username = 1;
     string password = 2;
+    bool createIfNotExists = 3;
 }
 
 message AdminLoginReply {
@@ -20,4 +24,29 @@ message AdminLoginReply {
     string Username = 3;
     google.protobuf.StringValue RefreshToken = 4;
     string ErrorCode = 5;
+}
+
+message CreateUserRoleRequest {
+    string name = 1;
+    google.protobuf.StringValue customer_id = 2;
+}
+
+message CreateUserRoleReply {
+    string id = 1;
+    google.protobuf.StringValue message = 2;
+}
+
+message AddActionsToRoleRequest {
+    string role_id = 1;
+    repeated string actions = 2;
+}
+
+message UpdateUserRoleRequest {
+    string id = 1;
+    string name = 2;
+    google.protobuf.StringValue customer_id = 3;
+}
+
+message UpdateUserRoleReply {
+    google.protobuf.StringValue message = 1;
 }

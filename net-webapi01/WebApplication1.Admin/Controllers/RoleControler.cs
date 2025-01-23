@@ -28,28 +28,6 @@
 //         });
 //     }
 
-//     [HttpPost("edit-role")]
-//     public async Task<IActionResult> EditRole([FromBody] ApplicationRoleRequest request)
-//     {
-//         ErrorStatuses.ThrowInternalErr("Invalid request", request == null || string.IsNullOrEmpty(request.Id));
-//         var role = await _roleManager.FindByIdAsync(request!.Id!);
-//         ErrorStatuses.ThrowInternalErr("Invalid role", role == null);
-//         role!.CustomerId = request.CustomerId;
-//         var tasks = new List<Task<IdentityResult>>
-//         {
-//             _roleManager.UpdateAsync(role),
-//             _roleManager.SetRoleNameAsync(role, request.StoreName)
-//         };
-//         var results = await Task.WhenAll(tasks);
-//         if (results.Any(a => !a.Succeeded))
-//         {
-//             var result = results.FirstOrDefault(a => !a.Succeeded);
-//             ErrorStatuses.ThrowInternalErr(result!.Errors.FirstOrDefault()?.Description ?? "", !result.Succeeded);
-//         }
-//         await _cacheService.LoadUserRoles(true);
-//         return Ok();
-//     }
-
 //     [HttpPost("add-user-roles")]
 //     [AdminAuthorize(true, true)]
 //     public async Task<IActionResult> AddUserRoles(UserRolesRequest req)
@@ -95,47 +73,6 @@
 //         {
 //             Data = result
 //         };
-//     }
-
-//     [HttpPost("add-role-actions")]
-//     [AdminAuthorize(true)]
-//     public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
-//     {
-//         await _roleActionRepository.AddActionsToRole(request.RoleId, request.Actions, User.Identity!.Name!);
-//         await _cacheService.LoadRoleActions();
-//         return Ok();
-//     }
-
-//     [HttpGet("user-actions")]
-//     [AdminAuthorize(true)]
-//     [ApiExplorerSettings(IgnoreApi = true)]
-//     public IActionResult GetUserActions()
-//     {
-//         var endpoints = _endpointSources.SelectMany(es => es.Endpoints);
-//         var result = endpoints.Where(e => !string.IsNullOrEmpty(string.Format("{0}", e.Metadata.GetMetadata<UserAuthorizeAttribute>()))).Select(
-//             e =>
-//             {
-//                 var controller = e.Metadata
-//                     .OfType<ControllerActionDescriptor>()
-//                     .FirstOrDefault();
-//                 var action = controller != null
-//                     ? $"{controller.ControllerName}.{controller.ActionName}"
-//                     : null;
-//                 var controllerMethod = controller != null
-//                     ? $"{controller.ControllerTypeInfo.FullName}:{controller.MethodInfo.Name}"
-//                     : null;
-//                 return new UserActionResponse
-//                 {
-//                     Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods?[0],
-//                     Action = action,
-//                     ControllerMethod = controllerMethod,
-//                     Description = controller?.MethodInfo.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "",
-//                 };
-//             }).ToList();
-//         return Ok(new DataResponse<List<UserActionResponse>>
-//         {
-//             Data = result
-//         });
 //     }
 
 //     [HttpPost("delete-role")]

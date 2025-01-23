@@ -9,6 +9,9 @@ service UserServiceProto {
 	rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
     rpc GetUser (GetUserRequest) returns (GetUserReply);
     rpc GetUserRoles (GetUserRolesRequest) returns (GetUserRolesReply);
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserReply);
+    rpc CreateUser(UpdateUserRequest) returns (UpdateUserReply);
+    rpc LockUser(LockUserRequest) returns (LockUserReply);
 }
 
 message ListUsersRequest {
@@ -55,6 +58,29 @@ message UserRole {
     string name = 2;
     string display_name = 3;
     repeated string actions = 4;
-    string customer_id = 5;
-    string customer_name = 6;
+    google.protobuf.StringValue customer_id = 5;
+    google.protobuf.StringValue customer_name = 6;
+}
+
+message UpdateUserRequest {
+    string username = 1;
+    string email = 2;
+    google.protobuf.StringValue password = 3;
+    google.protobuf.StringValue customer_id = 4;
+    google.protobuf.StringValue phone_number = 5;
+    repeated string roles = 6;
+    bool is_locked = 7;
+}
+
+message UpdateUserReply {
+    google.protobuf.StringValue message = 1;
+}
+
+message LockUserRequest {
+    string username = 1;
+    bool isLock = 2;
+}
+
+message LockUserReply {
+    bool isSuccess = 1;
 }

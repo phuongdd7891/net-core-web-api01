@@ -10,6 +10,9 @@ using Microsoft.Extensions.Primitives;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+
+builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Gateway/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+
 // Add services to the container.
 services.AddControllers()
     .AddNewtonsoftJson(

@@ -3,12 +3,13 @@ using AdminWeb.Models;
 
 namespace AdminWeb.Services
 {
-    public class CustomerService: BaseService
+    public class CustomerService : BaseService
     {
-
         public CustomerService(
             HttpClient httpClient,
-            IConfiguration configuration): base(httpClient, configuration) { }
+            IConfiguration configuration,
+            IHttpContextAccessor contextAccessor) : base(httpClient, configuration, contextAccessor)
+        { }
 
         public Task<ApiResponse<List<AdminProfile>>> GetCustomers()
         {
@@ -17,12 +18,12 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<CustomerViewModel>> GetCustomer(string username)
         {
-            return GetAsync<ApiResponse<CustomerViewModel>>($"api/admin/get-user?username={username}");
+            return GetAsync<ApiResponse<CustomerViewModel>>($"gw-api/admin/get-user?username={username}");
         }
 
         public Task<ApiResponse<string>> CreateCustomer(CustomerViewModel req)
         {
-            return PostAsync<Object, ApiResponse<string>>("api/admin/create-user", new
+            return PostAsync<Object, ApiResponse<string>>("gw-api/admin/create-user", new
             {
                 Username = req.Username,
                 Password = req.Password,
@@ -34,7 +35,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<string>> UpdateCustomer(CustomerViewModel req)
         {
-            return PostAsync<Object, ApiResponse<string>>("api/admin/update-user", new
+            return PostAsync<Object, ApiResponse<string>>("gw-api/admin/update-user", new
             {
                 Username = req.Username,
                 Password = req.Password,

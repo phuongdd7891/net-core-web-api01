@@ -1,18 +1,39 @@
 using MongoDB.Driver;
 using CoreLibrary.DbAccess;
-using WebApi.Models;
-using CoreLibrary.Helpers;
+using AdminMicroService.Models;
+using CoreLibrary.DataModels;
 
-namespace WebApi.Data;
+namespace AdminMicroService.Data;
 
 public class AppDBContext
 {
     private readonly MongoDbContext _dbContext;
+    private readonly string adminDbName;
 
-    public AppDBContext(string connectionString, string databaseName)
+    public AppDBContext(
+        MongoDbContext mongoDbContext,
+        IConfiguration configuration
+    )
     {
-        _dbContext = new MongoDbContext(AESHelpers.Decrypt(connectionString), databaseName);
+        _dbContext = mongoDbContext;
+        adminDbName = configuration.GetValue<string>("AdminDatabaseName") ?? string.Empty;
+        if (string.IsNullOrEmpty(adminDbName))
+        {
+            throw new ArgumentNullException("AdminDatabaseName is not found in appsettings.json");
+        }
     }
 
-    public IMongoCollection<AdminUser> AdminUsers => _dbContext.GetCollection<AdminUser>("Users");
+    public IMongoCollection<AdminUser> AdminUsers => _dbContext.GetCollection<AdminUser>("Users", adminDbName);
+    public IMongoCollection<ApplicationUser> AppUsers => _dbContext.GetCollection<ApplicationUser>("Users");
+    public IMongoCollection<ApplicationRole> AppRoles => _dbContext.GetCollection<ApplicationRole>("Roles");
+
+    public IMongoClient GetClient()
+    {
+        return _dbContext.GetClient();
+    }
+
+    public IMongoClient GetAdminClient()
+    {
+        return _dbContext.GetClient(adminDbName);
+    }
 }

@@ -38,84 +38,9 @@
 //         return null;
 //     }
 
-//     private void ValidatePasswordRequest(string password)
-//     {
-//         ErrorStatuses.ThrowBadRequest("Min length of password is 8", password.Length < 8);
-//         ErrorStatuses.ThrowBadRequest("Password should have at least a number", !password.Any(c => Char.IsNumber(c)));
-//         ErrorStatuses.ThrowBadRequest("Password should have at least an upper character", !password.Any(c => !Char.IsNumber(c) && Char.IsUpper(c)));
-//     }
 
-//     [HttpPost("create-user"), AdminAuthorize(true)]
-//     public async Task<IActionResult> CreateUser(AdminUserRequest request)
-//     {
-//         if (!ModelState.IsValid)
-//         {
-//             return BadRequest(new DataResponse<string>
-//             {
-//                 Code = DataResponseCode.InvalidRequest.ToString(),
-//                 Data = ModelState.Values.First().Errors.First()!.ErrorMessage
-//             });
-//         }
-//         ValidatePasswordRequest(request.Password);
-//         var user = await _adminService.GetUser(request.Username);
-//         ErrorStatuses.ThrowBadRequest("Username is duplicated", user != null);
-//         await _adminService.CreateUser(new AdminUser
-//         {
-//             Username = request.Username,
-//             Password = request.Password,
-//             FullName = request.FullName,
-//             Email = request.Email,
-//             IsSystem = request.IsSystem,
-//             IsCustomer = request.IsCustomer,
-//             Disabled = request.Disabled,
-//         });
-//         return Ok(new DataResponse());
-//     }
 
-//     [HttpPost("update-user"), AdminAuthorize(true)]
-//     public async Task<IActionResult> EditUser(AdminUserRequest request)
-//     {
-//         var user = await _adminService.GetUser(request.Username);
-//         ErrorStatuses.ThrowNotFound("User not found", user == null);
-//         if (!string.IsNullOrEmpty(request.Password))
-//         {
-//             ValidatePasswordRequest(request.Password);
-//         }
-//         else
-//         {
-//             request.Password = user!.Password;
-//             ModelState.Remove("Password");
-//         }
-//         if (!string.IsNullOrEmpty(request.Email))
-//         {
-//             ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(request.Email));
-//         }
-//         else
-//         {
-//             request.Email = user!.Email!;
-//             ModelState.Remove("Email");
-//         }
-//         if (!ModelState.IsValid)
-//         {
-//             return BadRequest(new DataResponse<string>
-//             {
-//                 Code = DataResponseCode.InvalidRequest.ToString(),
-//                 Data = ModelState.Values.First().Errors.First()!.ErrorMessage
-//             });
-//         }
-//         await _adminService.UpdateUser(new AdminUser
-//         {
-//             Id = user!.Id,
-//             Username = request.Username,
-//             Password = request.Password,
-//             FullName = request.FullName,
-//             Email = request.Email,
-//             Disabled = request.Disabled,
-//             CreatedDate = user.CreatedDate,
-//             IsCustomer = true,
-//         }, request.Password);
-//         return Ok(new DataResponse());
-//     }
+
 
 //     [HttpPost("Login")]
 //     public async Task<IActionResult> Login(AuthenticationRequest request)
@@ -201,18 +126,6 @@
 //                 IsCustomer = user.IsCustomer,
 //                 FullName = user.FullName
 //             }
-//         });
-//     }
-
-//     [HttpGet("get-user"), AdminAuthorize(true)]
-//     public async Task<IActionResult> GetUser(string username)
-//     {
-//         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
-//         var user = await _adminService.GetUser(username);
-//         ErrorStatuses.ThrowNotFound("User not found", user == null);
-//         return Ok(new DataResponse<AdminUser>
-//         {
-//             Data = user
 //         });
 //     }
 

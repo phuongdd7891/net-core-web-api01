@@ -38,7 +38,7 @@ public class ErrorHandlerInterceptor : Interceptor
         catch (RpcException ex)
         {
             _logger.LogError("err from interceptor >>> {0}", ex);
-            var err = ErrorStatuses.GetErrorResponse((int)HttpStatusCode.Unauthorized, ex.Status.StatusCode.ToString(), ex.Status.Detail);
+            var err = ErrorStatuses.GetErrorResponse((int)HttpStatusCode.InternalServerError, ex.StatusCode.ToString(), ex.Status.Detail);
             throw new InvalidOperationException(JsonConvert.SerializeObject(err), ex);
         }
     }

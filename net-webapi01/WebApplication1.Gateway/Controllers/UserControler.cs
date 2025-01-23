@@ -1,23 +1,32 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Userservice;
+using Gateway.Models.Requests;
+using CoreLibrary.Utils;
+using Adminauthservice;
 
 namespace Gateway.Controllers;
 
 [ApiController]
 [Route("gw-api/[controller]")]
-public class UserController : BaseController
+[Authorize]
+public partial class UserController : BaseController
 {
     private readonly UserServiceProto.UserServiceProtoClient _userClient;
+    private readonly AdminAuthServiceProto.AdminAuthServiceProtoClient _adminAuthClient;
+    private readonly IEnumerable<EndpointDataSource> _endpointDataSources;
     public UserController(
-        UserServiceProto.UserServiceProtoClient userClient
+        UserServiceProto.UserServiceProtoClient userClient,
+        AdminAuthServiceProto.AdminAuthServiceProtoClient adminAuthClient,
+        IEnumerable<EndpointDataSource> endpointDataSources
     )
     {
         _userClient = userClient;
+        _adminAuthClient = adminAuthClient;
+        _endpointDataSources = endpointDataSources;
     }
 
     [HttpGet("list")]
-    [Authorize]
     public async Task<IActionResult> GetUsers(int skip, int limit, string customerId)
     {
         var listUsers = await _userClient.ListUsersAsync(new ListUsersRequest
@@ -28,7 +37,8 @@ public class UserController : BaseController
         }, DefaultHeader);
         return Ok(new DataResponse<dynamic>
         {
-            Data = new {
+            Data = new
+            {
                 listUsers.List,
                 listUsers.Total
             }
@@ -36,7 +46,6 @@ public class UserController : BaseController
     }
 
     [HttpGet("get")]
-    [Authorize]
     public async Task<IActionResult> GetUser(string username)
     {
         ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(username));
@@ -52,7 +61,6 @@ public class UserController : BaseController
     }
 
     [HttpGet("user-roles")]
-    [Authorize]
     public async Task<IActionResult> GetUserRoles(string customerId)
     {
         var roles = await _userClient.GetUserRolesAsync(new GetUserRolesRequest
@@ -63,5 +71,79 @@ public class UserController : BaseController
         {
             Data = roles.Data
         });
+    }
+
+    [HttpPost("update-user")]
+    public async Task<IActionResult> UpdateUser(UserRequest user)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
+        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
+        var request = new UpdateUserRequest
+        {
+            Username = user.Username,
+            CustomerId = user.CustomerId,
+            Email = user.Email,
+            Password = user.Password,
+            PhoneNumber = user.PhoneNumber
+        };
+        request.Roles.AddRange(user.Roles);
+        var result = await _userClient.UpdateUserAsync(request, DefaultHeader);
+        if (!string.IsNullOrEmpty(result.Message))
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.IternalError.ToString(),
+                Data = result.Message
+            });
+        }
+        return Ok(new DataResponse());
+    }
+
+    [HttpPost("lock-user")]
+    public async Task<IActionResult> LockUser([FromBody] Models.Requests.LockUserRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
+        var result = await _userClient.LockUserAsync(new Userservice.LockUserRequest
+        {
+            Username = request.Username,
+            IsLock = request.IsLock
+        }, DefaultHeader);
+        ErrorStatuses.ThrowInternalErr(request.IsLock ? "Lock unsuccessfully" : "Unlock unsuccessfully", !result.IsSuccess);
+        return Ok();
+    }
+
+    [HttpPost("create-user")]
+    public async Task<IActionResult> CreateUser(UserRequest user)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.InvalidRequest.ToString(),
+                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
+            });
+        }
+        ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
+        ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
+        var request = new UpdateUserRequest
+        {
+            Username = user.Username,
+            CustomerId = user.CustomerId,
+            Email = user.Email,
+            Password = user.Password,
+            PhoneNumber = user.PhoneNumber
+        };
+        request.Roles.AddRange(user.Roles);
+        var result = await _userClient.CreateUserAsync(request, DefaultHeader);
+        if (!string.IsNullOrEmpty(result.Message))
+        {
+            return BadRequest(new DataResponse<string>
+            {
+                Code = DataResponseCode.IternalError.ToString(),
+                Data = result.Message
+            });
+        }
+        //TODO: await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>You need to confirm your email account by using below token</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
+        return Ok(new DataResponse());
     }
 }

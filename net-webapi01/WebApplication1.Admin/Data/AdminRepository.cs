@@ -1,10 +1,10 @@
 using CoreLibrary.Repository;
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
-using WebApi.Models;
+using AdminMicroService.Models;
 using MongoDB.Driver.Linq;
 
-namespace WebApi.Data;
+namespace AdminMicroService.Data;
 
 public class AdminRepository
 {
@@ -26,7 +26,7 @@ public class AdminRepository
     {
         var hashedPwd = passwordHasher.HashPassword(user, user.Password);
         user.Password = hashedPwd;
-        user.CreatedDate = DateTime.Now;
+        user.CreatedDate = DateTime.UtcNow;
         await _users.InsertOneAsync(user);
     }
 
@@ -48,7 +48,8 @@ public class AdminRepository
     public async Task UpdateUser(AdminUser user, string? password = null)
     {
         var filter = Builders<AdminUser>.Filter.Where(u => u.Username == user.Username);
-        user.ModifiedDate = DateTime.Now;
+        user.ModifiedDate = DateTime.UtcNow;
+        user.IsCustomer = true;
         if (!string.IsNullOrEmpty(password))
         {
             user.Password = passwordHasher.HashPassword(user, password);

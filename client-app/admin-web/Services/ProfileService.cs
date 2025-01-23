@@ -14,7 +14,7 @@ namespace AdminWeb.Services
             HttpClient httpClient,
             IConfiguration configuration,
             IHttpContextAccessor contextAccessor
-        ) : base(httpClient, configuration)
+        ) : base(httpClient, configuration, contextAccessor)
         {
             _contextAccessor = contextAccessor;
             var tempDataDictionaryFactory = _contextAccessor.HttpContext!.RequestServices.GetRequiredService<ITempDataDictionaryFactory>();

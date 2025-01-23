@@ -1,8 +1,8 @@
-using WebApi.Models;
+using AdminMicroService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using WebApi.Services;
+using AdminMicroService.Services;
 using Newtonsoft.Json;
 using System.Security.Claims;
 

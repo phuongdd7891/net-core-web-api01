@@ -1,20 +1,20 @@
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using WebApi.Services;
+using AdminMicroService.Services;
 using CoreLibrary.Repository;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.Newtonsoft;
 using Newtonsoft.Json.Serialization;
-using WebApi.Services.Grpc;
-using WebApi.Data;
+using MicroServices.Grpc;
+using AdminMicroService.Data;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CoreLibrary.DataModels;
-using CoreLibrary.Models;
 using CoreLibrary.DbAccess;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+
+builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Admin/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
 
 // Add services to the container.
 services.AddControllers()
@@ -72,30 +72,19 @@ services.AddSwaggerGen(options =>
 });
 
 //db configs
-var mongoDbSettings = builder.Configuration.GetSection("BookDatabase").Get<DbSettings>();
-services.Configure<DbSettings>(builder.Configuration.GetSection("AdminDatabase"));
+var dbName = builder.Configuration.GetValue<string>("DatabaseName");
+var dbConnectionStr = builder.Configuration.GetConnectionString("MongoDb");
 services.AddIdentity<ApplicationUser, ApplicationRole>()
         .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
         (
-            mongoDbSettings?.ConnectionString, mongoDbSettings?.DatabaseName
+            dbConnectionStr, dbName
         );
 
 var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConfiguration>();
 services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
 
-services.AddScoped(serviceProvider =>
-{
-    var settings = serviceProvider.GetRequiredService<IOptions<DbSettings>>().Value;
-    return new AppDBContext(settings.ConnectionString, settings.DatabaseName);
-});
-services.AddScoped(serviceProvider =>
-{
-    if (mongoDbSettings == null)
-    {
-        throw new Exception("Missing mongoDbSettings");
-    }
-    return new MongoDbContext(mongoDbSettings.ConnectionString, mongoDbSettings.DatabaseName);
-});
+services.AddSingleton<MongoDbContext>();
+services.AddSingleton<AppDBContext>();
 services.AddTransient<RedisRepository>();
 services.AddTransient<JwtService>();
 services.AddTransient<AdminRepository>();

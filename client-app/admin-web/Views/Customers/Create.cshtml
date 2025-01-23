@@ -3,7 +3,7 @@
     ViewData["Title"] = "Create Customer";
 }
 
-<form class="row g-3" asp-action="create" asp-controller="customers" method="post">
+<form class="row g-3" asp-action="create" asp-controller="customers" method="post" autocomplete="off">
     <div class="col-md-6">
         <label asp-for="Username" class="form-label">Username</label>
         @Html.TextBoxFor(a => a.Username, new { @class = "form-control", placeholder = "Username..." })

@@ -131,7 +131,7 @@ services.AddScoped(serviceProvider =>
 services.AddScoped<IConnectionThrottlingPipeline>(serviceProvider =>
 {
     var dbCtx = serviceProvider.GetRequiredService<MongoDbContext>();
-    return new ConnectionThrottlingPipeline(dbCtx.mongoClient);
+    return new ConnectionThrottlingPipeline(dbCtx.GetClient());
 });
 services.AddTransient<BooksService>();
 services.AddTransient<JwtService>();

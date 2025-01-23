@@ -1,4 +1,4 @@
-namespace WebApi.Models;
+namespace AdminMicroService.Models;
 
 public class User
 {

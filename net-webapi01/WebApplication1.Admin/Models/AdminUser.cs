@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
-namespace WebApi.Models
+namespace AdminMicroService.Models
 {   
     public class AdminUser
     {

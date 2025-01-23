@@ -10,7 +10,7 @@ namespace AdminWeb.Services
             HttpClient httpClient,
             IConfiguration configuration,
             IHttpContextAccessor contextAccessor
-        ) : base(httpClient, configuration)
+        ) : base(httpClient, configuration, contextAccessor)
         {
             _contextAccessor = contextAccessor;
         }
@@ -35,7 +35,7 @@ namespace AdminWeb.Services
 
         public Task AddRoleActions(string roleId, string[] actions)
         {
-            return PostAsync<Object, string?>("api/operations/add-role-actions", new {
+            return PostAsync<Object, string?>("gw-api/user/add-role-actions", new {
                 RoleId = roleId ,
                 Actions = actions
             });
@@ -43,7 +43,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<string>> CreateRole(string name, string? customerId)
         {
-            return PostAsync<object, ApiResponse<string>>("api/operations/create-role", new
+            return PostAsync<object, ApiResponse<string>>("gw-api/user/create-role", new
             {
                 Name = name,
                 CustomerId = customerId
@@ -52,7 +52,7 @@ namespace AdminWeb.Services
 
         public Task EditRole(string id, string name, string? customerId)
         {
-            return PostAsync<object, string?>("api/operations/edit-role", new
+            return PostAsync<object, string?>("gw-api/user/edit-role", new
             {
                 Id = id,
                 Name = name,
@@ -72,7 +72,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<List<UserActionResponse>>> GetUserActions()
         {
-            return GetAsync<ApiResponse<List<UserActionResponse>>>($"api/operations/user-actions");
+            return GetAsync<ApiResponse<List<UserActionResponse>>>($"gw-api/user/user-actions");
         }
 
         public Task ChangePassword(string currentPassword, string newPassword)

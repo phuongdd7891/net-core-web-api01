@@ -12,7 +12,7 @@ public static class GrpcClientExtentions
         services.AddGrpcClient<UserServiceProto.UserServiceProtoClient>(c =>
         {
             c.Address = new Uri(configuration.GetValue<string>("Microservices:UserMicroserviceUrl")!);
-        });
+        }).AddInterceptor<ErrorHandlerInterceptor>();
         services.AddGrpcClient<AdminUserServiceProto.AdminUserServiceProtoClient>(c =>
         {
             c.Address = new Uri(configuration.GetValue<string>("Microservices:AdminMicroserviceUrl")!);
@@ -20,7 +20,7 @@ public static class GrpcClientExtentions
         services.AddGrpcClient<AdminAuthServiceProto.AdminAuthServiceProtoClient>(c =>
         {
             c.Address = new Uri(configuration.GetValue<string>("Microservices:AdminMicroserviceUrl")!);
-        });
+        }).AddInterceptor<ErrorHandlerInterceptor>();
 
         return services;
     }

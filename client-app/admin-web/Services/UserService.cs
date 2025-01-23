@@ -7,8 +7,9 @@ namespace AdminWeb.Services
     {
         public UserService(
            HttpClient httpClient,
-           IConfiguration configuration
-        ) : base(httpClient, configuration)
+           IConfiguration configuration,
+           IHttpContextAccessor contextAccessor
+        ) : base(httpClient, configuration, contextAccessor)
         { }
 
         public Task<ApiResponse<string>> AddUserToRoles(string username, string[] roles)
@@ -27,7 +28,7 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<string>> SetLockUser(string username, bool isLock)
         {
-            return PostAsync<Object, ApiResponse<string>>("api/operations/lock-user", new
+            return PostAsync<Object, ApiResponse<string>>("gw-api/user/lock-user", new
             {
                 Username = username,
                 IsLock = isLock
@@ -41,12 +42,12 @@ namespace AdminWeb.Services
 
         public Task<ApiResponse<string>> UpdateUser(UserViewModel req)
         {
-            return PostAsync<Object, ApiResponse<string>>("api/operations/update-user", req);
+            return PostAsync<Object, ApiResponse<string>>("gw-api/user/update-user", req);
         }
 
         public Task<ApiResponse<string>> CreateUser(UserViewModel req)
         {
-            return PostAsync<Object, ApiResponse<string>>("api/operations/create-user", req);
+            return PostAsync<Object, ApiResponse<string>>("gw-api/user/create-user", req);
         }
     }
 }

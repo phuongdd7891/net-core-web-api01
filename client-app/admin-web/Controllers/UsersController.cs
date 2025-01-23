@@ -58,7 +58,10 @@ namespace AdminWeb.Controllers
         {
             var user = await _userService.GetUser(username);
             var roles = await _authService.GetUserRoles(customerId);
-            TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            if (roles?.Data != null)
+            {
+                TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            }
             return View(user.Data);
         }
 
@@ -70,10 +73,9 @@ namespace AdminWeb.Controllers
             var customerId = model.CustomerId;
             try
             {
-                await _userService.UpdateUser(model);
                 var roles = usrRoles.Where(a => a.IndexOf("__") < 0 || a.StartsWith(string.Format("{0}__", customerId))).ToArray();
-                await _userService.AddUserToRoles(model.Username, roles);
-                await _userService.SetLockUser(model.Username, model.IsLocked);
+                model.Roles = roles;
+                await _userService.UpdateUser(model);
                 _notyfService.Success(Messages.SaveSuccessfully);
             }
             catch (Exception ex)
@@ -90,7 +92,10 @@ namespace AdminWeb.Controllers
         public async Task<IActionResult> Create(string? customerId)
         {
             var roles = await _authService.GetUserRoles(customerId);
-            TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            if (roles?.Data != null)
+            {
+                TempData["Roles"] = JsonConvert.SerializeObject(roles.Data);
+            }
             var vm = new UserViewModel { CustomerId = customerId };
             return View(vm);
         }
@@ -103,9 +108,9 @@ namespace AdminWeb.Controllers
             var customerId = model.CustomerId;
             try
             {
-                await _userService.CreateUser(model);
                 var roles = usrRoles.Where(a => a.IndexOf("__") < 0 || a.StartsWith(string.Format("{0}__", customerId))).ToArray();
-                await _userService.AddUserToRoles(model.Username, roles);
+                model.Roles = roles;
+                await _userService.CreateUser(model);
                 _notyfService.Success(Messages.CreateSuccessfully);
             }
             catch (Exception ex)

@@ -8,6 +8,9 @@ package adminuserservice;
 service AdminUserServiceProto {
     rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileReply);
     rpc GetCustomerUsers (google.protobuf.Empty) returns (GetCustomerUsersReply);
+    rpc CreateUser (CreateUserRequest) returns (CreateUserReply);
+    rpc UpdateUser (UpdateUserRequest) returns (CreateUserReply);
+    rpc GetUser (GetUserProfileRequest) returns (AdminUser);
 }
 
 message GetUserProfileRequest {
@@ -47,4 +50,28 @@ message AdminUser {
 
 message GetCustomerUsersReply {
     repeated AdminProfile data = 1;
+}
+
+message CreateUserRequest {
+    string username = 1;
+    string password = 2;
+    google.protobuf.StringValue fullName = 3;
+    google.protobuf.StringValue email = 4;
+    bool isSystem = 5;
+    bool isCustomer = 6;
+    bool disabled = 7;
+}
+
+message CreateUserReply {
+    string id = 1;
+    google.protobuf.StringValue message = 2;
+}
+
+message UpdateUserRequest {
+    string id = 1;
+    string username = 2;
+    google.protobuf.StringValue password = 3;
+    google.protobuf.StringValue fullName = 4;
+    google.protobuf.StringValue email = 5;
+    bool disabled = 6;
 }

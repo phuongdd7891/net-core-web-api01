@@ -45,7 +45,7 @@ namespace AdminWeb.Handlers
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
-            Response.Redirect($"/home/error?code={Const.ErrCode_InvalidToken}");
+            Response.Redirect($"/home/error?code={Const.ErrCode_InvalidToken}&redirectUrl=/");
             return Task.CompletedTask;
         }
     }

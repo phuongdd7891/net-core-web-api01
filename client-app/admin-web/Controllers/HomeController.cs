@@ -5,14 +5,26 @@ using AdminWeb.Services;
 using AspNetCoreHero.ToastNotification.Abstractions;
 using Microsoft.Extensions.Primitives;
 using Microsoft.AspNetCore.Authorization;
-namespace AdminWeb.Controllers; 
+namespace AdminWeb.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger; private readonly INotyfService _notyfService; private readonly ToastMessageService _toastMsgService;
+    private readonly ILogger<HomeController> _logger;
+    private readonly INotyfService _notyfService;
+    private readonly ToastMessageService _toastMsgService;
     private readonly AuthService _authService;
 
-    public HomeController(ILogger<HomeController> logger, INotyfService notyfService, ToastMessageService toastMsgService, AuthService authService) { _logger = logger; _notyfService = notyfService; _toastMsgService = toastMsgService; _authService = authService; }
+    public HomeController(
+        ILogger<HomeController> logger,
+        INotyfService notyfService,
+        ToastMessageService toastMsgService,
+        AuthService authService)
+    {
+        _logger = logger;
+        _notyfService = notyfService;
+        _toastMsgService = toastMsgService;
+        _authService = authService;
+    }
     public IActionResult Index()
     {
 
@@ -33,7 +45,9 @@ public class HomeController : Controller
     [HttpGet]
     public IActionResult Error([FromForm] string message)
     {
-        string? redirectUrl = null; var errCode = string.Empty; if (Request.QueryString.HasValue)
+        string? redirectUrl = null;
+        var errCode = string.Empty;
+        if (Request.QueryString.HasValue)
         {
             var values = new StringValues();
             if (Request.Query.TryGetValue("code", out values))
@@ -56,4 +70,5 @@ public class HomeController : Controller
             Message = message,
             BackUrl = redirectUrl ?? string.Format("/?redirectUrl={0}", Request.Headers["Referer"].ToString())
         });
-    }}
+    }
+}
