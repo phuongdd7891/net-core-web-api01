@@ -5,6 +5,7 @@ using Userservice;
 using AdminMicroService.Data;
 using AdminMicroService.Models;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Clusters;
 
 namespace MicroServices.Grpc;
 public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
@@ -49,17 +50,8 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
             .SelectMany(a => a.Admins.DefaultIfEmpty(), (u, a) => new CoreLibrary.Models.UserViewModel(u.User)
             {
                 CustomerName = a?.FullName ?? string.Empty
-            }).ToList();
-        var tasks = new List<Task>();
-        users.ForEach(u =>
-        {
-            tasks.Add(GetRolesByUser(u.UserName!).ContinueWith(x =>
-            {
-                u.Roles = x.Result.Select(a => FormatRoleNameByCustomer(a, u.CustomerId)).ToArray();
-            }));
-        });
-        await Task.WhenAll(tasks);
-        result.List.AddRange(users.Select(user =>
+            });
+        var userVMTasks = users.Select(async user =>
         {
             var userVM = new Userservice.UserViewModel
             {
@@ -71,9 +63,34 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
                 IsLocked = user.IsLocked,
                 UserName = user.UserName
             };
-            userVM.Roles.AddRange(user.Roles);
+            var usrRoles = await GetRolesByUser(user.UserName!);
+            if (usrRoles != null)
+            {
+                var roleNames = usrRoles.Select(a => FormatRoleNameByCustomer(a, user.CustomerId)).ToArray();
+                if (roleNames != null)
+                {
+                    userVM.Roles.AddRange(roleNames);
+                    var roleTasks = roleNames.Select(a =>
+                    {
+                        return _roleManager.FindByNameAsync(a).ContinueWith(x =>
+                        {
+                            if (x.Result != null)
+                            {
+                                userVM.RoleIds.Add(x.Result.Id.ToString());
+                            }
+                        });
+                    });
+                    await Task.WhenAll(roleTasks);
+                }
+            }
             return userVM;
-        }));
+        });
+
+        var userVMs = await Task.WhenAll(userVMTasks);
+        if (userVMs != null)
+        {
+            result.List.AddRange(userVMs);
+        }
         result.Total = total;
         return result;
     }
@@ -130,6 +147,7 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
                     appUser!.Email = request.Email;
                     appUser.PhoneNumber = request.PhoneNumber;
                     appUser.CustomerId = request.CustomerId;
+                    appUser.LockoutEnabled = request.IsLocked;
                     appUser.LockoutEnd = request.IsLocked ? DateTimeOffset.MaxValue : DateTimeOffset.UtcNow.AddDays(-1);
                     var updateResult = await _appDBContext.AppUsers.ReplaceOneAsync(session, x => x.Id == appUser.Id, appUser);
                     if (!updateResult.IsAcknowledged)
@@ -138,16 +156,16 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
                     }
                     else
                     {
+                        if (appUser.Roles.Count > 0)
+                        {
+                            var removeResult = await _appDBContext.AppUsers.UpdateOneAsync(session, a => a.Id == appUser.Id, Builders<ApplicationUser>.Update.Set("Roles", new List<Guid>()));
+                            if (!removeResult.IsAcknowledged)
+                            {
+                                throw new Exception("Remove role fail");
+                            }
+                        }
                         if (request.Roles.Count > 0)
                         {
-                            if (appUser.Roles.Count > 0)
-                            {
-                                var removeResult = await _appDBContext.AppUsers.UpdateOneAsync(session, a => a.Id == appUser.Id, Builders<ApplicationUser>.Update.Set("Roles", new List<Guid>()));
-                                if (!removeResult.IsAcknowledged)
-                                {
-                                    throw new Exception("Remove role fail");
-                                }
-                            }
                             var roleIds = await _appDBContext.AppRoles.Find(session, a => request.Roles.Contains(a.Name)).Project(a => a.Id).ToListAsync();
                             var roleResult = await _appDBContext.AppUsers.UpdateOneAsync(session, a => a.Id == appUser.Id, Builders<ApplicationUser>.Update.Set("Roles", roleIds));
                             if (!roleResult.IsAcknowledged)
@@ -221,12 +239,32 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
     public override async Task<LockUserReply> LockUser(LockUserRequest request, ServerCallContext context)
     {
         var result = new LockUserReply();
-        result.IsSuccess = false;
         var user = await _userManager.FindByNameAsync(request.Username!);
         if (user != null)
         {
-            var lockResult = await _userManager.SetLockoutEndDateAsync(user, request.IsLock ? DateTimeOffset.MaxValue : DateTimeOffset.UtcNow.AddDays(-1));
-            result.IsSuccess = lockResult.Succeeded;
+            var enableResult = await _userManager.SetLockoutEnabledAsync(user, true);
+            var msg = string.Empty;
+            if (request.IsLock)
+            {
+                var lockResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                result.IsSuccess = enableResult.Succeeded && lockResult.Succeeded;
+                msg = lockResult.Errors.FirstOrDefault()?.Description ?? "Lock user fail";
+            }
+            else
+            {
+                var unlockResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddDays(-1));
+                result.IsSuccess = enableResult.Succeeded && unlockResult.Succeeded;
+                msg = unlockResult.Errors.FirstOrDefault()?.Description ?? "Unlock user fail";
+            }
+            if (!result.IsSuccess)
+            {
+                result.Message = enableResult.Errors.FirstOrDefault()?.Description ?? msg;
+            }
+        }
+        else
+        {
+            result.IsSuccess = false;
+            result.Message = "User not found";
         }
         return result;
     }

@@ -11,7 +11,16 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//builder.Configuration.AddJsonFile("./client-app/admin-web/appsettings.json", optional: false, reloadOnChange: true);
+var basePath = Environment.GetEnvironmentVariable("BASE_PATH");
+if (!string.IsNullOrEmpty(basePath))
+{
+    builder.Configuration.SetBasePath(basePath);
+}
+
+// Add configuration files
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

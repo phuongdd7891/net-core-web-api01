@@ -35,7 +35,7 @@ namespace Gateway.Models.Requests
 
     public class LockUserRequest
     {
-        public string? Username { get; set; }
+        public required string Username { get; set; }
         public bool IsLock { get; set; }
     }
 

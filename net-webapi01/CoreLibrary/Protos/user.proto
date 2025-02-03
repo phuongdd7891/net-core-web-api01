@@ -83,4 +83,5 @@ message LockUserRequest {
 
 message LockUserReply {
     bool isSuccess = 1;
+    google.protobuf.StringValue message = 2;
 }

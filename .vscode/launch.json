@@ -19,6 +19,7 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
+                "BASE_PATH": "${workspaceFolder}/client-app/admin-web",
                 "ASPNETCORE_URLS": "http://localhost:5017"
             },
             "sourceFileMap": {

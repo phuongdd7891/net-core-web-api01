@@ -40,17 +40,10 @@ public class AdminUserGrpcService : AdminUserServiceProto.AdminUserServiceProtoB
     {
         var users = new List<AdminMicroService.Models.AdminUser>();
         var claimUser = Helpers.GetClaimProfile(context);
-        if (claimUser != null)
+        if (Convert.ToBoolean(claimUser?.IsSystem))
         {
-            if (claimUser.IsSystem)
-            {
-                var listUsers = await _adminRepository.ListUsers(true);
-                users.AddRange(listUsers);
-            }
-            if (claimUser.IsCustomer)
-            {
-                users.Add(await _adminRepository.GetUser(claimUser.Username));
-            }
+            var listUsers = await _adminRepository.ListUsers(true);
+            users.AddRange(listUsers.Where(a => a.Id != claimUser.Id));
         }
         var appUsers = _userManager.Users;
         var list = users.GroupJoin(appUsers, u => u.Id, a => a.CustomerId, (u, a) => new { Admin = u, UserCount = a.Count() }).ToList();
@@ -112,7 +105,9 @@ public class AdminUserGrpcService : AdminUserServiceProto.AdminUserServiceProtoB
                 FullName = request.FullName,
                 Email = request.Email,
                 Disabled = request.Disabled,
-                CreatedDate = user.CreatedDate
+                CreatedDate = user.CreatedDate,
+                IsCustomer = user.IsCustomer,
+                IsSystem = user.IsSystem
             });
         }
         return result;

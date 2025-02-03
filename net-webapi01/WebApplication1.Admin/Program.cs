@@ -112,6 +112,7 @@ var excludeMethods = new List<string>
     "/adminauthservice.AdminAuthServiceProto/Login"
 };
 services.AddTransient(sp => new JwtValidationInterceptor(tokenValidationParameters, excludeMethods));
+services.AddGrpcReflection();
 
 var app = builder.Build();
 
@@ -120,6 +121,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.MapGrpcReflectionService();
 }
 app.UseRouting();
 app.MapControllers();

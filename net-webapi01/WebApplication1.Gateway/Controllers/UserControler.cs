@@ -84,7 +84,8 @@ public partial class UserController : BaseController
             CustomerId = user.CustomerId,
             Email = user.Email,
             Password = user.Password,
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
+            IsLocked = user.IsLocked
         };
         request.Roles.AddRange(user.Roles);
         var result = await _userClient.UpdateUserAsync(request, DefaultHeader);
@@ -102,27 +103,20 @@ public partial class UserController : BaseController
     [HttpPost("lock-user")]
     public async Task<IActionResult> LockUser([FromBody] Models.Requests.LockUserRequest request)
     {
-        ErrorStatuses.ThrowBadRequest("Username is required", string.IsNullOrEmpty(request.Username));
+        ErrorStatuses.ThrowBadRequest(ModelState.Values.FirstOrDefault()?.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid request", !ModelState.IsValid);
         var result = await _userClient.LockUserAsync(new Userservice.LockUserRequest
         {
             Username = request.Username,
             IsLock = request.IsLock
         }, DefaultHeader);
-        ErrorStatuses.ThrowInternalErr(request.IsLock ? "Lock unsuccessfully" : "Unlock unsuccessfully", !result.IsSuccess);
+        ErrorStatuses.ThrowInternalErr(result.Message, !result.IsSuccess);
         return Ok();
     }
 
     [HttpPost("create-user")]
     public async Task<IActionResult> CreateUser(UserRequest user)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new DataResponse<string>
-            {
-                Code = DataResponseCode.InvalidRequest.ToString(),
-                Data = ModelState.Values.First().Errors.First()!.ErrorMessage
-            });
-        }
+        ErrorStatuses.ThrowBadRequest(ModelState.Values.FirstOrDefault()?.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid request", !ModelState.IsValid);
         ErrorStatuses.ThrowBadRequest("Invalid email", !Utils.ValidEmailAddress(user.Email));
         ErrorStatuses.ThrowBadRequest("Invalid phone", !string.IsNullOrEmpty(user.PhoneNumber) && !Utils.ValidPhoneNumber(user.PhoneNumber));
         var request = new UpdateUserRequest
@@ -135,14 +129,8 @@ public partial class UserController : BaseController
         };
         request.Roles.AddRange(user.Roles);
         var result = await _userClient.CreateUserAsync(request, DefaultHeader);
-        if (!string.IsNullOrEmpty(result.Message))
-        {
-            return BadRequest(new DataResponse<string>
-            {
-                Code = DataResponseCode.IternalError.ToString(),
-                Data = result.Message
-            });
-        }
+        ErrorStatuses.ThrowBadRequest(result.Message, !string.IsNullOrEmpty(result.Message));
+
         //TODO: await _emailSender.SendEmailAsync(user.Email, "Email Confirmation Token", $"<p>You need to confirm your email account by using below token</p><p><b>{emailToken}</b></p>").ConfigureAwait(false);
         return Ok(new DataResponse());
     }

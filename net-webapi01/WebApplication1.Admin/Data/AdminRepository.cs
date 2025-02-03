@@ -49,7 +49,6 @@ public class AdminRepository
     {
         var filter = Builders<AdminUser>.Filter.Where(u => u.Username == user.Username);
         user.ModifiedDate = DateTime.UtcNow;
-        user.IsCustomer = true;
         if (!string.IsNullOrEmpty(password))
         {
             user.Password = passwordHasher.HashPassword(user, password);

@@ -12,4 +12,5 @@ public class UserRequest
 
     public string? PhoneNumber { get; set; }
     public string[]? Roles { get; set; }
+    public bool IsLocked { get; set; }
 }

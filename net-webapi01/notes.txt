@@ -1,10 +1,11 @@
 #---IMPLEMENTATION
-- implement handle error
-- implement logger
-- upload file - validate file (size, extension...)
-- api gateway
 - rabbitmq
 - full-text search lucene.net
+
+#---GATEWAY
+- implement logger
+- authentication 
+
 #---CLIENT APP
 - add show password to input
 - modify again stored user
