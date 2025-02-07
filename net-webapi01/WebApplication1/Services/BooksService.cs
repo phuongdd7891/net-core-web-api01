@@ -23,11 +23,23 @@ public class BooksService
 
     public async Task<List<Book>> GetAsync(GetBooksRequest req, string createdBy)
     {
-        var filterDate = Builders<Book>.Filter.Where(a => a.CreatedDate >= req.CreatedFrom && a.CreatedDate < req.CreatedTo
-            || !req.CreatedFrom.HasValue && !req.CreatedTo.HasValue
-            || a.CreatedDate >= req.CreatedFrom && !req.CreatedTo.HasValue
-            || a.CreatedDate < req.CreatedTo && !req.CreatedFrom.HasValue);
-        var filterCreateBy = Builders<Book>.Filter.Eq("CreatedBy", createdBy);
+        var filterDate = Builders<Book>.Filter.Empty;
+        if (req.CreatedFrom.HasValue && req.CreatedTo.HasValue)
+        {
+            filterDate = Builders<Book>.Filter.And(
+                Builders<Book>.Filter.Gte(a => a.CreatedDate, req.CreatedFrom.Value),
+                Builders<Book>.Filter.Lt(a => a.CreatedDate, req.CreatedTo.Value)
+            );
+        }
+        else if (req.CreatedFrom.HasValue)
+        {
+            filterDate = Builders<Book>.Filter.Gte(a => a.CreatedDate, req.CreatedFrom.Value);
+        }
+        else if (req.CreatedTo.HasValue)
+        {
+            filterDate = Builders<Book>.Filter.Lt(a => a.CreatedDate, req.CreatedTo.Value);
+        }
+        var filterCreateBy = Builders<Book>.Filter.Eq(a => a.CreatedBy, createdBy);
         var data = string.IsNullOrEmpty(req.SearchKey) ? await _booksCollection
             .Find(Builders<Book>.Filter.And(
                 filterDate,
@@ -83,7 +95,7 @@ public class BooksService
             };
             listWrites.Add(new InsertOneModel<Book>(cloneBook));
             count++;
-        };
+        }
         var result = await _connectionThrottlingPipeline.AddRequest(() => _booksCollection.BulkWriteAsync(listWrites));
         return result.InsertedCount;
     }

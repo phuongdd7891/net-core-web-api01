@@ -2,14 +2,16 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "common.proto";
 
 package adminauthservice;
 
 service AdminAuthServiceProto {
 	rpc Login (AdminLoginRequest) returns (AdminLoginReply);
     rpc CreateUserRole (CreateUserRoleRequest) returns (CreateUserRoleReply);
-    rpc UpdateUserRole (UpdateUserRoleRequest) returns (UpdateUserRoleReply);
+    rpc UpdateUserRole (UpdateUserRoleRequest) returns (common.CommonReply);
     rpc AddActionsToRole (AddActionsToRoleRequest) returns (google.protobuf.Empty);
+    rpc DeleteUserRole (DeleteUserRoleRequest) returns (common.CommonReply);
 }
 
 message AdminLoginRequest {
@@ -47,6 +49,6 @@ message UpdateUserRoleRequest {
     google.protobuf.StringValue customer_id = 3;
 }
 
-message UpdateUserRoleReply {
-    google.protobuf.StringValue message = 1;
+message DeleteUserRoleRequest {
+    string id = 1;
 }

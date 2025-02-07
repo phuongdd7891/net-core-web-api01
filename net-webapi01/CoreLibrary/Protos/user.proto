@@ -2,6 +2,7 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "common.proto";
 
 package userservice;
 
@@ -9,8 +10,8 @@ service UserServiceProto {
 	rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
     rpc GetUser (GetUserRequest) returns (GetUserReply);
     rpc GetUserRoles (GetUserRolesRequest) returns (GetUserRolesReply);
-    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserReply);
-    rpc CreateUser(UpdateUserRequest) returns (UpdateUserReply);
+    rpc UpdateUser(UpdateUserRequest) returns (common.CommonReply);
+    rpc CreateUser(UpdateUserRequest) returns (common.CommonReply);
     rpc LockUser(LockUserRequest) returns (LockUserReply);
 }
 
@@ -70,10 +71,6 @@ message UpdateUserRequest {
     google.protobuf.StringValue phone_number = 5;
     repeated string roles = 6;
     bool is_locked = 7;
-}
-
-message UpdateUserReply {
-    google.protobuf.StringValue message = 1;
 }
 
 message LockUserRequest {

@@ -1,0 +1,8 @@
+syntax = "proto3";
+import "google/protobuf/wrappers.proto";
+
+package common;
+
+message CommonReply {
+    google.protobuf.StringValue message = 1;
+}

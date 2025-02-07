@@ -4,7 +4,6 @@ using Gateway.Models.Requests;
 using Gateway.Models.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Gateway.Controllers;
@@ -99,6 +98,20 @@ public partial class UserController
         }, DefaultHeader);
         ErrorStatuses.ThrowInternalErr(result.Message, !string.IsNullOrEmpty(result.Message));
         //TODO: await _cacheService.LoadUserRoles(true);
+        return Ok();
+    }
+
+    [HttpPost("delete-role")]
+    public async Task<IActionResult> DeleteRole([FromBody] string id)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(id));
+        var result = await _adminAuthClient.DeleteUserRoleAsync(new Adminauthservice.DeleteUserRoleRequest
+        {
+            Id = id
+        }, DefaultHeader);
+        ErrorStatuses.ThrowInternalErr(result.Message, !string.IsNullOrEmpty(result.Message));
+        //TODO: await _cacheService.LoadUserRoles(true);
+        //TODO: await _cacheService.LoadRoleActions(true);
         return Ok();
     }
 }

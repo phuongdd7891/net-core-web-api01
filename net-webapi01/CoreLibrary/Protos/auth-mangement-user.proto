@@ -1,0 +1,34 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+package managementauthservice;
+
+service ManagementAuthServiceProto {
+	rpc Login (LoginRequest) returns (LoginReply);
+    rpc ChangePassword (ChangePasswordRequest) returns (common.CommonReply);
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message AuthData {
+    string token = 1;
+    google.protobuf.Timestamp expiration = 2;
+    string username = 3;
+}
+
+message LoginReply {
+    AuthData authData = 1;
+    string errorCode = 2;
+}
+
+message ChangePasswordRequest {
+    string username = 1;
+    string oldPassword = 2;
+    string newPassword = 3;
+}

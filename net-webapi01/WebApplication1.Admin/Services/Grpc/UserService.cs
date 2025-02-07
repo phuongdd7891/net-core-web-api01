@@ -6,6 +6,7 @@ using AdminMicroService.Data;
 using AdminMicroService.Models;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Clusters;
+using Common;
 
 namespace MicroServices.Grpc;
 public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
@@ -128,9 +129,9 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
         return result;
     }
 
-    public override async Task<UpdateUserReply> UpdateUser(UpdateUserRequest request, ServerCallContext context)
+    public override async Task<CommonReply> UpdateUser(UpdateUserRequest request, ServerCallContext context)
     {
-        var result = new UpdateUserReply();
+        var result = new CommonReply();
         var client = _appDBContext.GetClient();
         using (var session = await client.StartSessionAsync())
         {
@@ -190,13 +191,13 @@ public partial class UserGrpcService : UserServiceProto.UserServiceProtoBase
         return result;
     }
 
-    public override async Task<UpdateUserReply> CreateUser(UpdateUserRequest request, ServerCallContext context)
+    public override async Task<CommonReply> CreateUser(UpdateUserRequest request, ServerCallContext context)
     {
         var client = _appDBContext.GetClient();
         using (var session = await client.StartSessionAsync())
         {
             session.StartTransaction();
-            var result = new UpdateUserReply();
+            var result = new CommonReply();
             try
             {
                 var createUser = new ApplicationUser()

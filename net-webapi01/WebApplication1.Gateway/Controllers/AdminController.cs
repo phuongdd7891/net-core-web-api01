@@ -3,10 +3,10 @@ using Gateway.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Adminuserservice;
 using Adminauthservice;
-using Userservice;
 using Microsoft.AspNetCore.Authorization;
 using Google.Protobuf.WellKnownTypes;
 using CoreLibrary.Utils;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Gateway.Controllers;
 
@@ -54,6 +54,12 @@ public class AdminController : BaseController
                 result.RefreshToken
             }
         });
+    }
+
+    [HttpPost("Logout")]
+    public IActionResult Logout()
+    {
+        return Ok(new DataResponse());
     }
 
     [HttpGet("user-profile")]

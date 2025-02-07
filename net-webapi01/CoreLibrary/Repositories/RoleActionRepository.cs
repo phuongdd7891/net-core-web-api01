@@ -1,6 +1,5 @@
 using CoreLibrary.DbAccess;
 using CoreLibrary.Models;
-using DnsClient.Protocol;
 using MongoDB.Driver;
 
 public class RoleActionRepository
@@ -35,16 +34,23 @@ public class RoleActionRepository
                 ModifiedBy = actor
             });
         }
-    }    
+    }
 
     public async Task<List<RoleAction>> GetAll()
     {
         return await _collection.Find(_ => true).ToListAsync();
     }
 
-    public async Task DeleteByRoleId(string roleId)
+    public async Task DeleteByRoleId(string roleId, IClientSessionHandle? session = null)
     {
         var filter = Builders<RoleAction>.Filter.Where(x => x.RoleId == roleId);
-        await _collection.DeleteOneAsync(filter);
+        if (session == null)
+        {
+            await _collection.DeleteOneAsync(filter);
+        }
+        else
+        {
+            await _collection.DeleteOneAsync(session, filter);
+        }
     }
 }

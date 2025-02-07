@@ -6,6 +6,8 @@ using AdminMicroService.Data;
 using AdminMicroService.Services;
 using Microsoft.AspNetCore.Identity;
 using CoreLibrary.DataModels;
+using MongoDB.Driver;
+using Common;
 
 namespace MicroServices.Grpc;
 
@@ -15,14 +17,17 @@ public class AuthGrpcService : AdminAuthServiceProto.AdminAuthServiceProtoBase
     private readonly JwtService _jwtService;
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly RoleActionRepository _roleActionRepository;
+    private readonly AppDBContext _appDBContext;
 
     public AuthGrpcService(
+        AppDBContext appDBContext,
         AdminRepository adminRepository,
         JwtService jwtService,
         RoleManager<ApplicationRole> roleManager,
         RoleActionRepository roleActionRepository
     )
     {
+        _appDBContext = appDBContext;
         _adminRepository = adminRepository;
         _jwtService = jwtService;
         _roleManager = roleManager;
@@ -95,9 +100,9 @@ public class AuthGrpcService : AdminAuthServiceProto.AdminAuthServiceProtoBase
         return new Empty();
     }
 
-    public override async Task<UpdateUserRoleReply> UpdateUserRole(UpdateUserRoleRequest request, ServerCallContext context)
+    public override async Task<CommonReply> UpdateUserRole(UpdateUserRoleRequest request, ServerCallContext context)
     {
-        var result = new UpdateUserRoleReply();
+        var result = new CommonReply();
         var role = await _roleManager.FindByIdAsync(request.Id);
         if (role == null)
         {
@@ -120,5 +125,57 @@ public class AuthGrpcService : AdminAuthServiceProto.AdminAuthServiceProtoBase
             }
         }
         return result;
+    }
+
+    public override async Task<CommonReply> DeleteUserRole(DeleteUserRoleRequest request, ServerCallContext context)
+    {
+        var reply = new CommonReply();
+        var role = await _roleManager.FindByIdAsync(request.Id);
+        if (role != null)
+        {
+            var client = _appDBContext.GetClient();
+            using (var session = await client.StartSessionAsync())
+            {
+                session.StartTransaction();
+                try
+                {
+                    var rId = Guid.Empty;
+                    if (Guid.TryParse(request.Id, out rId))
+                    {
+                        var deleteRoleResult = await _appDBContext.AppRoles.DeleteOneAsync(session, a => a.Id == rId);
+                        if (deleteRoleResult.DeletedCount == 0)
+                        {
+                            throw new Exception("Delete role unsuccessfully");
+                        }
+                        await _roleActionRepository.DeleteByRoleId(request.Id, session);
+                        var users = await _appDBContext.AppUsers.Find(session, a => a.Roles.Contains(rId)).ToListAsync();
+                        if (users?.Count > 0)
+                        {
+                            var updateTasks = users.Select(usr =>
+                            {
+                                usr.Roles.Remove(rId);
+                                return _appDBContext.AppUsers.UpdateOneAsync(session, a => a.Id == usr.Id, Builders<ApplicationUser>.Update.Set(a => a.Roles, usr.Roles));
+                            });
+                            var updateResult = await Task.WhenAll(updateTasks);
+                            if (updateResult.Any(a => a.ModifiedCount == 0))
+                            {
+                                throw new Exception("Update user role unsuccessfully");
+                            }
+                        }
+                    }
+                    await session.CommitTransactionAsync();
+                }
+                catch (Exception ex)
+                {
+                    await session.AbortTransactionAsync();
+                    throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+                }
+            }
+        }
+        else
+        {
+            reply.Message = "Role not found";
+        }
+        return reply;
     }
 }
