@@ -7,6 +7,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.Extensions.Primitives;
+using StackExchange.Redis.Extensions.Core.Configuration;
+using StackExchange.Redis.Extensions.Newtonsoft;
+using CoreLibrary.Repository;
+using Gateway.Services;
+using Gateway.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -89,10 +94,18 @@ services.AddAuthorization(options =>
         .Build();
 });
 
+var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConfiguration>();
+services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
+
+services.Configure<UploadSettings>(builder.Configuration.GetSection("UploadSettings"));
+
 services.AddScoped<ErrorHandlerInterceptor>();
+services.AddTransient<RedisRepository>();
 
 services.AddGrpc();
 services.AddGrpcClients(builder.Configuration);
+
+services.AddHostedService<FileHostedService>();
 
 var app = builder.Build();
 

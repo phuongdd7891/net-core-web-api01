@@ -66,7 +66,7 @@ public class ApiKeyService
         {
             var token = GenerateApiKeyValue();
             userKey.Value = token;
-            await _redisRepository.Set(redisKey, token, defaultExpiryMins);
+            await _redisRepository.Add(redisKey, token, defaultExpiryMins);
             await _redisRepository.SetEntity<ApplicationUser>($"{redisKey}:{token}", user, defaultExpiryMins);
         }
         return userKey;

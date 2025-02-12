@@ -58,5 +58,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGrpcService<AuthService>();
+app.MapGrpcService<FileService>();
 
 app.Run();

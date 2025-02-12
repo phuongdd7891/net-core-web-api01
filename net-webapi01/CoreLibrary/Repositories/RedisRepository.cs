@@ -14,7 +14,7 @@ public class RedisRepository
         _redisClient = redisClient;
     }
 
-    public async Task Set(string key, string value, TimeSpan expiry)
+    public async Task Add(string key, string value, TimeSpan expiry)
     {
         ErrorStatuses.ThrowInternalErr(_emptyKeyMessage, string.IsNullOrEmpty(key));
         await _redisClient.Db0.AddAsync(key, value, expiry);
@@ -36,6 +36,21 @@ public class RedisRepository
     public async Task<bool> HasKey(string key)
     {
         return await _redisClient.Db0.ExistsAsync(key);
+    }
+
+    public async Task SetAdd(string key, string value)
+    {
+        await _redisClient.Db0.SetAddAsync(key, value);
+    }
+
+    public async Task<bool> SetContains(string key, string value)
+    {
+        return await _redisClient.Db0.SetContainsAsync(key, value);
+    }
+
+    public async Task<T[]> SetMembers<T>(string key)
+    {
+        return await _redisClient.Db0.SetMembersAsync<T>(key);
     }
 
     public async Task UpdateExpireKey(string key, TimeSpan expiry)

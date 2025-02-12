@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package fileuploadservice;
+
+service UploadServiceProto {
+    rpc UploadFile (stream FileChunk) returns (UploadReply);
+}
+
+message FileChunk {
+    string fileName = 1;
+    bytes chunkData = 2;
+    string fileDir = 3;
+}
+
+message UploadReply {
+    string message = 1;
+}
