@@ -34,6 +34,14 @@ public class FileHostedService : IHostedService
 
     private async Task LoadFileNamesToCacheAsync()
     {
+        var members = await _redisRepository.SetMembers<string>(_uploadSettings.CacheName);
+        if (members.Length > 0)
+        {
+            foreach (var item in members)
+            {
+                await _redisRepository.SetRemove(_uploadSettings.CacheName, item);
+            }
+        }
         var files = Directory.EnumerateFiles(_uploadSettings.UploadDir)
                             .Where(a => !string.IsNullOrEmpty(a))
                             .Select(Path.GetFileName)

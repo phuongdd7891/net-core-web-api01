@@ -3,6 +3,7 @@ using Userservice;
 using Adminauthservice;
 using Adminuserservice;
 using Fileuploadservice;
+using Booklibrary;
 
 namespace Gateway.Middlewares;
 
@@ -26,6 +27,11 @@ public static class GrpcClientExtentions
         }).AddInterceptor<ErrorHandlerInterceptor>();
 
         services.AddGrpcClient<UploadServiceProto.UploadServiceProtoClient>(c =>
+        {
+            c.Address = new Uri(configuration.GetValue<string>("Microservices:ManagementUserMicroserviceUrl")!);
+        }).AddInterceptor<ErrorHandlerInterceptor>();
+
+        services.AddGrpcClient<BookLibraryServiceProto.BookLibraryServiceProtoClient>(c =>
         {
             c.Address = new Uri(configuration.GetValue<string>("Microservices:ManagementUserMicroserviceUrl")!);
         }).AddInterceptor<ErrorHandlerInterceptor>();

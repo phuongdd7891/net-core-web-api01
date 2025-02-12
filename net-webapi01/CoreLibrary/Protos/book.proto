@@ -10,6 +10,7 @@ service BookLibraryServiceProto {
     rpc GetBooks (ListBookRequest) returns (ListBooksReply);
     // rpc GetBook (GetBookRequest) returns (Book);
     rpc CreateBook (CreateBookRequest) returns (common.CommonReply);
+    rpc CreateBookWithUpload (stream CreateBookUploadRequest) returns (common.CommonReply);
     // rpc UpdateBook (UpdateBookRequest) returns (CreateBookReply);
     // rpc DeleteBook (DeleteBookRequest) returns (google.protobuf.Empty);
 }
@@ -33,7 +34,7 @@ message Book {
     google.protobuf.StringValue title = 2;
     google.protobuf.StringValue author = 3;
     google.protobuf.StringValue category = 4;
-    float price = 5;
+    double price = 5;
     google.protobuf.StringValue description = 6;
     google.protobuf.Timestamp createdDate = 7;
     google.protobuf.Timestamp modifiedDate = 8;
@@ -46,7 +47,15 @@ message CreateBookRequest {
     google.protobuf.StringValue title = 1;
     google.protobuf.StringValue author = 2;
     google.protobuf.StringValue category = 3;
-    float price = 4;
+    double price = 4;
     google.protobuf.StringValue description = 5;
     google.protobuf.StringValue summary = 6;
+    google.protobuf.StringValue coverPicture = 7;
+}
+
+message CreateBookUploadRequest {
+    oneof data {
+        common.FileChunk chunk = 1;
+        CreateBookRequest bookData = 2;
+    }
 }

@@ -1,15 +1,10 @@
 syntax = "proto3";
+import "common.proto";
 
 package fileuploadservice;
 
 service UploadServiceProto {
-    rpc UploadFile (stream FileChunk) returns (UploadReply);
-}
-
-message FileChunk {
-    string fileName = 1;
-    bytes chunkData = 2;
-    string fileDir = 3;
+    rpc UploadFile (stream common.FileChunk) returns (UploadReply);
 }
 
 message UploadReply {

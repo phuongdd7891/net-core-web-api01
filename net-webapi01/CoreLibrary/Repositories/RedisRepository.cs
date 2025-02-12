@@ -53,6 +53,11 @@ public class RedisRepository
         return await _redisClient.Db0.SetMembersAsync<T>(key);
     }
 
+    public async Task<bool> SetRemove(string key, string value)
+    {
+        return await _redisClient.Db0.SetRemoveAsync(key, value);
+    }
+
     public async Task UpdateExpireKey(string key, TimeSpan expiry)
     {
         await _redisClient.Db0.UpdateExpiryAsync(key, expiry);

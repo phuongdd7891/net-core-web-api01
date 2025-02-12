@@ -5,6 +5,7 @@ using StackExchange.Redis.Extensions.Newtonsoft;
 using CoreLibrary.Repository;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using CoreLibrary.DbAccess;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -42,6 +43,7 @@ var tokenValidationParameters = new TokenValidationParameters
     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
 };
 services.AddSingleton(tokenValidationParameters);
+services.AddSingleton<MongoDbContext>();
 
 services.AddGrpcSwagger();
 services.AddGrpc();
@@ -59,5 +61,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapGrpcService<AuthService>();
 app.MapGrpcService<FileService>();
+app.MapGrpcService<BookService>();
 
 app.Run();

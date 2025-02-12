@@ -6,3 +6,9 @@ package common;
 message CommonReply {
     google.protobuf.StringValue message = 1;
 }
+
+message FileChunk {
+    string fileName = 1;
+    bytes chunkData = 2;
+    string fileDir = 3;
+}
