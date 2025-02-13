@@ -1,5 +1,5 @@
 syntax="proto3";
-import "google/protobuf/empty.proto";
+
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 import "common.proto";
@@ -8,11 +8,11 @@ package booklibrary;
 
 service BookLibraryServiceProto {
     rpc GetBooks (ListBookRequest) returns (ListBooksReply);
-    // rpc GetBook (GetBookRequest) returns (Book);
+    rpc GetBook (GetBookRequest) returns (GetBookReply);
     rpc CreateBook (CreateBookRequest) returns (common.CommonReply);
     rpc CreateBookWithUpload (stream CreateBookUploadRequest) returns (common.CommonReply);
-    // rpc UpdateBook (UpdateBookRequest) returns (CreateBookReply);
-    // rpc DeleteBook (DeleteBookRequest) returns (google.protobuf.Empty);
+    rpc UpdateBook (UpdateBookRequest) returns (common.CommonReply);
+    rpc UpdateBookWithUpload (stream UpdateBookUploadRequest) returns (common.CommonReply);
 }
 
 message ListBookRequest {
@@ -41,6 +41,7 @@ message Book {
     google.protobuf.StringValue createdBy = 9;
     google.protobuf.StringValue modifiedBy = 10;
     google.protobuf.StringValue summary = 11;
+    google.protobuf.StringValue coverPicture = 12;
 }
 
 message CreateBookRequest {
@@ -58,4 +59,30 @@ message CreateBookUploadRequest {
         common.FileChunk chunk = 1;
         CreateBookRequest bookData = 2;
     }
+}
+
+message UpdateBookRequest {
+    string id = 1;
+    google.protobuf.StringValue title = 2;
+    google.protobuf.StringValue author = 3;
+    google.protobuf.StringValue category = 4;
+    double price = 5;
+    google.protobuf.StringValue description = 6;
+    google.protobuf.StringValue summary = 7;
+    google.protobuf.StringValue coverPicture = 8;
+}
+
+message UpdateBookUploadRequest {
+    oneof data {
+        common.FileChunk chunk = 1;
+        UpdateBookRequest bookData = 2;
+    }
+}
+
+message GetBookRequest {
+    string id = 1;
+}
+
+message GetBookReply {
+    Book data = 1;
 }

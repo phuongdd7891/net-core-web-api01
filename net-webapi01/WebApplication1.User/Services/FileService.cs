@@ -1,6 +1,7 @@
 using Fileuploadservice;
 using Grpc.Core;
 using Common;
+using CoreLibrary.Utils;
 
 namespace WebApplication1.User.Services;
 
@@ -40,5 +41,24 @@ public class FileService : UploadServiceProto.UploadServiceProtoBase
         {
             fileStream?.Close();
         }
+    }
+
+    public override Task<DownloadReply> DownloadFile(DownloadRequest request, ServerCallContext context)
+    {
+        var reply = new DownloadReply();
+        try
+        {
+            var bytes = Utils.ConvertToByteArrayChunked(request.FileName);
+            if (bytes?.Length > 0)
+            {
+                reply.Data = Google.Protobuf.ByteString.CopyFrom(bytes);
+            }
+        }
+        catch (FileNotFoundException ex)
+        {
+            reply.Message = ex.Message;
+        }
+
+        return Task.FromResult(reply);
     }
 }

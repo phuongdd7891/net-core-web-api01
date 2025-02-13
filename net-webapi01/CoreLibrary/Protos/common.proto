@@ -11,4 +11,5 @@ message FileChunk {
     string fileName = 1;
     bytes chunkData = 2;
     string fileDir = 3;
+    string updateId = 4;
 }
