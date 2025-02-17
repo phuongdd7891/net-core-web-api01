@@ -13,6 +13,8 @@ service BookLibraryServiceProto {
     rpc CreateBookWithUpload (stream CreateBookUploadRequest) returns (common.CommonReply);
     rpc UpdateBook (UpdateBookRequest) returns (common.CommonReply);
     rpc UpdateBookWithUpload (stream UpdateBookUploadRequest) returns (common.CommonReply);
+    rpc CreateBulkBooks (stream CreateBulkRequest) returns (common.CommonReply);
+    rpc DeleteBulkBooks (DeleteBulkRequest) returns (common.CommonReply);
 }
 
 message ListBookRequest {
@@ -35,7 +37,7 @@ message Book {
     google.protobuf.StringValue author = 3;
     google.protobuf.StringValue category = 4;
     double price = 5;
-    google.protobuf.StringValue description = 6;
+    google.protobuf.StringValue cloneId = 6;
     google.protobuf.Timestamp createdDate = 7;
     google.protobuf.Timestamp modifiedDate = 8;
     google.protobuf.StringValue createdBy = 9;
@@ -49,9 +51,9 @@ message CreateBookRequest {
     google.protobuf.StringValue author = 2;
     google.protobuf.StringValue category = 3;
     double price = 4;
-    google.protobuf.StringValue description = 5;
-    google.protobuf.StringValue summary = 6;
-    google.protobuf.StringValue coverPicture = 7;
+    google.protobuf.StringValue summary = 5;
+    google.protobuf.StringValue coverPicture = 6;
+    google.protobuf.StringValue cloneId = 7;
 }
 
 message CreateBookUploadRequest {
@@ -67,9 +69,8 @@ message UpdateBookRequest {
     google.protobuf.StringValue author = 3;
     google.protobuf.StringValue category = 4;
     double price = 5;
-    google.protobuf.StringValue description = 6;
-    google.protobuf.StringValue summary = 7;
-    google.protobuf.StringValue coverPicture = 8;
+    google.protobuf.StringValue summary = 6;
+    google.protobuf.StringValue coverPicture = 7;
 }
 
 message UpdateBookUploadRequest {
@@ -77,6 +78,16 @@ message UpdateBookUploadRequest {
         common.FileChunk chunk = 1;
         UpdateBookRequest bookData = 2;
     }
+}
+
+message CreateBulkRequest {
+    repeated CreateBookRequest data = 1;
+}
+
+message DeleteBulkRequest {
+    string id = 1;
+    int32 fromOrder = 2;
+    int32 toOrder = 3;
 }
 
 message GetBookRequest {

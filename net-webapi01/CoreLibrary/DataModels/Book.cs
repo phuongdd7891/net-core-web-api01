@@ -24,4 +24,5 @@ public class Book
     public string? CreatedBy { get; set; }
     public string? ModifiedBy { get; set; }
     public string? Summary { get; set; }
+    public string? CloneId { get; set; }
 }

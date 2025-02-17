@@ -5,7 +5,6 @@ using CoreLibrary.Repository;
 using Booklibrary;
 using Gateway.Models;
 using Microsoft.Extensions.Options;
-using Gateway.Models.Response;
 using Common;
 
 namespace Gateway.Controllers;
@@ -241,5 +240,68 @@ public class BookController : BaseController
         {
             Data = "Updated successfully"
         });
+    }
+
+    [HttpPost("create-clone")]
+    public async Task<IActionResult> CreateClone(Models.Requests.CloneBookRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Id) || request.Quantity == 0);
+        var book = await _bookServiceClient.GetBookAsync(new GetBookRequest
+        {
+            Id = request.Id
+        });
+        ErrorStatuses.ThrowNotFound("Book not found", book.Data == null);
+        int count = 0;
+        var list = new List<CreateBookRequest>();
+        while (count < request.Quantity)
+        {
+            list.Add(new CreateBookRequest
+            {
+                Title = $"[clone] {book.Data!.Title}",
+                Author = book.Data.Author,
+                Summary = book.Data.Summary,
+                Price = Convert.ToDouble(book.Data.Price),
+                Category = book.Data.Category,
+                CoverPicture = book.Data.CoverPicture,
+                CloneId = request.Id
+            });
+            count++;
+        }
+
+        using var call = _bookServiceClient.CreateBulkBooks();
+        const int batchSize = 1000;
+        for (int i = 0; i < list.Count; i += batchSize)
+        {
+            var batch = new CreateBulkRequest();
+            batch.Data.AddRange(list.GetRange(i, Math.Min(batchSize, list.Count - i)));
+            await call.RequestStream.WriteAsync(batch);
+        }
+
+        await call.RequestStream.CompleteAsync();
+
+        var response = await call;
+        ErrorStatuses.ThrowInternalErr(response.Message, !string.IsNullOrEmpty(response.Message));
+        return Ok(new DataResponse
+        {
+            Data = "Cloned successfully"
+        });
+    }
+
+    [HttpPost("delete-clone")]
+    public async Task<IActionResult> DeleteClone(Models.Requests.DeleteCloneBooksRequest request)
+    {
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Id) || request.From > request.To);
+        var response = await _bookServiceClient.DeleteBulkBooksAsync(new DeleteBulkRequest
+        {
+            Id = request.Id,
+            FromOrder = request.From,
+            ToOrder = request.To
+        });
+        ErrorStatuses.ThrowInternalErr(response.Message, !string.IsNullOrEmpty(response.Message));
+        return Ok(new DataResponse
+        {
+            Data = "Deleted successfully"
+        });
+
     }
 }

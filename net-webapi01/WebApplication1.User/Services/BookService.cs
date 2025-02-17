@@ -3,6 +3,7 @@ using Common;
 using CoreLibrary.DbAccess;
 using Grpc.Core;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 
 namespace WebApplication1.User.Services;
 
@@ -10,6 +11,8 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
 {
     private readonly MongoDbContext _mongoDbContext;
     private readonly IMongoCollection<CoreLibrary.DataModels.Book> _bookCollection;
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(10);
+
     public BookService(
         MongoDbContext mongoDbContext
     )
@@ -209,19 +212,126 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
     public override async Task<GetBookReply> GetBook(GetBookRequest request, ServerCallContext context)
     {
         var reply = new GetBookReply();
-        var book = await _bookCollection.Find(a => a.Id == request.Id).FirstOrDefaultAsync();
-        if (book != null)
+        try
         {
-            reply.Data = new Book
+            var book = await _bookCollection.Find(a => a.Id == request.Id).FirstOrDefaultAsync();
+            if (book != null)
             {
-                Id = book.Id,
-                Title = book.BookName,
+                reply.Data = new Book
+                {
+                    Id = book.Id,
+                    Title = book.BookName,
+                    Author = book.Author,
+                    Category = book.Category,
+                    Price = Convert.ToDouble(book.Price),
+                    Summary = book.Summary,
+                    CoverPicture = book.CoverPicture
+                };
+            }
+        }
+        catch { }
+        return reply;
+    }
+
+    private async Task InsertBatchAsync(List<CreateBookRequest> batch)
+    {
+        await _semaphore.WaitAsync();
+        try
+        {
+            await _bookCollection.InsertManyAsync(batch.Select(book => new CoreLibrary.DataModels.Book
+            {
+                BookName = book.Title,
                 Author = book.Author,
-                Category = book.Category,
-                Price = Convert.ToDouble(book.Price),
                 Summary = book.Summary,
-                CoverPicture = book.CoverPicture
-            };
+                Price = Convert.ToDecimal(book.Price),
+                CoverPicture = book.CoverPicture,
+                CreatedDate = DateTime.UtcNow,
+                Category = book.Category,
+                CloneId = book.CloneId
+            }), new InsertManyOptions { IsOrdered = false });
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public override async Task<CommonReply> CreateBulkBooks(IAsyncStreamReader<CreateBulkRequest> requestStream, ServerCallContext context)
+    {
+        var reply = new CommonReply();
+        try
+        {
+            int count = 0;
+            long cloneCount = 1;
+            while (await requestStream.MoveNext())
+            {
+                var batch = requestStream.Current.Data;
+                if (batch != null && batch.Count > 0)
+                {
+                    if (count == 0)
+                    {
+                        var bId = batch[0].CloneId;
+                        var filter = Builders<CoreLibrary.DataModels.Book>.Filter.Regex(a => a.CloneId, new MongoDB.Bson.BsonRegularExpression($"^{bId}#"));
+                        var maxClone = _bookCollection.Find(filter).ToEnumerable().MaxBy(a => Convert.ToInt32(a.CloneId?.Replace($"{bId}#", "")));
+                        if (maxClone != null)
+                        {
+                            cloneCount += Convert.ToInt32(maxClone.CloneId!.Replace($"{bId}#", ""));
+                        }
+                    }
+                    await InsertBatchAsync(batch.Select(a =>
+                    {
+                        a.CloneId = $"{a.CloneId}#{cloneCount++}";
+                        return a;
+                    }).ToList());
+                }
+                count++;
+            }
+        }
+        catch (Exception ex)
+        {
+            reply.Message = ex.Message;
+        }
+        return reply;
+    }
+
+    private async Task DeleteBatchAsync(List<string> ids)
+    {
+        await _semaphore.WaitAsync();
+        try
+        {
+            var filter = Builders<CoreLibrary.DataModels.Book>.Filter.In(doc => doc.CloneId, ids);
+            await _bookCollection.DeleteManyAsync(filter);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public override async Task<CommonReply> DeleteBulkBooks(DeleteBulkRequest request, ServerCallContext context)
+    {
+        var reply = new CommonReply();
+        try
+        {
+            var cloneIds = new List<string>();
+            for (int i = request.FromOrder; i <= request.ToOrder; i++)
+            {
+                cloneIds.Add($"{request.Id}#{i}");
+            }
+            const int batchSize = 1000;
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < cloneIds.Count; i += batchSize)
+            {
+                var batch = cloneIds.Skip(i).Take(batchSize).ToList();
+                tasks.Add(DeleteBatchAsync(batch));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            reply.Message = ex.Message;
         }
         return reply;
     }
