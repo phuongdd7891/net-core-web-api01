@@ -27,7 +27,7 @@ message ListBookRequest {
 }
 
 message ListBooksReply {
-    repeated Book data = 1;
+    repeated Book list = 1;
     int32 total = 2;
 }
 

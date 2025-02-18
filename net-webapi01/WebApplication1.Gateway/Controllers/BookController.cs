@@ -6,6 +6,7 @@ using Booklibrary;
 using Gateway.Models;
 using Microsoft.Extensions.Options;
 using Common;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Gateway.Controllers;
 
@@ -302,6 +303,21 @@ public class BookController : BaseController
         {
             Data = "Deleted successfully"
         });
+    }
 
+    [HttpGet("list")]
+    public async Task<IActionResult> ListBooks([FromQuery] Models.Requests.GetBooksRequest request)
+    {
+        var response = await _bookServiceClient.GetBooksAsync(new ListBookRequest
+        {
+            CreatedFrom = !string.IsNullOrEmpty(request.CreatedFrom) ? DateTimeOffset.Parse(request.CreatedFrom).UtcDateTime.ToTimestamp() : null,
+            CreatedTo = !string.IsNullOrEmpty(request.CreatedTo) ? DateTimeOffset.Parse(request.CreatedTo).UtcDateTime.ToTimestamp() : null,
+            Skip = request.Skip,
+            Limit = request.Limit
+        });
+        return Ok(new DataResponse<dynamic>
+        {
+            Data = response
+        });
     }
 }

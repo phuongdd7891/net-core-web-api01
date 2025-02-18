@@ -27,3 +27,13 @@ public class DeleteCloneBooksRequest
     public int From { get; set; }
     public int To { get; set; }
 }
+
+public class GetBooksRequest
+{
+    public string? SearchKey { get; set; }
+    public bool SearchExact { get; set; } = false;
+    public string? CreatedFrom { get; set; }
+    public string? CreatedTo { get; set; }
+    public int Skip { get; set; }
+    public int Limit { get; set; }
+}

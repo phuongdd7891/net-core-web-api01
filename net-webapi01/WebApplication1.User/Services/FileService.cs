@@ -2,6 +2,7 @@ using Fileuploadservice;
 using Grpc.Core;
 using Common;
 using CoreLibrary.Utils;
+using Newtonsoft.Json;
 
 namespace WebApplication1.User.Services;
 
@@ -60,5 +61,36 @@ public class FileService : UploadServiceProto.UploadServiceProtoBase
         }
 
         return Task.FromResult(reply);
+    }
+
+    public async Task WriteListToFileAsync<T>(List<T> list, string filePath)
+    {
+        using (StreamWriter writer = new StreamWriter(filePath))
+        {
+            foreach (var item in list)
+            {
+                var obj = JsonConvert.SerializeObject(item);
+                await writer.WriteLineAsync(obj);
+            }
+        }
+    }
+
+    public async Task<List<T>> ReadListFromFileAsync<T>(string filePath)
+    {
+        var list = new List<T>();
+        if (File.Exists(filePath))
+        {
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string? line;
+                while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
+                {
+                    var item = JsonConvert.DeserializeObject<T>(line);
+                    list.Add(item!);
+                }
+            }
+        }
+
+        return list;
     }
 }

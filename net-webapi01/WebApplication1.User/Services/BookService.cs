@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using Booklibrary;
 using Common;
 using CoreLibrary.DbAccess;
 using Grpc.Core;
 using MongoDB.Driver;
-using Newtonsoft.Json;
 
 namespace WebApplication1.User.Services;
 
@@ -12,6 +12,7 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
     private readonly MongoDbContext _mongoDbContext;
     private readonly IMongoCollection<CoreLibrary.DataModels.Book> _bookCollection;
     private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(10);
+    private static readonly Dictionary<string, int> _cloneCountById = new Dictionary<string, int>();
 
     public BookService(
         MongoDbContext mongoDbContext
@@ -233,6 +234,17 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
         return reply;
     }
 
+    private int GetCloneMaxCount(string cloneId)
+    {
+        var filter = Builders<CoreLibrary.DataModels.Book>.Filter.Regex(a => a.CloneId, new MongoDB.Bson.BsonRegularExpression($"^{cloneId}#"));
+        var projection = Builders<CoreLibrary.DataModels.Book>.Projection.Include(a => a.CloneId);
+        var maxClone = _bookCollection.Find(filter).Project(projection).ToEnumerable()
+            .Select(a => Convert.ToInt32(a["CloneId"].AsString.Replace($"{cloneId}#", "")))
+            .DefaultIfEmpty(0)
+            .Max();
+        return maxClone;
+    }
+
     private async Task InsertBatchAsync(List<CreateBookRequest> batch)
     {
         await _semaphore.WaitAsync();
@@ -262,7 +274,8 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
         try
         {
             int count = 0;
-            long cloneCount = 1;
+            int cloneCount = 1;
+            string bId = string.Empty;
             while (await requestStream.MoveNext())
             {
                 var batch = requestStream.Current.Data;
@@ -270,12 +283,14 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
                 {
                     if (count == 0)
                     {
-                        var bId = batch[0].CloneId;
-                        var filter = Builders<CoreLibrary.DataModels.Book>.Filter.Regex(a => a.CloneId, new MongoDB.Bson.BsonRegularExpression($"^{bId}#"));
-                        var maxClone = _bookCollection.Find(filter).ToEnumerable().MaxBy(a => Convert.ToInt32(a.CloneId?.Replace($"{bId}#", "")));
-                        if (maxClone != null)
+                        bId = batch[0].CloneId;
+                        if (_cloneCountById.ContainsKey(bId))
                         {
-                            cloneCount += Convert.ToInt32(maxClone.CloneId!.Replace($"{bId}#", ""));
+                            cloneCount += _cloneCountById[bId];
+                        }
+                        else
+                        {
+                            cloneCount += GetCloneMaxCount(bId);
                         }
                     }
                     await InsertBatchAsync(batch.Select(a =>
@@ -285,6 +300,10 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
                     }).ToList());
                 }
                 count++;
+            }
+            if (!string.IsNullOrEmpty(bId))
+            {
+                _cloneCountById[bId] = cloneCount;
             }
         }
         catch (Exception ex)
@@ -328,11 +347,66 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
             }
 
             await Task.WhenAll(tasks);
+
+            _cloneCountById[request.Id] = GetCloneMaxCount(request.Id);
         }
         catch (Exception ex)
         {
             reply.Message = ex.Message;
         }
         return reply;
+    }
+
+    public override async Task<ListBooksReply> GetBooks(ListBookRequest request, ServerCallContext context)
+    {
+        var reply = new ListBooksReply();
+        try
+        {
+            var filterDate = Builders<CoreLibrary.DataModels.Book>.Filter.Empty;
+            if (request.CreatedFrom != null && request.CreatedTo != null)
+            {
+                filterDate = Builders<CoreLibrary.DataModels.Book>.Filter.And(
+                    Builders<CoreLibrary.DataModels.Book>.Filter.Gte(a => a.CreatedDate, request.CreatedFrom.ToDateTime()),
+                    Builders<CoreLibrary.DataModels.Book>.Filter.Lt(a => a.CreatedDate, request.CreatedTo.ToDateTime())
+                );
+            }
+            else if (request.CreatedFrom != null)
+            {
+                filterDate = Builders<CoreLibrary.DataModels.Book>.Filter.Gte(a => a.CreatedDate, request.CreatedFrom.ToDateTime());
+            }
+            else if (request.CreatedTo != null)
+            {
+                filterDate = Builders<CoreLibrary.DataModels.Book>.Filter.Lt(a => a.CreatedDate, request.CreatedTo.ToDateTime());
+            }
+            var data = await _bookCollection.Find(filterDate).SortByDescending(a => a.CreatedDate)
+                .Skip(request.Skip).Limit(request.Limit).ToListAsync();
+            reply.List.AddRange(data.Select(book => new Book
+            {
+                Id = book.Id,
+                Title = book.BookName,
+                Author = book.Author,
+                Category = book.Category,
+                Price = Convert.ToDouble(book.Price),
+                Summary = book.Summary,
+                CoverPicture = book.CoverPicture,
+                CloneId = book.CloneId
+            }));
+            reply.Total = Convert.ToInt32(await _bookCollection.Find(filterDate).CountDocumentsAsync());
+        }
+        catch
+        {
+            throw;
+        }
+        return reply;
+    }
+
+    public List<(string Id, int Count)> ListCloneMaxCount() => _cloneCountById.Select(a => (a.Key, a.Value)).ToList();
+
+    public void LoadCloneMaxCount(List<(string Id, int Count)> list)
+    {
+        foreach (var item in list)
+        {
+            _cloneCountById[item.Id] = item.Count;
+        }
     }
 }

@@ -30,6 +30,8 @@ services.AddSwaggerGen();
 // Add services to the container.
 services.AddTransient<RedisRepository>();
 services.AddTransient<JwtService>();
+services.AddTransient<FileService>();
+services.AddTransient<BookService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var tokenValidationParameters = new TokenValidationParameters
@@ -48,6 +50,8 @@ services.AddSingleton<MongoDbContext>();
 services.AddGrpcSwagger();
 services.AddGrpc();
 services.AddGrpcReflection();
+
+services.AddHostedService<BookHostedService>();
 
 var app = builder.Build();
 
