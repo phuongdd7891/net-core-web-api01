@@ -291,7 +291,7 @@ public class BookController : BaseController
     [HttpPost("delete-clone")]
     public async Task<IActionResult> DeleteClone(Models.Requests.DeleteCloneBooksRequest request)
     {
-        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Id) || request.From > request.To);
+        ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(request.Id) || request.From == 0 || (request.From > request.To && request.To != 0));
         var response = await _bookServiceClient.DeleteBulkBooksAsync(new DeleteBulkRequest
         {
             Id = request.Id,
@@ -308,7 +308,7 @@ public class BookController : BaseController
     [HttpGet("list")]
     public async Task<IActionResult> ListBooks([FromQuery] Models.Requests.GetBooksRequest request)
     {
-        var response = await _bookServiceClient.GetBooksAsync(new ListBookRequest
+        var response = await _bookServiceClient.ListBooksAsync(new ListBookRequest
         {
             CreatedFrom = !string.IsNullOrEmpty(request.CreatedFrom) ? DateTimeOffset.Parse(request.CreatedFrom).UtcDateTime.ToTimestamp() : null,
             CreatedTo = !string.IsNullOrEmpty(request.CreatedTo) ? DateTimeOffset.Parse(request.CreatedTo).UtcDateTime.ToTimestamp() : null,

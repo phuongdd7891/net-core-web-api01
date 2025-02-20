@@ -110,7 +110,7 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
             var book = await _bookCollection.Find(a => a.Id == request.Id).FirstOrDefaultAsync();
             if (book == null)
             {
-                result.Message = "Book not found";
+                result.Message = "Book Id not found";
             }
             else
             {
@@ -154,7 +154,7 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
                     var book = await _bookCollection.Find(session, a => a.Id == request.BookData.Id).FirstOrDefaultAsync();
                     if (book == null)
                     {
-                        throw new Exception("Book not found");
+                        throw new Exception("Book Id not found");
                     }
                     await _bookCollection.ReplaceOneAsync(session, a => a.Id == request.BookData.Id, new CoreLibrary.DataModels.Book
                     {
@@ -174,7 +174,7 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
                     var book = await _bookCollection.Find(a => a.Id == request.Chunk.UpdateId).FirstOrDefaultAsync();
                     if (book == null)
                     {
-                        throw new Exception("Book not found");
+                        throw new Exception("Book Id not found");
                     }
                     filePath = Path.Combine(request.Chunk.FileDir, request.Chunk.FileName);
                     fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
@@ -333,6 +333,12 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
         try
         {
             var cloneIds = new List<string>();
+            var maxCount = 0;
+            if (request.ToOrder == 0)
+            {
+                maxCount = GetCloneMaxCount(request.Id);
+                request.ToOrder = maxCount;
+            }
             for (int i = request.FromOrder; i <= request.ToOrder; i++)
             {
                 cloneIds.Add($"{request.Id}#{i}");
@@ -347,8 +353,10 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
             }
 
             await Task.WhenAll(tasks);
-
-            _cloneCountById[request.Id] = GetCloneMaxCount(request.Id);
+            if (request.ToOrder == maxCount || _cloneCountById[request.Id] == request.ToOrder)
+            {
+                _cloneCountById[request.Id] = GetCloneMaxCount(request.Id);
+            }
         }
         catch (Exception ex)
         {
@@ -357,7 +365,7 @@ public class BookService : BookLibraryServiceProto.BookLibraryServiceProtoBase
         return reply;
     }
 
-    public override async Task<ListBooksReply> GetBooks(ListBookRequest request, ServerCallContext context)
+    public override async Task<ListBooksReply> ListBooks(ListBookRequest request, ServerCallContext context)
     {
         var reply = new ListBooksReply();
         try

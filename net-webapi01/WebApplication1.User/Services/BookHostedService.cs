@@ -4,7 +4,7 @@ public class BookHostedService : IHostedService
 {
     private readonly BookService _bookService;
     private readonly FileService _fileService;
-    private readonly string maxCountFilePath = Path.Combine("./", "maxCloneCount.txt");
+    private readonly string maxCountFilePath = Path.Combine("./data", "maxCloneCount.txt");
     public BookHostedService(
         BookService bookService,
         FileService fileService

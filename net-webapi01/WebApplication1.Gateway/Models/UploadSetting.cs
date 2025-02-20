@@ -6,7 +6,7 @@ public class UploadSettings
     public string CacheName { get; set; }
     public string UploadDir { 
         get {
-            return Path.Combine(Directory.GetCurrentDirectory(), "../", ImagePath ?? "BookImages");
+            return Path.Combine(Directory.GetCurrentDirectory(), "./data", ImagePath ?? "BookImages");
         }
     }
 }

@@ -7,7 +7,7 @@ import "common.proto";
 package booklibrary;
 
 service BookLibraryServiceProto {
-    rpc GetBooks (ListBookRequest) returns (ListBooksReply);
+    rpc ListBooks (ListBookRequest) returns (ListBooksReply);
     rpc GetBook (GetBookRequest) returns (GetBookReply);
     rpc CreateBook (CreateBookRequest) returns (common.CommonReply);
     rpc CreateBookWithUpload (stream CreateBookUploadRequest) returns (common.CommonReply);

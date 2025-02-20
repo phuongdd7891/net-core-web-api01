@@ -1,0 +1,52 @@
+version: '3.4'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: myredis
+    networks:
+      - net-webapi01_default
+    ports:
+      - "6379:6379"
+
+  usergrpcservice:
+    image: usergrpcservice:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile_grpc_user
+    volumes:
+      - usergrpcservice-data:/app/data
+    ports:
+      - 7017:7017
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+  
+  admingrpcservice:
+    image: admingrpcservice:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile_grpc_admin
+    ports:
+      - 7272:7272
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  bookgateway:
+    image: bookgateway:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile_gw
+    volumes:
+      - bookgateway-data:/app/data
+    ports:
+      - 5210:5210
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+volumes:
+  usergrpcservice-data:
+  bookgateway-data:
+
+networks:
+  net-webapi01_default:
+    external: true
