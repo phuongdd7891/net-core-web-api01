@@ -65,32 +65,42 @@ public class FileService : UploadServiceProto.UploadServiceProtoBase
 
     public async Task WriteListToFileAsync<T>(List<T> list, string filePath)
     {
-        using (StreamWriter writer = new StreamWriter(filePath))
+        try
         {
-            foreach (var item in list)
+            int chunkSize = 100;
+            using (StreamWriter writer = new StreamWriter(filePath))
             {
-                var obj = JsonConvert.SerializeObject(item);
-                await writer.WriteLineAsync(obj);
+                for (int i = 0; i < list.Count; i += chunkSize)
+                {
+                    for (int j = i; j < i + chunkSize && j < list.Count; j++)
+                    {
+                        await writer.WriteLineAsync(JsonConvert.SerializeObject(list[j]));
+                    }
+                }
             }
         }
+        catch { }
     }
 
     public async Task<List<T>> ReadListFromFileAsync<T>(string filePath)
     {
         var list = new List<T>();
-        if (File.Exists(filePath))
+        try
         {
-            using (StreamReader reader = new StreamReader(filePath))
+            if (File.Exists(filePath))
             {
-                string? line;
-                while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
+                using (StreamReader reader = new StreamReader(filePath))
                 {
-                    var item = JsonConvert.DeserializeObject<T>(line);
-                    list.Add(item!);
+                    string? line;
+                    while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
+                    {
+                        var item = JsonConvert.DeserializeObject<T>(line);
+                        list.Add(item!);
+                    }
                 }
             }
         }
-
+        catch { }
         return list;
     }
 }
