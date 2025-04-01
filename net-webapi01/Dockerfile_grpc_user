@@ -24,9 +24,9 @@ COPY --from=build /app/publish .
 COPY WebApplication1.User/appsettings.json .
 
 # Copy the certificate and set environment variables
-COPY aspnetcore-dev-cert.pfx /https/aspnetcore-dev-cert.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=AA1234aa
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetcore-dev-cert.pfx
+COPY ./certs/certificate.pfx /app/aspnetcore-dev-cert.pfx
+ENV ASPNETCORE_Kestrel__Certificates__Default__Password=qw@rty123
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certificate.pfx
 
 # Expose the port your gRPC service is listening on
 EXPOSE 5250

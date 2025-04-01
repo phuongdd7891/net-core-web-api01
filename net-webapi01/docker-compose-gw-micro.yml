@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   redis:
     image: redis:latest
@@ -10,38 +8,51 @@ services:
       - "6379:6379"
 
   usergrpcservice:
-    image: usergrpcservice:latest
+    image: localhost:5000/usergrpcservice:latest
     build:
       context: .
       dockerfile: ./Dockerfile_grpc_user
     volumes:
+      - ./certs/certificate.pfx:/app/certificate.pfx
       - usergrpcservice-data:/app/data
     ports:
-      - 7017:7017
+      - "7018:7018"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-  
+    networks:
+      - net-webapi01_default
+
   admingrpcservice:
-    image: admingrpcservice:latest
+    image: localhost:5000/admingrpcservice:latest
     build:
       context: .
       dockerfile: ./Dockerfile_grpc_admin
+    volumes:
+      - ./certs/certificate.pfx:/app/certificate.pfx
     ports:
-      - 7272:7272
+      - "7275:7275"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - net-webapi01_default
 
   bookgateway:
-    image: bookgateway:latest
+    image: localhost:5000/bookgateway:latest
     build:
       context: .
       dockerfile: ./Dockerfile_gw
     volumes:
+      - ./certs/cert.pem:/app/cert.pem
       - bookgateway-data:/app/data
     ports:
-      - 5210:5210
+      - "5210:5210"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - usergrpcservice
+      - admingrpcservice
+    networks:
+      - net-webapi01_default
 
 volumes:
   usergrpcservice-data:
@@ -49,4 +60,3 @@ volumes:
 
 networks:
   net-webapi01_default:
-    external: true

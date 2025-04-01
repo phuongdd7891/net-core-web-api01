@@ -6,11 +6,21 @@ using CoreLibrary.Repository;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CoreLibrary.DbAccess;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.User/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(7018, listenOptions =>
+    {
+        listenOptions.UseHttps("certificate.pfx", builder.Configuration.GetValue<string>("CertificatePassword")!);
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
 
 //db configs
 var dbName = builder.Configuration.GetValue<string>("DatabaseName");

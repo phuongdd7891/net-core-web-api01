@@ -10,11 +10,21 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CoreLibrary.DataModels;
 using CoreLibrary.DbAccess;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Admin/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(7275, listenOptions =>
+    {
+        listenOptions.UseHttps("certificate.pfx", builder.Configuration.GetValue<string>("CertificatePassword")!);
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
 
 // Add services to the container.
 services.AddControllers()
