@@ -19,9 +19,12 @@ builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Admin/appsett
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(7275, listenOptions =>
+    options.ListenAnyIP(builder.Configuration.GetValue<int>("Kestrel:Port"), listenOptions =>
     {
-        listenOptions.UseHttps("certificate.pfx", builder.Configuration.GetValue<string>("CertificatePassword")!);
+        listenOptions.UseHttps(httpsOptions =>
+        {
+            httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+        });
         listenOptions.Protocols = HttpProtocols.Http2;
     });
 });

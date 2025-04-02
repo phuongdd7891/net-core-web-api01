@@ -1,0 +1,17 @@
+deploy-bookgateway:
+	docker build -f Dockerfile_gw -t bookgateway:latest .
+	docker tag bookgateway:latest localhost:5000/bookgateway:latest
+	docker push localhost:5000/bookgateway:latest
+	docker-compose -f docker-compose-gw-micro.yml up -d --force-recreate bookgateway
+
+deploy-admingrpcservice:
+	docker build -f Dockerfile_grpc_admin -t admingrpcservice:latest .
+	docker tag admingrpcservice:latest localhost:5000/admingrpcservice:latest
+	docker push localhost:5000/admingrpcservice:latest
+	docker-compose -f docker-compose-gw-micro.yml up -d --force-recreate admingrpcservice
+
+deploy-usergrpcservice:
+	docker build -f Dockerfile_grpc_user -t usergrpcservice:latest .
+	docker tag usergrpcservice:latest localhost:5000/usergrpcservice:latest
+	docker push localhost:5000/usergrpcservice:latest
+	docker-compose -f docker-compose-gw-micro.yml up -d --force-recreate usergrpcservice

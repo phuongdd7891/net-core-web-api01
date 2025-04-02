@@ -23,7 +23,6 @@ COPY --from=build /app/publish .
 # Copy the appsettings.json file
 COPY WebApplication1.Admin/appsettings.json .
 
-COPY ./certs/certificate.pfx /app/aspnetcore-dev-cert.pfx
 ENV ASPNETCORE_Kestrel__Certificates__Default__Password=qw@rty123
 ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certificate.pfx
 

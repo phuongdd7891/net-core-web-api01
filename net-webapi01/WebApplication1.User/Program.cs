@@ -15,9 +15,12 @@ builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.User/appsetti
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(7018, listenOptions =>
+    options.ListenAnyIP(builder.Configuration.GetValue<int>("Kestrel:Port"), listenOptions =>
     {
-        listenOptions.UseHttps("certificate.pfx", builder.Configuration.GetValue<string>("CertificatePassword")!);
+        listenOptions.UseHttps(httpsOptions =>
+        {
+            httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+        });
         listenOptions.Protocols = HttpProtocols.Http2;
     });
 });
@@ -34,8 +37,8 @@ services.AddIdentity<ApplicationUser, ApplicationRole>()
 var redisConfiguration = builder.Configuration.GetSection("Redis").Get<RedisConfiguration>();
 services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguration!);
 
-services.AddEndpointsApiExplorer(); 
-services.AddSwaggerGen(); 
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
 
 // Add services to the container.
 services.AddTransient<RedisRepository>();
