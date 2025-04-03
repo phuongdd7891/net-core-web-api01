@@ -15,3 +15,21 @@ deploy-usergrpcservice:
 	docker tag usergrpcservice:latest localhost:5000/usergrpcservice:latest
 	docker push localhost:5000/usergrpcservice:latest
 	docker-compose -f docker-compose-gw-micro.yml up -d --force-recreate usergrpcservice
+
+start-kibana:
+	docker-compose -f docker-compose-gw-micro.yml up -d kibana
+
+start-elasticsearch:
+	docker-compose -f docker-compose-gw-micro.yml up -d elasticsearch
+
+start-mongo:
+	docker-compose -f ./dockers/docker-compose-mongo.yml up -d
+
+build:
+	docker-compose -f docker-compose-gw-micro.yml up --build
+
+up:
+	docker-compose -f docker-compose-gw-micro.yml up
+
+down:
+	docker-compose -f docker-compose-gw-micro.yml down

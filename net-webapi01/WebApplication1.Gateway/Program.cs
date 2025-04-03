@@ -12,12 +12,17 @@ using StackExchange.Redis.Extensions.Newtonsoft;
 using CoreLibrary.Repository;
 using Gateway.Services;
 using Gateway.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Gateway/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
 
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration.ReadFrom.Configuration(context.Configuration);
+});
 // Add services to the container.
 services.AddControllers()
     .AddNewtonsoftJson(

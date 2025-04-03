@@ -1,0 +1,26 @@
+services:
+  mongo1:
+    image: mongo
+    container_name: mongo-1
+    restart: always
+    networks:
+      - mongo-replica-network
+    command: ["mongod", "--replSet", "rs0"]
+    ports:
+      - "27017:27017"
+
+  mongo2:
+    image: mongo
+    container_name: mongo-2
+    restart: always
+    networks:
+      - mongo-replica-network
+    command: ["mongod", "--replSet", "rs0"]
+    ports:
+      - "27018:27017"
+
+# docker exec -it mongo-1 mongosh
+# rs.initiate({_id: "rs0",members: [{ _id: 0, host: "host.docker.internal:27017" },{ _id: 1, host: "host.docker.internal:27018" }]})
+
+networks:
+  mongo-replica-network:

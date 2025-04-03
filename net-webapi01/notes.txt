@@ -7,12 +7,6 @@
 - authentication
 - authorization
 
-#---docker
-docker build -f Dockerfile_gw -t bookgateway:latest .
-docker tag bookgateway:latest localhost:5000/bookgateway:latest
-docker push localhost:5000/bookgateway:latest
-docker-compose -f docker-compose-gw-micro.yml up -d --force-recreate bookgateway
-
 #---certificates
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=usergrpcservice" -addext "subjectAltName=DNS:usergrpcservice,DNS:admingrpcservice"
 openssl pkcs12 -export -out ./certs/certificate.pfx -inkey key.pem -in cert.pem -password pass:yourpassword
