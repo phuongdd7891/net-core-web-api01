@@ -10,3 +10,96 @@
 #---certificates
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=usergrpcservice" -addext "subjectAltName=DNS:usergrpcservice,DNS:admingrpcservice"
 openssl pkcs12 -export -out ./certs/certificate.pfx -inkey key.pem -in cert.pem -password pass:yourpassword
+
+#---elastic
+- create user/role for write log
+curl -u elastic:ytr@wq321 -X POST "http://localhost:9200/_security/role/bookgateway_logger" -H "Content-Type: application/json" -d '
+{
+  "cluster": ["monitor"],
+  "indices": [
+    {
+      "names": ["bookgateway-logs-*"],
+      "privileges": ["create", "create_index", "write", "read", "manage"]
+    }
+  ]
+}'
+curl -u elastic:ytr@wq321 -X POST "http://localhost:9200/_security/user/bookgateway_logger" -H "Content-Type: application/json" -d '
+{
+  "password": "ytr@wq321",
+  "roles": ["bookgateway_logger"],
+  "full_name": "BookGateway Logger User"
+}'
+
+- create kibana user to access service
+curl -u elastic:ytr@wq321 -X POST "http://localhost:9200/_security/user/kibana_user" -H "Content-Type: application/json" -d '{
+  "password": "kibana_password",
+  "roles": ["kibana_system"],
+  "full_name": "Kibana User"
+}'
+
+- Update the kibana_system Role
+curl -u elastic:yourpassword -X PUT "http://localhost:9200/_security/role/kibana_system" -H "Content-Type: application/json" -d '{
+  "cluster": [
+    "manage_index_templates",
+    "monitor",
+    "manage_ilm",
+    "manage_ingest_pipelines",
+    "manage_security",
+    "manage_own_api_key"
+  ],
+  "indices": [
+    {
+      "names": [".kibana*", ".kibana_analytics*"],
+      "privileges": ["all"],
+      "allow_restricted_indices": false
+    },
+    {
+      "names": ["bookgateway-logs-*"],
+      "privileges": ["read", "view_index_metadata"],
+      "allow_restricted_indices": false
+    },
+    {
+      "names": ["*"],
+      "privileges": ["read", "view_index_metadata"],
+      "allow_restricted_indices": false
+    }
+  ],
+  "applications": [
+    {
+      "application": "kibana-.kibana",
+      "privileges": ["all"],
+      "resources": ["*"]
+    }
+  ]
+}'
+
+- Check Cluster Health
+curl -u elastic:ytr@wq321 "http://localhost:9200/_cluster/health?pretty"
+
+- Check Shard Allocation
+curl -u elastic:ytr@wq321 "http://localhost:9200/_cat/shards?v"
+
+- Update the Number of Replicas for Existing Indices
+curl -u elastic:ytr@wq321 -X PUT "http://localhost:9200/_settings" -H "Content-Type: application/json" -d '{
+  "index": {
+    "number_of_replicas": 0
+  }
+}'
+
+- ensures that new bookgateway-logs-* indices are created with 0 replicas.
+curl -u elastic:yourpassword -X PUT "http://localhost:9200/_template/bookgateway-logs" -H "Content-Type: application/json" -d '{
+  "index_patterns": ["bookgateway-logs-*"],
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "@timestamp": { "type": "date" },
+      "level": { "type": "keyword" },
+      "message": { "type": "text" },
+      "application": { "type": "keyword" }
+    }
+  }
+}'

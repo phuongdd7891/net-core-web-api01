@@ -19,7 +19,7 @@ deploy-usergrpcservice:
 start-kibana:
 	docker-compose -f docker-compose-gw-micro.yml up -d kibana
 
-start-elasticsearch:
+start-elastic:
 	docker-compose -f docker-compose-gw-micro.yml up -d elasticsearch
 
 start-mongo:
