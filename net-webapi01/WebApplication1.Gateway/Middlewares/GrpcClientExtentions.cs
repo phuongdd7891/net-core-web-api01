@@ -6,6 +6,7 @@ using Fileuploadservice;
 using Booklibrary;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using Serilog;
 
 namespace Gateway.Middlewares;
 
@@ -37,7 +38,8 @@ public static class GrpcClientExtentions
             {
                 o.HttpHandler = httpHandler;
             });
-        }).AddInterceptor<ErrorHandlerInterceptor>();
+        }).AddInterceptor<ErrorHandlerInterceptor>()
+        .AddInterceptor(() => new LoggingInterceptor(Log.Logger));
 
         services.AddGrpcClient<AdminUserServiceProto.AdminUserServiceProtoClient>(c =>
         {
@@ -46,7 +48,8 @@ public static class GrpcClientExtentions
             {
                 o.HttpHandler = httpHandler;
             });
-        }).AddInterceptor<ErrorHandlerInterceptor>();
+        }).AddInterceptor<ErrorHandlerInterceptor>()
+        .AddInterceptor(() => new LoggingInterceptor(Log.Logger));
 
         services.AddGrpcClient<AdminAuthServiceProto.AdminAuthServiceProtoClient>(c =>
         {
@@ -55,7 +58,8 @@ public static class GrpcClientExtentions
             {
                 o.HttpHandler = httpHandler;
             });
-        }).AddInterceptor<ErrorHandlerInterceptor>();
+        }).AddInterceptor<ErrorHandlerInterceptor>()
+        .AddInterceptor(() => new LoggingInterceptor(Log.Logger));
 
         services.AddGrpcClient<UploadServiceProto.UploadServiceProtoClient>(c =>
         {
@@ -64,7 +68,8 @@ public static class GrpcClientExtentions
             {
                 o.HttpHandler = httpHandler;
             });
-        }).AddInterceptor<ErrorHandlerInterceptor>();
+        }).AddInterceptor<ErrorHandlerInterceptor>()
+        .AddInterceptor(() => new LoggingInterceptor(Log.Logger));
 
         services.AddGrpcClient<BookLibraryServiceProto.BookLibraryServiceProtoClient>(c =>
         {
@@ -73,7 +78,8 @@ public static class GrpcClientExtentions
             {
                 o.HttpHandler = httpHandler;
             });
-        }).AddInterceptor<ErrorHandlerInterceptor>();
+        }).AddInterceptor<ErrorHandlerInterceptor>()
+        .AddInterceptor(() => new LoggingInterceptor(Log.Logger));
 
         return services;
     }

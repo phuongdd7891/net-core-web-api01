@@ -11,7 +11,11 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.User/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+builder.Configuration
+           .SetBasePath(Directory.GetCurrentDirectory())
+           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+           .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+           .AddEnvironmentVariables();
 
 builder.WebHost.ConfigureKestrel(options =>
 {

@@ -17,14 +17,17 @@ public class AdminController : BaseController
 {
     private readonly AdminUserServiceProto.AdminUserServiceProtoClient _adminUserClient;
     private readonly AdminAuthServiceProto.AdminAuthServiceProtoClient _adminAuthClient;
+    private readonly IConfiguration _configuration;
 
     public AdminController(
         AdminUserServiceProto.AdminUserServiceProtoClient adminUserClient,
-        AdminAuthServiceProto.AdminAuthServiceProtoClient adminAuthClient
+        AdminAuthServiceProto.AdminAuthServiceProtoClient adminAuthClient,
+        IConfiguration configuration
     )
     {
         _adminUserClient = adminUserClient;
         _adminAuthClient = adminAuthClient;
+        _configuration = configuration;
     }
 
 
@@ -37,9 +40,34 @@ public class AdminController : BaseController
         var result = await _adminAuthClient.LoginAsync(new AdminLoginRequest
         {
             Username = request.UserName,
-            Password = request.Password,
-            CreateIfNotExists = true
+            Password = request.Password
         });
+        var createIfNotExists = _configuration.GetValue("CreateUserIfNotExists", false);
+        if (result.ErrorCode == Const.ErrCode_UserNotFound && createIfNotExists)
+        {
+            var createResult = await _adminUserClient.CreateUserAsync(new CreateUserRequest
+            {
+                Username = request.UserName,
+                Password = request.Password,
+                FullName = request.UserName,
+                Email = request.UserName,
+                IsSystem = true,
+                IsCustomer = false,
+                Disabled = false
+            }, GetSpecialHeader(request.UserName));
+            if (string.IsNullOrEmpty(createResult.Message))
+            {
+                result = await _adminAuthClient.LoginAsync(new AdminLoginRequest
+                {
+                    Username = request.UserName,
+                    Password = request.Password
+                });
+            }
+            else
+            {
+                ErrorStatuses.ThrowBadRequest(createResult.Message, true);
+            }
+        }
         ErrorStatuses.ThrowBadRequest("Bad credentials", result.ErrorCode == Const.ErroCode_BadCredential);
         ErrorStatuses.ThrowNotFound("User not found", result.ErrorCode == Const.ErrCode_UserNotFound);
         ErrorStatuses.ThrowInternalErr("Invalid user", result.ErrorCode == Const.ErrCode_InvalidUser);

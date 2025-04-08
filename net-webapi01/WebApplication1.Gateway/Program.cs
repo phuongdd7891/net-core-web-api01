@@ -17,7 +17,11 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-builder.Configuration.AddJsonFile($"./net-webapi01/WebApplication1.Gateway/appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+builder.Configuration
+           .SetBasePath(Directory.GetCurrentDirectory())
+           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+           .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+           .AddEnvironmentVariables();
 
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -61,22 +65,22 @@ services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var authVal = StringValues.Empty;
-            if (context.HttpContext.Request.Headers.TryGetValue("Authorization", out authVal))
-            {
-                context.HttpContext.RequestServices
-                .GetRequiredService<ILogger<Program>>()
-                .LogInformation("JWT received in request {0}: {1}", context.HttpContext.Request.Path, authVal.ToString());
-            }
+            // var authVal = StringValues.Empty;
+            // if (context.HttpContext.Request.Headers.TryGetValue("Authorization", out authVal))
+            // {
+            //     context.HttpContext.RequestServices
+            //     .GetRequiredService<ILogger<Program>>()
+            //     .LogInformation("JWT received in request {0}: {1}", context.HttpContext.Request.Path, authVal.ToString());
+            // }
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
-            var logger = context.HttpContext.RequestServices
-                .GetRequiredService<ILogger<Program>>();
+            // var logger = context.HttpContext.RequestServices
+            //     .GetRequiredService<ILogger<Program>>();
 
-            var claims = context.Principal?.Claims.Select(c => new { c.Type, c.Value });
-            logger.LogInformation("JWT validated. Claims: {Claims}", claims);
+            // var claims = context.Principal?.Claims.Select(c => new { c.Type, c.Value });
+            //logger.LogInformation("JWT validated. Claims: {Claims}", claims);
 
             return Task.CompletedTask;
         },

@@ -1,6 +1,8 @@
+using CoreLibrary.Helpers;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -27,14 +29,17 @@ public class JwtValidationInterceptor : Interceptor
         }
         try
         {
-            // Extract the Authorization header from metadata
-            var token = GetJwtTokenFromMetadata(context.RequestHeaders);
+            if (!CheckSpecialToken(context.RequestHeaders))
+            {
+                // Extract the Authorization header from metadata
+                var token = GetJwtTokenFromMetadata(context.RequestHeaders);
 
-            // Validate the token and extract claims
-            var claimsPrincipal = ValidateToken(token);
+                // Validate the token and extract claims
+                var claimsPrincipal = ValidateToken(token);
 
-            // Store claimsPrincipal in CallContext for service classes to access
-            context.UserState["ClaimsPrincipal"] = claimsPrincipal;
+                // Store claimsPrincipal in CallContext for service classes to access
+                context.UserState["ClaimsPrincipal"] = claimsPrincipal;
+            }
         }
         catch (SecurityTokenException ex)
         {
@@ -81,5 +86,25 @@ public class JwtValidationInterceptor : Interceptor
         {
             throw new Exception("Token validation failed");
         }
+    }
+
+    private bool CheckSpecialToken(Metadata headers)
+    {
+        var specialAuth = headers.FirstOrDefault(h => h.Key == "specialauthorization")?.Value;
+        if (!string.IsNullOrEmpty(specialAuth))
+        {
+            var specialToken = specialAuth.ToString();
+            var username = headers.FirstOrDefault(h => h.Key == "username")?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                throw new SecurityTokenException("Missing username in special authorization header");
+            }
+            if (string.Compare(specialToken, AESHelpers.Encrypt($"{username}:{DateTime.UtcNow.AddMinutes(5):yyyy-MM-dd HH:mm}")) != 0)
+            {
+                throw new SecurityTokenException("Invalid token");
+            }
+            return true;
+        }
+        return false;
     }
 }

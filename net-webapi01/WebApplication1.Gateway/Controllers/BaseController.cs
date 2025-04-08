@@ -1,4 +1,5 @@
 
+using CoreLibrary.Helpers;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
@@ -28,5 +29,14 @@ public class BaseController: ControllerBase
             }
             return headers;
         }
+    }
+
+    public Metadata GetSpecialHeader(string username)
+    {
+        var headers = new Metadata();
+        var token = AESHelpers.Encrypt($"{username}:{DateTime.UtcNow.AddMinutes(5):yyyy-MM-dd HH:mm}");
+        headers.Add("SpecialAuthorization", token);
+        headers.Add("Username", username);
+        return headers;
     }
 }

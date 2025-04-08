@@ -7,11 +7,13 @@ using Gateway.Models;
 using Microsoft.Extensions.Options;
 using Common;
 using Google.Protobuf.WellKnownTypes;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Gateway.Controllers;
 
 [ApiController]
 [Route("gw-api/[controller]")]
+[Authorize]
 public class BookController : BaseController
 {
     private readonly UploadSettings _uploadSettings;
