@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "common.proto";
 
@@ -12,6 +12,7 @@ service UserServiceProto {
     rpc UpdateUser(UpdateUserRequest) returns (common.CommonReply);
     rpc CreateUser(UpdateUserRequest) returns (common.CommonReply);
     rpc LockUser(LockUserRequest) returns (LockUserReply);
+    rpc GetRoleActions (google.protobuf.Empty) returns (GetRoleActionseply);
 }
 
 message ListUsersRequest {
@@ -80,4 +81,14 @@ message LockUserRequest {
 message LockUserReply {
     bool isSuccess = 1;
     google.protobuf.StringValue message = 2;
+}
+
+message GetRoleActionseply {
+    repeated RoleActions data = 1;
+}
+
+message RoleActions {
+    string id = 1;
+    string role_id = 2;
+    repeated string actions = 3;
 }

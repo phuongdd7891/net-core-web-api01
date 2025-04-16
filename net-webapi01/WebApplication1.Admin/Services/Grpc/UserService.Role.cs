@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Userservice;
 
@@ -38,5 +39,23 @@ public partial class UserGrpcService
     {
         var roleNameArr = name.Split("__", StringSplitOptions.RemoveEmptyEntries);
         return string.IsNullOrEmpty(customerId) ? name : string.Join("", roleNameArr, roleNameArr.Length > 1 ? roleNameArr.Length - 1 : roleNameArr.Length, 1);
+    }
+
+    public override async Task<GetRoleActionseply> GetRoleActions(Empty request, ServerCallContext context)
+    {
+        var result = new GetRoleActionseply();
+        var loginUser = Helpers.GetClaimProfile(context);
+        if (loginUser == null)
+        {
+            return result;
+        }
+        var roleActions = await _roleActionRepository.GetAll();
+        result.Data.AddRange(roleActions.Select(a => new RoleActions
+        {
+            Id = a.Id,
+            RoleId = a.RoleId,
+            Actions = { a.Actions ?? new List<string>() }
+        }));
+        return result;
     }
 }

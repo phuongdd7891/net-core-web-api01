@@ -1,15 +1,13 @@
 
 using CoreLibrary.Helpers;
-using Google.Protobuf.WellKnownTypes;
+using Gateway.Authorization;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 
 namespace Gateway.Controllers;
 
 public class BaseController: ControllerBase
 {
-
     public Metadata DefaultHeader
     {
         get {

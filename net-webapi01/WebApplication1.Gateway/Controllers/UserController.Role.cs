@@ -63,7 +63,7 @@ public partial class UserController
             CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId,
         }, DefaultHeader);
         ErrorStatuses.ThrowInternalErr(result.Message, !string.IsNullOrEmpty(result.Message));
-        //TODO: await _cacheService.LoadUserRoles();
+        await _cacheService.LoadUserRoles();
 
         return Ok(new DataResponse
         {
@@ -81,7 +81,7 @@ public partial class UserController
         };
         actionReq.Actions.AddRange(request.Actions);
         await _adminAuthClient.AddActionsToRoleAsync(actionReq, DefaultHeader);
-        //TODO: await _cacheService.LoadRoleActions();
+        await _cacheService.LoadRoleActions();
         return Ok();
     }
 
@@ -97,11 +97,12 @@ public partial class UserController
             CustomerId = string.IsNullOrEmpty(request.CustomerId) ? null : request.CustomerId,
         }, DefaultHeader);
         ErrorStatuses.ThrowInternalErr(result.Message, !string.IsNullOrEmpty(result.Message));
-        //TODO: await _cacheService.LoadUserRoles(true);
+        await _cacheService.LoadUserRoles(true);
         return Ok();
     }
 
     [HttpPost("delete-role")]
+    [Authorize]
     public async Task<IActionResult> DeleteRole([FromBody] string id)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(id));
@@ -110,8 +111,8 @@ public partial class UserController
             Id = id
         }, DefaultHeader);
         ErrorStatuses.ThrowInternalErr(result.Message, !string.IsNullOrEmpty(result.Message));
-        //TODO: await _cacheService.LoadUserRoles(true);
-        //TODO: await _cacheService.LoadRoleActions(true);
+        await _cacheService.LoadUserRoles(true);
+        await _cacheService.LoadRoleActions(true);
         return Ok();
     }
 }

@@ -1,3 +1,4 @@
+using AdminMicroService.Models;
 using CoreLibrary.Helpers;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
@@ -39,6 +40,22 @@ public class JwtValidationInterceptor : Interceptor
 
                 // Store claimsPrincipal in CallContext for service classes to access
                 context.UserState["ClaimsPrincipal"] = claimsPrincipal;
+            }
+            else
+            {
+                var principal = new ClaimsPrincipal();
+                var username = context.RequestHeaders.FirstOrDefault(h => h.Key == "username")!.Value;
+                principal.AddIdentity(new ClaimsIdentity(new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(new AdminProfile
+                    {
+                        Username = username,
+                        IsCustomer = false,
+                        IsSystem = true
+                    }))
+                }));
+                context.UserState["ClaimsPrincipal"] = principal;
             }
         }
         catch (SecurityTokenException ex)

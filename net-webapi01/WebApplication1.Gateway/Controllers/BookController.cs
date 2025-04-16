@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Common;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authorization;
+using Gateway.Authorization;
 
 namespace Gateway.Controllers;
 
@@ -308,6 +309,7 @@ public class BookController : BaseController
     }
 
     [HttpGet("list")]
+    [UserAuthorize]
     public async Task<IActionResult> ListBooks([FromQuery] Models.Requests.GetBooksRequest request)
     {
         var response = await _bookServiceClient.ListBooksAsync(new ListBookRequest

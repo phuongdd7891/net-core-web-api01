@@ -13,6 +13,8 @@ using CoreLibrary.Repository;
 using Gateway.Services;
 using Gateway.Models;
 using Serilog;
+using Microsoft.AspNetCore.Authentication;
+using Gateway.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -50,7 +52,7 @@ services.AddAuthentication(options =>
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, x =>
 {
     var jwtSettings = builder.Configuration.GetSection("Jwt");
-    x.RequireHttpsMetadata = false;
+    x.RequireHttpsMetadata = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -108,12 +110,16 @@ services.AddStackExchangeRedisExtensions<NewtonsoftSerializer>(redisConfiguratio
 
 services.Configure<UploadSettings>(builder.Configuration.GetSection("UploadSettings"));
 
+services.AddHttpContextAccessor();
 services.AddScoped<ErrorHandlerInterceptor>();
 services.AddTransient<RedisRepository>();
+services.AddTransient<CacheService>();
+services.AddScoped<IUserIdentity, UserIdentity>();
 
 services.AddGrpc();
 services.AddGrpcClients(builder.Configuration);
 
+services.AddHostedService<InitializeCacheService>();
 services.AddHostedService<FileHostedService>();
 
 var app = builder.Build();

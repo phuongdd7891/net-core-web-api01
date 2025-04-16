@@ -4,6 +4,7 @@ using Userservice;
 using Gateway.Models.Requests;
 using CoreLibrary.Utils;
 using Adminauthservice;
+using Gateway.Services;
 
 namespace Gateway.Controllers;
 
@@ -15,15 +16,18 @@ public partial class UserController : BaseController
     private readonly UserServiceProto.UserServiceProtoClient _userClient;
     private readonly AdminAuthServiceProto.AdminAuthServiceProtoClient _adminAuthClient;
     private readonly IEnumerable<EndpointDataSource> _endpointDataSources;
+    private readonly CacheService _cacheService;
     public UserController(
         UserServiceProto.UserServiceProtoClient userClient,
         AdminAuthServiceProto.AdminAuthServiceProtoClient adminAuthClient,
-        IEnumerable<EndpointDataSource> endpointDataSources
+        IEnumerable<EndpointDataSource> endpointDataSources,
+        CacheService cacheService
     )
     {
         _userClient = userClient;
         _adminAuthClient = adminAuthClient;
         _endpointDataSources = endpointDataSources;
+        _cacheService = cacheService;
     }
 
     [HttpGet("list")]
