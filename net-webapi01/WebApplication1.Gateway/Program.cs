@@ -30,7 +30,10 @@ builder.Host.UseSerilog((context, services, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration);
 });
 // Add services to the container.
-services.AddControllers()
+services.AddControllers(options =>
+{
+    options.Conventions.Add(new CustomActionConvention());
+})
     .AddNewtonsoftJson(
         options => options.SerializerSettings.ContractResolver = new DefaultContractResolver
         {

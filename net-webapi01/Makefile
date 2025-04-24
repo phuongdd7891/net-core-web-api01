@@ -34,5 +34,8 @@ build:
 up:
 	docker-compose -f docker-compose-gw-micro.yml up
 
+up-scale:
+	docker-compose -f docker-compose-gw-micro.yml up --scale elasticsearch=0 --scale kibana=0
+
 down:
 	docker-compose -f docker-compose-gw-micro.yml down

@@ -1,6 +1,5 @@
 
 using CoreLibrary.Helpers;
-using Gateway.Authorization;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +28,7 @@ public class BaseController: ControllerBase
         }
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     public Metadata GetSpecialHeader(string username)
     {
         var headers = new Metadata();

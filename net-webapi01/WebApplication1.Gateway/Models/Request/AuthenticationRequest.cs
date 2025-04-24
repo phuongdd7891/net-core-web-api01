@@ -17,7 +17,7 @@ namespace Gateway.Models.Requests
 
     public class RoleActionRequest
     {
-        public required string[] Actions { get; set; }
+        public required string[] ActionIds { get; set; }
         public required string RoleId { get; set; }
     }
 

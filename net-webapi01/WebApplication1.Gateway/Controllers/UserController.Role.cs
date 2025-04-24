@@ -27,11 +27,10 @@ public partial class UserController
                     var controllerActionDescriptor = routeEndpoint.Metadata
                         .OfType<ControllerActionDescriptor>()
                         .FirstOrDefault();
-
-                    if (controllerActionDescriptor != null && routeEndpoint.Metadata.GetMetadata<AuthorizeAttribute>() != null)
+                    var explorerSettingAttr = routeEndpoint.Metadata.GetMetadata<ApiExplorerSettingsAttribute>();
+                    if (controllerActionDescriptor != null && (explorerSettingAttr == null || !explorerSettingAttr.IgnoreApi))
                     {
-                        var controllerName = controllerActionDescriptor.ControllerName;
-                        var actionName = controllerActionDescriptor.ActionName;
+                        var actionId = controllerActionDescriptor.Properties["ActionId"] as string;
                         var httpMethods = routeEndpoint.Metadata
                             .OfType<HttpMethodMetadata>()
                             .FirstOrDefault()?.HttpMethods;
@@ -41,7 +40,8 @@ public partial class UserController
                             ControllerMethod = $"{controllerActionDescriptor.ControllerTypeInfo.FullName}:{controllerActionDescriptor.MethodInfo.Name}",
                             Description = controllerActionDescriptor.MethodInfo.GetCustomAttribute<DescriptionAttribute>()?.Description,
                             Method = string.Join(", ", httpMethods ?? new List<string>()),
-                            Action = $"{controllerName}.{actionName}"
+                            ActionId = actionId,
+                            Route = routeEndpoint.RoutePattern.RawText
                         });
                     }
                 }
@@ -54,7 +54,6 @@ public partial class UserController
     }
 
     [HttpPost("create-role")]
-    [Authorize]
     public async Task<IActionResult> CreateRole([FromBody] ApplicationRoleRequest request)
     {
         var result = await _adminAuthClient.CreateUserRoleAsync(new Adminauthservice.CreateUserRoleRequest
@@ -72,21 +71,38 @@ public partial class UserController
     }
 
     [HttpPost("add-role-actions")]
-    [Authorize]
     public async Task<IActionResult> AddRoleActions(RoleActionRequest request)
     {
         var actionReq = new Adminauthservice.AddActionsToRoleRequest
         {
-            RoleId = request.RoleId,
+            RoleId = request.RoleId
         };
-        actionReq.Actions.AddRange(request.Actions);
+        var actions = new List<string>();
+        foreach (var dataSource in _endpointDataSources)
+        {
+            var endpoints = dataSource.Endpoints;
+
+            foreach (var endpoint in endpoints)
+            {
+                if (endpoint is RouteEndpoint routeEndpoint)
+                {
+                    var controllerActionDescriptor = routeEndpoint.Metadata
+                        .OfType<ControllerActionDescriptor>()
+                        .FirstOrDefault(a => request.ActionIds.Contains(a.Properties["ActionId"] as string));
+                    if (controllerActionDescriptor != null)
+                    {
+                        actions.Add((controllerActionDescriptor.Properties["ActionId"] as string)!);
+                    }
+                }
+            }
+        }
+        actionReq.Actions.AddRange(actions);
         await _adminAuthClient.AddActionsToRoleAsync(actionReq, DefaultHeader);
         await _cacheService.LoadRoleActions();
         return Ok();
     }
 
     [HttpPost("edit-role")]
-    [Authorize]
     public async Task<IActionResult> EditRole([FromBody] ApplicationRoleRequest request)
     {
         ErrorStatuses.ThrowInternalErr("Invalid request", request == null || string.IsNullOrEmpty(request.Id));
@@ -102,7 +118,6 @@ public partial class UserController
     }
 
     [HttpPost("delete-role")]
-    [Authorize]
     public async Task<IActionResult> DeleteRole([FromBody] string id)
     {
         ErrorStatuses.ThrowBadRequest("Invalid request", string.IsNullOrEmpty(id));
